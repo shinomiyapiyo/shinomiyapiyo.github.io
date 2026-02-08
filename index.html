@@ -6,6 +6,20 @@
     <meta name="theme-color" content="#FFB7C5">
     <meta name="format-detection" content="telephone=no">
     
+    <!-- ==========================================
+         Google Analytics 4 (GA4) Configuration
+         TODO: 'G-XXXXXXXXXX' を実際の測定IDに置換してください
+    ========================================== -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    -->
+
     <!-- SEO Meta Tags -->
     <title>四ノ宮ぴよ Official | 仙台 144cmにゃんこひよこメイド</title>
     <meta name="description" content="仙台のメイドカフェ「にゃんぽんたん」でお給仕中。144cmにゃんこひよこメイド、四ノ宮ぴよ（ぴよちゃん）の公式ポータルサイト。SNSリンク(X/Insta/TikTok)、YouTube、ライブ情報、通販チェキ等の最新情報を集約。">
@@ -29,8 +43,16 @@
     <meta name="twitter:description" content="仙台メイドカフェにゃんぽんたん所属。144cmにゃんこひよこメイド。">
     <meta name="twitter:image" content="https://shinomiyapiyo.github.io/piyo01.jfif">
     
-    <!-- Favicon -->
+    <!-- Favicon & Web Clip Icon Strategy -->
+    <!-- 1. Favicon (Browser Tab): SVG Emoji for lightweight visibility -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐥</text></svg>">
+    
+    <!-- 2. Apple Touch Icon (iOS Home Screen): Requires 'apple-touch-icon.png' -->
+    <!-- Note: Upload a square PNG image named 'apple-touch-icon.png' to the repository root. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+    
+    <!-- 3. Android Home Screen (General): Fallback using the same icon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="./apple-touch-icon.png">
 
     <!-- Design Tokens: Google Fonts & Tailwind CSS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
