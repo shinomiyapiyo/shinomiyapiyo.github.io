@@ -14,10 +14,7 @@
     <link rel="manifest" href="manifest.json">
     
     <!-- iOS / Icon Settings -->
-    <!-- iOS (iPhone/iPad) はここを参照します。大きいサイズ(512px)を指定すると綺麗に縮小されます -->
     <link rel="apple-touch-icon" href="icon-512.png">
-    
-    <!-- PC/Androidブラウザタブ用 -->
     <link rel="icon" type="image/png" href="192x192.png">
 
     <title>ぴよ氏の冒険</title>
@@ -40,15 +37,16 @@
             align-items: center;
         }
 
-        /* --- 縦画面警告 --- */
+        /* --- 縦画面警告 (修正済み) --- */
         @media screen and (orientation: portrait) {
             body::before {
-                content: "🔄🌚画面を横向きにするンゴ🌝";
+                /* 改行コード \A を使用 */
+                content: "🔓 画面ロックを解除して\A🔄🌚画面を横向きにするンゴ🌝";
                 position: fixed;
                 top: 0; left: 0; width: 100%; height: 100%;
                 background: linear-gradient(135deg, #ffb6c1, #ffc0cb, #ff69b4);
                 color: #fff;
-                font-size: 6vw;
+                font-size: 5vw; /* 少しサイズを調整して収まりよく */
                 font-weight: bold;
                 display: flex;
                 align-items: center;
@@ -57,6 +55,8 @@
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
                 text-align: center;
                 padding: 20px;
+                white-space: pre-wrap; /* 改行を有効化 */
+                line-height: 1.5;      /* 行間を広げる */
             }
             #gameContainer { display: none; }
         }
@@ -127,7 +127,7 @@
         }
         .overlay.hidden { display: none; }
 
-        /* --- タイトル画像 (スマホ優先設定) --- */
+        /* --- タイトル画像 --- */
         #titleImage {
             position: absolute;
             top: 50%;
@@ -450,14 +450,15 @@
             
             <img id="titleImage" src="" alt="ぴよ氏の冒険">
 
+            <!-- バージョン情報：左下へ分散 -->
             <div style="
-                position: absolute; bottom: 8vh; left: 50%;
-                transform: translateX(-50%); z-index: 10;
-                display: flex; align-items: center; gap: 8px;
+                position: absolute; bottom: 15px; left: 15px;
+                z-index: 10;
+                display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                font-weight: bold; justify-content: center;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.03</span>
+                font-weight: bold;">
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.04</span>
                 <span style="font-size: 1.0vw; opacity: 0.8; font-weight: normal;">LastUpDate 2026/02/09</span>
             </div>
 
@@ -469,21 +470,18 @@
                 <button class="game-button" id="rankingButton">🏆 ランキング</button>
             </div>
 
-            <div class="instruction-text" style="font-size: 3vw; margin-top: 10px; opacity: 0.8;">
-                <div style="margin-top: 15px; text-align: center;">
-                    <div style="
-                        position: absolute; bottom: 0.5vh; left: 50%;
-                        transform: translateX(-50%); z-index: 10;
-                        text-align: center; color: rgba(255,255,255,0.7);
-                        font-size: 1.5vw; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-                        line-height: 1.2;">
-                        © 2025 ぴよ氏の冒険<br>Created by NullPo Games
-                    </div>
-                </div>
+            <!-- クレジット：右下へ分散 -->
+            <div style="
+                position: absolute; bottom: 15px; right: 15px;
+                z-index: 10;
+                text-align: right; color: rgba(255,255,255,0.7);
+                font-size: 1.5vw; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+                line-height: 1.2;">
+                © 2025 ぴよ氏の冒険<br>Created by NullPo Games
             </div>
 
             <div id="startMessage" style="
-                position: absolute; bottom: 3vh; left: 50%;
+                position: absolute; bottom: 10vh; left: 50%;
                 transform: translateX(-50%); z-index: 10;
                 font-size: 2vw; text-align: center; color: #fff;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
@@ -552,20 +550,14 @@
                 touch-action: pan-y; overscroll-behavior: contain;">
                 <div style="color: #ffd700; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 3vw;">最終更新日: 2026/02/09</div>
                 <div style="color: #fff; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 直近の更新内容</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• PWA設定の修正（iOS対応）</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• ホーム画面アイコンの指定タグを追加</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• 縦画面警告の表示修正（見切れ対策・文言追加）</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• タイトル画面UIの配置調整（重複回避）</div>
                 <div style="color: #fff; font-weight: bold; margin: 15px 0 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 過去の更新内容</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• PWA設定の修正（iOS対応）</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• タイトル画像の表示バグ修正（スマホ最適化）</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• 画像が画面中央に収まるようCSS調整</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• コード全体のリファクタリング・バグ修正</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• HTML構文エラーの修正</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• フレームレート依存の速度問題を修正（固定60fpsタイムステップ導入）</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• 画面遷移ロジックの安定化</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• Firebase未接続時のフォールバック処理を追加</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• 表示位置の微調整</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• ランキング用BGMを実装</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• アクセス画面を追加</div>
-                <div style="margin-bottom: 8px; padding-left: 5px;">• 注意書き画面を追加、サウンドの設定変更、タイトル画像追加</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• フレームレート依存の速度問題を修正</div>
             </div>
             <button class="game-button" onclick="hideUpdateHistory()" style="margin-top: 10px; z-index: 31; font-size: 3vw; padding: 8px 16px;">🔙 戻る</button>
         </div>
@@ -606,7 +598,7 @@
 
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.03
+ * ぴよ氏の冒険 v1.04
  * © 2025 Created by NullPo Games
  * ============================================================ */
 
@@ -640,7 +632,7 @@ const SPEED_UP_RATE       = 0.20;  // 20%ずつ
 const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
-const CURRENT_VERSION     = '1.03';
+const CURRENT_VERSION     = '1.04';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
