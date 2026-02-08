@@ -9,7 +9,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#ff69b4">
+    
+    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS / Icon Settings -->
+    <!-- iOS (iPhone/iPad) はここを参照します。大きいサイズ(512px)を指定すると綺麗に縮小されます -->
+    <link rel="apple-touch-icon" href="icon-512.png">
+    
+    <!-- PC/Androidブラウザタブ用 -->
+    <link rel="icon" type="image/png" href="192x192.png">
+
     <title>ぴよ氏の冒険</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -117,34 +127,25 @@
         }
         .overlay.hidden { display: none; }
 
-        /* --- タイトル画像 (修正版: スマホ優先設定) --- */
+        /* --- タイトル画像 (スマホ優先設定) --- */
         #titleImage {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            
-            /* 画面内に収める設定 */
             width: auto;
             height: auto;
-            max-width: 90vw;  /* 画面幅の90%まで */
-            max-height: 80vh; /* 画面高さの80%まで */
-            
-            object-fit: contain; /* アスペクト比を維持して全体を表示 */
-            
+            max-width: 90vw;
+            max-height: 80vh;
+            object-fit: contain;
             border: none;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             z-index: 1;
             display: block;
         }
-        
-        /* PC等の大画面用微調整 */
         @media (min-width: 900px) {
-            #titleImage {
-                max-width: 50vw;
-                max-height: 70vh;
-            }
+            #titleImage { max-width: 50vw; max-height: 70vh; }
         }
 
         /* --- ボタン共通 --- */
@@ -371,8 +372,6 @@
             #titleButtons { right: calc(8px + env(safe-area-inset-right)) !important; }
             #startScreen img {
                 position: absolute;
-                /* left: 50% !important; 不要な上書きを削除 */
-                /* transform: translateX(-50%) !important; 不要な上書きを削除 */
             }
         }
 
@@ -449,7 +448,6 @@
                 transform: translateX(-50%);
                 width: 25vw; height: auto; z-index: 10;">
             
-            <!-- 修正: 画像が切れないようにCSSクラス制御へ移行 -->
             <img id="titleImage" src="" alt="ぴよ氏の冒険">
 
             <div style="
@@ -459,7 +457,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold; justify-content: center;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.02</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.03</span>
                 <span style="font-size: 1.0vw; opacity: 0.8; font-weight: normal;">LastUpDate 2026/02/09</span>
             </div>
 
@@ -554,9 +552,11 @@
                 touch-action: pan-y; overscroll-behavior: contain;">
                 <div style="color: #ffd700; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 3vw;">最終更新日: 2026/02/09</div>
                 <div style="color: #fff; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 直近の更新内容</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• PWA設定の修正（iOS対応）</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• ホーム画面アイコンの指定タグを追加</div>
+                <div style="color: #fff; font-weight: bold; margin: 15px 0 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 過去の更新内容</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• タイトル画像の表示バグ修正（スマホ最適化）</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• 画像が画面中央に収まるようCSS調整</div>
-                <div style="color: #fff; font-weight: bold; margin: 15px 0 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 過去の更新内容</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• コード全体のリファクタリング・バグ修正</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• HTML構文エラーの修正</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• フレームレート依存の速度問題を修正（固定60fpsタイムステップ導入）</div>
@@ -606,7 +606,7 @@
 
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.02
+ * ぴよ氏の冒険 v1.03
  * © 2025 Created by NullPo Games
  * ============================================================ */
 
@@ -640,7 +640,7 @@ const SPEED_UP_RATE       = 0.20;  // 20%ずつ
 const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
-const CURRENT_VERSION     = '1.02';
+const CURRENT_VERSION     = '1.03';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
