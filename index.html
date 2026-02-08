@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFB7C5">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- SEO Meta Tags -->
+    <title>四ノ宮ぴよ Official | 仙台 144cmにゃんこひよこメイド</title>
+    <meta name="description" content="仙台のメイドカフェ「にゃんぽんたん」でお給仕中。144cmにゃんこひよこメイド、四ノ宮ぴよ（ぴよちゃん）の公式ポータルサイト。SNSリンク(X/Insta/TikTok)、YouTube、ライブ情報、通販チェキ等の最新情報を集約。">
+    <meta name="keywords" content="四ノ宮ぴよ,ぴよちゃん,にゃんぽんたん,仙台,メイドカフェ,コンカフェ,アイドル,地下アイドル,144cm,ツインテール">
+    <link rel="canonical" href="https://shinomiyapiyo.github.io/">
+
+    <!-- Open Graph Protocol (SNS Sharing) -->
+    <meta property="og:site_name" content="四ノ宮ぴよ Official">
+    <meta property="og:title" content="四ノ宮ぴよ Official | 144cmにゃんこひよこメイド">
+    <meta property="og:description" content="144cmひよこのぴよちゃんです🐥 仙台でメイドさんしたり🎀、東京でライブしたりしてます🎤 SNS・通販リンクまとめ">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shinomiyapiyo.github.io/">
+    <meta property="og:image" content="https://shinomiyapiyo.github.io/piyo01.jfif">
+    <meta property="og:locale" content="ja_JP">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@piyopiyoo_nyan">
+    <meta name="twitter:creator" content="@piyopiyoo_nyan">
+    <meta name="twitter:title" content="四ノ宮ぴよ Official">
+    <meta name="twitter:description" content="仙台メイドカフェにゃんぽんたん所属。144cmにゃんこひよこメイド。">
+    <meta name="twitter:image" content="https://shinomiyapiyo.github.io/piyo01.jfif">
+    
+    <!-- Favicon (Fallback to Emoji/Default if not present, creating simple favicon) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐥</text></svg>">
+
+    <!-- Design Tokens: Google Fonts & Tailwind CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "四ノ宮ぴよ",
+      "alternateName": "Shinomiyapiyo",
+      "url": "https://shinomiyapiyo.github.io/",
+      "image": "https://shinomiyapiyo.github.io/piyo01.jfif",
+      "jobTitle": "Maid, Idol",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Nyanpontan"
+      },
+      "sameAs": [
+        "https://x.com/piyopiyoo_nyan",
+        "https://www.instagram.com/pipipi_yoo/",
+        "https://www.tiktok.com/@pipipi_yoo",
+        "https://www.youtube.com/@%E5%9B%9B%E3%83%8E%E5%AE%AE%E3%81%B4%E3%82%88"
+      ],
+      "description": "仙台のメイドカフェ「にゃんぽんたん」所属の144cmにゃんこひよこメイド。"
+    }
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Zen Maru Gothic"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            pink: '#FFB7C5',
+                            darkPink: '#FF8FAB',
+                            yellow: '#FFEA70',
+                            text: '#4A4A4A',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Utilities for Glassmorphism & Backgrounds */
+        body {
+            background-color: #fff0f3;
+            background-image: radial-gradient(#ffccd5 1px, transparent 1px), radial-gradient(#ffccd5 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            overflow-x: hidden;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(255, 183, 197, 0.37);
+        }
+
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shine::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+        .btn-shine:hover::after {
+            left: 100%;
+        }
+
+        /* Mobile First Optimization */
+        .hero-image-mask {
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        
+        /* Insta Gradient Text */
+        .insta-gradient {
+            background: -webkit-linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="text-brand-text antialiased selection:bg-brand-pink selection:text-white">
+
+    <!-- Background Decoration -->
+    <div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-64 h-64 bg-brand-yellow rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float"></div>
+        <div class="absolute top-[20%] right-[-10%] w-72 h-72 bg-brand-pink rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[-10%] left-[20%] w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-md mx-auto min-h-screen flex flex-col relative pb-12">
+        
+        <!-- Hero Section -->
+        <section class="relative h-[60vh] w-full flex items-end justify-center overflow-hidden">
+            <!-- Main Visual -->
+            <!-- 
+                NOTE: object-centerに変更し、横長画像でも顔が中央に来るように調整済み 
+            -->
+            <img src="./piyo01.jfif" 
+                 alt="四ノ宮ぴよ" 
+                 class="absolute bottom-0 w-auto h-[105%] object-cover object-center z-10 hero-image-mask drop-shadow-2xl transition-transform hover:scale-105 duration-700"
+                 onerror="this.src='https://placehold.co/400x800/ffb7c5/white?text=Main+Visual'; this.style.height='100%'; this.style.objectFit='cover';">
+            
+            <!-- Name Overlay -->
+            <div class="absolute bottom-4 z-20 text-center w-full px-4 animate-fade-in-up">
+                <div class="glass-card rounded-2xl p-4 border-t-4 border-brand-yellow">
+                    <p class="text-sm font-bold text-brand-darkPink tracking-widest mb-1">144cmにゃんこひよこメイド</p>
+                    <h1 class="text-3xl font-black tracking-tight text-gray-800 drop-shadow-sm">
+                        四ノ宮 ぴよ<span class="text-brand-yellow text-xl ml-1">🐥</span>
+                    </h1>
+                </div>
+            </div>
+        </section>
+
+        <!-- Links Section -->
+        <section class="px-5 mt-6 z-20 flex flex-col gap-4">
+            
+            <!-- Profile / Bio -->
+            <div class="text-center mb-4 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <p class="text-sm leading-relaxed opacity-80 bg-white/50 inline-block px-4 py-3 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
+                    144cmひよこのぴよちゃんです🐥<br>
+                    仙台でメイドさんしたり🎀、<br>
+                    東京でライブしたりしてます🎤
+                </p>
+            </div>
+
+            <!-- Social Links -->
+            
+            <!-- X (Twitter) -->
+            <a href="https://x.com/piyopiyoo_nyan" target="_blank" rel="noopener noreferrer" 
+               class="group btn-shine flex items-center justify-between p-4 bg-black text-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-xl">
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span class="text-xs text-gray-400 font-bold tracking-wider">OFFICIAL X</span>
+                        <span class="font-bold text-lg">@piyopiyoo_nyan</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition-transform"></i>
+            </a>
+
+            <!-- Instagram -->
+            <a href="https://www.instagram.com/pipipi_yoo/" target="_blank" rel="noopener noreferrer" 
+               class="group btn-shine flex items-center justify-between p-1 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.25s;">
+                <div class="flex items-center justify-between w-full p-3 bg-white rounded-xl border border-pink-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xl">
+                            <i class="fa-brands fa-instagram"></i>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs font-bold tracking-wider insta-gradient">Instagram</span>
+                            <span class="font-bold text-lg text-gray-800">@pipipi_yoo</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- TikTok -->
+            <a href="https://www.tiktok.com/@pipipi_yoo" target="_blank" rel="noopener noreferrer" 
+               class="group btn-shine flex items-center justify-between p-1 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between w-full p-3 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center text-xl relative overflow-hidden">
+                            <i class="fa-brands fa-tiktok z-10"></i>
+                            <div class="absolute inset-0 bg-gradient-to-tr from-[#69C9D0] to-[#EE1D52] opacity-80 mix-blend-screen"></div>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs text-gray-500 font-bold tracking-wider">TikTok</span>
+                            <span class="font-bold text-lg text-gray-800">@pipipi_yoo</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </a>
+
+            <!-- YouTube -->
+            <a href="https://www.youtube.com/@%E5%9B%9B%E3%83%8E%E5%AE%AE%E3%81%B4%E3%82%88" target="_blank" rel="noopener noreferrer" 
+               class="group btn-shine flex items-center justify-between p-4 bg-white border-2 border-red-50 text-gray-800 rounded-2xl shadow-lg hover:shadow-red-100 hover:border-red-100 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.35s;">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center text-lg">
+                        <i class="fa-brands fa-youtube"></i>
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span class="text-xs text-red-400 font-bold tracking-wider">YouTube Channel</span>
+                        <span class="font-bold text-lg">四ノ宮ぴよ</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
+            </a>
+
+            <!-- Maid Cafe -->
+            <a href="https://nyanpontan.com/" target="_blank" rel="noopener noreferrer" 
+               class="group btn-shine flex items-center justify-between p-4 bg-white/80 border border-brand-pink/30 text-gray-800 rounded-2xl shadow-lg hover:shadow-pink-100 hover:bg-white hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-brand-pink text-white rounded-full flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-paw"></i>
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span class="text-xs text-brand-darkPink font-bold tracking-wider">お給仕中 ☕</span>
+                        <span class="font-bold text-lg">にゃんぽんたん</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
+            </a>
+
+            <!-- BOOTH (Shop) -->
+            <a href="https://booth.pm/ja/items/5859689" target="_blank" rel="noopener noreferrer" 
+               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-brand-pink to-brand-darkPink text-white rounded-2xl shadow-lg hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.45s;">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg backdrop-blur-md">
+                        <i class="fa-solid fa-shop"></i>
+                    </div>
+                    <div class="flex flex-col text-left">
+                        <span class="text-xs text-white/80 font-bold tracking-wider">ONLINE SHOP</span>
+                        <span class="font-bold text-lg">通販チェキ (BOOTH)</span>
+                    </div>
+                </div>
+                <span class="bg-white text-brand-darkPink text-xs font-bold px-3 py-1 rounded-full group-hover:scale-105 transition-transform">
+                    Check!
+                </span>
+            </a>
+
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-xs text-gray-400 pb-8 animate-fade-in-up" style="animation-delay: 0.6s;">
+            <div class="mb-2">
+                <i class="fa-solid fa-heart text-brand-darkPink animate-pulse"></i>
+            </div>
+            <p>&copy; 2024 Shinomiyapiyo. All Rights Reserved.</p>
+        </footer>
+
+    </main>
+
+</body>
+</html>
