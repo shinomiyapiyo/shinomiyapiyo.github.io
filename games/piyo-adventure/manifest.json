@@ -2,7 +2,7 @@
   "name": "ぴよ氏の冒険",
   "short_name": "ぴよ氏",
   "description": "可愛いぴよ氏と一緒に冒険しよう！",
-  "start_url": "./",
+  "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#ffb6c1",
