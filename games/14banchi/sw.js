@@ -1,4 +1,4 @@
-const CACHE_NAME = '14banchi-v050';
+const CACHE_NAME = '14banchi-v051';
 const ASSETS = [
   './',
   './index.html',
