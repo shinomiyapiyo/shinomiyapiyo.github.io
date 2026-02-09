@@ -337,12 +337,12 @@ function dGnd(){
   // pebbles anomaly - small stones on road
   if(hasA&&AN[aT]==='pebbles'){
     const sd2=cB*333;
-    X.fillStyle='rgba(80,75,65,0.5)';
-    for(let i=0;i<8;i++){
+    X.fillStyle='rgba(120,110,95,0.7)';
+    for(let i=0;i<12;i++){
       const px2=((sd2+i*271)%BW)+bsX-camX;
       if(px2<-10||px2>W+10)continue;
       const py2=gy+8+((sd2+i*47)%12);
-      const pr=1.5+((sd2+i*83)%2);
+      const pr=2.5+((sd2+i*83)%3);
       X.beginPath();X.ellipse(px2,py2,pr,pr*0.6,((sd2+i)%3)*0.5,0,Math.PI*2);X.fill();
     }
   }
@@ -471,7 +471,7 @@ function dAnom(){
   if(a==='foggy'){for(let i=0;i<8;i++){const fx=((fc*0.3+i*200+sd)%(W+200))-100;const fy=H*0.3+((sd+i*77)%(H*0.35));const fw=120+((sd+i*53)%80);const al=0.06+Math.sin(fc*0.01+i)*0.03;X.fillStyle=`rgba(180,180,200,${al})`;X.beginPath();X.ellipse(fx,fy,fw,25+i*3,0,0,Math.PI*2);X.fill()}}
 
   // shadowHands
-  if(a==='shadowHands'){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.3+Math.sin(fc*0.02+i)*0.15;X.fillStyle=`rgba(10,0,20,${al})`;X.save();X.translate(hx,gy+2);
+  if(a==='shadowHands'){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.5+Math.sin(fc*0.02+i)*0.2;X.fillStyle=`rgba(20,0,35,${al})`;X.save();X.translate(hx,gy+2);
     // Draw a hand shape
     X.beginPath();X.moveTo(0,0);X.lineTo(-4,-18-rise);X.lineTo(-2,-24-rise);X.lineTo(0,-20-rise);X.lineTo(2,-26-rise);X.lineTo(4,-22-rise);X.lineTo(6,-27-rise);X.lineTo(7,-21-rise);X.lineTo(8,-25-rise);X.lineTo(9,-18-rise);X.lineTo(6,-12-rise);X.lineTo(10,0);X.closePath();X.fill();X.restore()}}
 
@@ -686,7 +686,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.53',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.54',W/2,H*0.99);
 }
 
 // === CLEAR ===
