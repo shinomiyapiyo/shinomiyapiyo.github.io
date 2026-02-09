@@ -157,6 +157,20 @@
             background: -webkit-linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
+        /* セクションヘッダー用のかわいい装飾 */
+        .section-title {
+            position: relative;
+            display: inline-block;
+        }
+        .section-title::before, .section-title::after {
+            content: '✨';
+            font-size: 0.8em;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .section-title::before { left: -1.5em; }
+        .section-title::after { right: -1.5em; }
     </style>
 </head>
 <body class="text-brand-text antialiased selection:bg-brand-pink selection:text-white">
@@ -189,10 +203,10 @@
         </section>
 
         <!-- Links Section -->
-        <section class="px-5 mt-6 z-20 flex flex-col gap-4">
+        <section class="px-5 mt-6 z-20 flex flex-col gap-8">
             
             <!-- Profile -->
-            <div class="text-center mb-4 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <div class="text-center animate-fade-in-up" style="animation-delay: 0.1s;">
                 <h2 class="sr-only">Profile</h2>
                 <p class="text-sm leading-relaxed opacity-80 bg-white/50 inline-block px-4 py-3 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
                     144cmひよこのぴよちゃんです🐥<br>
@@ -201,172 +215,230 @@
                 </p>
             </div>
 
-            <h2 class="sr-only">Social Media Links</h2>
-            
-            <!-- X (Twitter) -->
-            <a href="https://x.com/piyopiyoo_nyan" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('Twitter')"
-               class="group btn-shine flex items-center justify-between p-4 bg-black text-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.2s;">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-xl">
-                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                        </svg>
-                    </div>
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-gray-400 font-bold tracking-wider">OFFICIAL X</span>
-                        <span class="font-bold text-lg">最新情報 & シフト 🗓️</span>
-                    </div>
+            <!-- ===========================
+                 CATEGORY: LIVE STREAMING
+            ============================ -->
+            <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.15s;">
+                <div class="text-center mb-1">
+                    <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">LIVE STREAMING</h3>
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                        遊びに来てね♡
+                    </p>
                 </div>
-                <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition-transform"></i>
-            </a>
 
-            <!-- SHOWROOM -->
-            <a href="https://www.showroom-live.com/r/piyopiyotoroom" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('SHOWROOM')"
-               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-sky-400 via-violet-400 to-pink-400 text-white rounded-2xl shadow-lg hover:shadow-purple-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.25s;">
-                <div class="flex items-center gap-4">
-                    <img src="./Showroom.png" alt="SHOWROOM" class="w-10 h-10 rounded-full border-2 border-white/50 shadow-sm object-cover">
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-white/90 font-bold tracking-wider">SHOWROOM 毎日配信中！</span>
-                        <span class="font-bold text-lg">ぴよぴよっとるーむ 💭</span>
-                    </div>
-                </div>
-                <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition-transform"></i>
-            </a>
-
-            <!-- Instagram -->
-            <a href="https://www.instagram.com/pipipi_yoo/" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('Instagram')"
-               class="group btn-shine flex items-center justify-between p-1 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.3s;">
-                <div class="flex items-center justify-between w-full p-3 bg-white rounded-xl border border-pink-100">
+                <!-- SHOWROOM -->
+                <a href="https://www.showroom-live.com/r/piyopiyotoroom" target="_blank" rel="noopener noreferrer" 
+                onclick="trackClick('SHOWROOM')"
+                class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-sky-400 via-violet-400 to-pink-400 text-white rounded-2xl shadow-lg hover:shadow-purple-200 hover:-translate-y-1 transition-all duration-300">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xl">
-                            <i class="fa-brands fa-instagram"></i>
+                        <img src="./Showroom.png" alt="SHOWROOM" class="w-10 h-10 rounded-full border-2 border-white/50 shadow-sm object-cover">
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs text-white/90 font-bold tracking-wider">SHOWROOM 毎日配信中！</span>
+                            <span class="font-bold text-lg">ぴよぴよっとるーむ 💭</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            </div>
+
+            <!-- ===========================
+                 CATEGORY: SNS
+            ============================ -->
+            <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="text-center mb-1">
+                    <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">SNS</h3>
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                        フォローしてね♡
+                    </p>
+                </div>
+
+                <!-- X (Twitter) -->
+                <a href="https://x.com/piyopiyoo_nyan" target="_blank" rel="noopener noreferrer" 
+                   onclick="trackClick('Twitter')"
+                   class="group btn-shine flex items-center justify-between p-4 bg-black text-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-xl">
+                            <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
                         </div>
                         <div class="flex flex-col text-left">
-                            <span class="text-xs font-bold tracking-wider insta-gradient">Instagram</span>
-                            <span class="font-bold text-lg text-gray-800">日常の一枚 & 自撮り 📸</span>
+                            <span class="text-xs text-gray-400 font-bold tracking-wider">OFFICIAL X</span>
+                            <span class="font-bold text-lg">最新情報 & シフト 🗓️</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition-transform"></i>
+                </a>
+
+                <!-- Instagram -->
+                <a href="https://www.instagram.com/pipipi_yoo/" target="_blank" rel="noopener noreferrer" 
+                   onclick="trackClick('Instagram')"
+                   class="group btn-shine flex items-center justify-between p-1 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between w-full p-3 bg-white rounded-xl border border-pink-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xl">
+                                <i class="fa-brands fa-instagram"></i>
+                            </div>
+                            <div class="flex flex-col text-left">
+                                <span class="text-xs font-bold tracking-wider insta-gradient">Instagram</span>
+                                <span class="font-bold text-lg text-gray-800">日常の一枚 & 自撮り 📸</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </a>
+
+                <!-- TikTok -->
+                <a href="https://www.tiktok.com/@pipipi_yoo" target="_blank" rel="noopener noreferrer" 
+                   onclick="trackClick('TikTok')"
+                   class="group btn-shine flex items-center justify-between p-1 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-between w-full p-3 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center text-xl relative overflow-hidden">
+                                <i class="fa-brands fa-tiktok z-10"></i>
+                                <div class="absolute inset-0 bg-gradient-to-tr from-[#69C9D0] to-[#EE1D52] opacity-80 mix-blend-screen"></div>
+                            </div>
+                            <div class="flex flex-col text-left">
+                                <span class="text-xs text-gray-500 font-bold tracking-wider">TikTok</span>
+                                <span class="font-bold text-lg text-gray-800">ダンシングぴよ 🎵</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </a>
+
+                <!-- YouTube -->
+                <a href="https://www.youtube.com/@%E5%9B%9B%E3%83%8E%E5%AE%AE%E3%81%B4%E3%82%88" target="_blank" rel="noopener noreferrer" 
+                   onclick="trackClick('YouTube')"
+                   class="group btn-shine flex items-center justify-between p-4 bg-white border-2 border-red-50 text-gray-800 rounded-2xl shadow-lg hover:shadow-red-100 hover:border-red-100 hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center text-lg">
+                            <i class="fa-brands fa-youtube"></i>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs text-red-400 font-bold tracking-wider">YouTube Channel</span>
+                            <span class="font-bold text-lg">ライブ映像 & パフォーマンス 🎤</span>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
-                </div>
-            </a>
+                </a>
+            </div>
 
-            <!-- TikTok -->
-            <a href="https://www.tiktok.com/@pipipi_yoo" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('TikTok')"
-               class="group btn-shine flex items-center justify-between p-1 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.35s;">
-                <div class="flex items-center justify-between w-full p-3 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
+            <!-- ===========================
+                 CATEGORY: Maid Cafe
+            ============================ -->
+            <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.3s;">
+                <div class="text-center mb-1">
+                    <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">メイドカフェ</h3>
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                        ぴよに会える♡
+                    </p>
+                </div>
+
+                <!-- Maid Cafe -->
+                <a href="https://nyanpontan.com/" target="_blank" rel="noopener noreferrer" 
+                   onclick="trackClick('MaidCafe')"
+                   class="group btn-shine flex items-center justify-between p-4 bg-white/80 border border-brand-pink/30 text-gray-800 rounded-2xl shadow-lg hover:shadow-pink-100 hover:bg-white hover:-translate-y-1 transition-all duration-300">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center text-xl relative overflow-hidden">
-                            <i class="fa-brands fa-tiktok z-10"></i>
-                            <div class="absolute inset-0 bg-gradient-to-tr from-[#69C9D0] to-[#EE1D52] opacity-80 mix-blend-screen"></div>
+                        <div class="w-10 h-10 bg-brand-pink text-white rounded-full flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-paw"></i>
                         </div>
                         <div class="flex flex-col text-left">
-                            <span class="text-xs text-gray-500 font-bold tracking-wider">TikTok</span>
-                            <span class="font-bold text-lg text-gray-800">ダンシングぴよ 🎵</span>
+                            <span class="text-xs text-brand-darkPink font-bold tracking-wider">仙台メイドカフェ</span>
+                            <span class="font-bold text-lg">にゃんぽんたん ☕</span>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
-                </div>
-            </a>
+                </a>
+            </div>
 
-            <!-- YouTube -->
-            <a href="https://www.youtube.com/@%E5%9B%9B%E3%83%8E%E5%AE%AE%E3%81%B4%E3%82%88" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('YouTube')"
-               class="group btn-shine flex items-center justify-between p-4 bg-white border-2 border-red-50 text-gray-800 rounded-2xl shadow-lg hover:shadow-red-100 hover:border-red-100 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.4s;">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-red-600 text-white rounded-full flex items-center justify-center text-lg">
-                        <i class="fa-brands fa-youtube"></i>
-                    </div>
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-red-400 font-bold tracking-wider">YouTube Channel</span>
-                        <span class="font-bold text-lg">ライブ映像 & パフォーマンス 🎤</span>
-                    </div>
+            <!-- ===========================
+                 CATEGORY: Games
+            ============================ -->
+            <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.4s;">
+                <div class="text-center mb-1">
+                    <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">ゲーム</h3>
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                        ぴよがゲームになったよ♡
+                    </p>
                 </div>
-                <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
-            </a>
 
-            <!-- Maid Cafe -->
-            <a href="https://nyanpontan.com/" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('MaidCafe')"
-               class="group btn-shine flex items-center justify-between p-4 bg-white/80 border border-brand-pink/30 text-gray-800 rounded-2xl shadow-lg hover:shadow-pink-100 hover:bg-white hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.45s;">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-brand-pink text-white rounded-full flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-paw"></i>
+                <!-- GAME: 14番地 -->
+                <a href="https://shinomiyapiyo.github.io/games/14banchi/index.html" target="_blank" rel="noopener noreferrer"
+                   onclick="trackClick('Game_14Banchi')"
+                   class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-violet-800 to-indigo-900 text-white rounded-2xl shadow-lg hover:shadow-indigo-200 hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <img src="games/14banchi/icon-192.png" 
+                             alt="14番地 Icon" 
+                             class="w-10 h-10 rounded-full border-2 border-white/20 shadow-sm object-cover"
+                             onerror="this.src='https://placehold.co/192x192/4c1d95/white?text=14';">
+                        
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs text-indigo-200 font-bold tracking-wider">NEW BROWSER GAME</span>
+                            <span class="font-bold text-lg leading-none mb-1">14番地</span>
+                            <span class="text-[10px] text-white/80 font-medium bg-black/20 px-2 py-0.5 rounded-full w-fit">
+                                <i class="fa-solid fa-ghost mr-1"></i>新作ゲーム公開中
+                            </span>
+                        </div>
                     </div>
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-brand-darkPink font-bold tracking-wider">仙台メイドカフェ</span>
-                        <span class="font-bold text-lg">にゃんぽんたん ☕</span>
-                    </div>
-                </div>
-                <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
-            </a>
+                    <span class="bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full group-hover:bg-white group-hover:text-indigo-900 transition-colors shadow-sm">
+                        Play
+                    </span>
+                </a>
 
-            <!-- GAME: 14番地 (Absolute Path Fix) -->
-            <a href="https://shinomiyapiyo.github.io/games/14banchi/index.html" target="_blank" rel="noopener noreferrer"
-               onclick="trackClick('Game_14Banchi')"
-               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-violet-800 to-indigo-900 text-white rounded-2xl shadow-lg hover:shadow-indigo-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.47s;">
-                <div class="flex items-center gap-4">
-                    <img src="games/14banchi/icon-192.png" 
-                         alt="14番地 Icon" 
-                         class="w-10 h-10 rounded-full border-2 border-white/20 shadow-sm object-cover"
-                         onerror="this.src='https://placehold.co/192x192/4c1d95/white?text=14';">
-                    
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-indigo-200 font-bold tracking-wider">NEW BROWSER GAME</span>
-                        <span class="font-bold text-lg leading-none mb-1">14番地</span>
-                        <span class="text-[10px] text-white/80 font-medium bg-black/20 px-2 py-0.5 rounded-full w-fit">
-                            <i class="fa-solid fa-ghost mr-1"></i>新作ゲーム公開中
-                        </span>
+                <!-- GAME: Piyo Adventure -->
+                <a href="https://shinomiyapiyo.github.io/games/piyo-adventure/index.html" target="_blank" rel="noopener noreferrer"
+                   onclick="trackClick('Game_PiyoAdventure')"
+                   class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl shadow-lg hover:shadow-yellow-200 hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <img src="games/piyo-adventure/192x192.png" 
+                             alt="ぴよ氏の冒険 Icon" 
+                             class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
+                             onerror="this.src='https://placehold.co/192x192/facc15/white?text=Piyo';">
+                        
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs text-yellow-100 font-bold tracking-wider">BROWSER GAME</span>
+                            <span class="font-bold text-lg leading-none mb-1">ぴよ氏の冒険</span>
+                            <span class="text-[10px] text-white/90 font-medium bg-black/10 px-2 py-0.5 rounded-full w-fit">
+                                <i class="fa-solid fa-mobile-screen-button mr-1"></i>ホーム画面追加でアプリ化
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <span class="bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full group-hover:bg-white group-hover:text-indigo-900 transition-colors shadow-sm">
-                    Play
-                </span>
-            </a>
+                    <span class="bg-white text-orange-500 text-xs font-bold px-3 py-1 rounded-full group-hover:scale-105 transition-transform shadow-sm">
+                        Play!
+                    </span>
+                </a>
+            </div>
 
-            <!-- GAME: Piyo Adventure (Absolute Path Fix) -->
-            <a href="https://shinomiyapiyo.github.io/games/piyo-adventure/index.html" target="_blank" rel="noopener noreferrer"
-               onclick="trackClick('Game_PiyoAdventure')"
-               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl shadow-lg hover:shadow-yellow-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.49s;">
-                <div class="flex items-center gap-4">
-                    <img src="games/piyo-adventure/192x192.png" 
-                         alt="ぴよ氏の冒険 Icon" 
-                         class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
-                         onerror="this.src='https://placehold.co/192x192/facc15/white?text=Piyo';">
-                    
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-yellow-100 font-bold tracking-wider">BROWSER GAME</span>
-                        <span class="font-bold text-lg leading-none mb-1">ぴよ氏の冒険</span>
-                        <span class="text-[10px] text-white/90 font-medium bg-black/10 px-2 py-0.5 rounded-full w-fit">
-                            <i class="fa-solid fa-mobile-screen-button mr-1"></i>ホーム画面追加でアプリ化
-                        </span>
-                    </div>
+            <!-- ===========================
+                 CATEGORY: Shop (通販)
+            ============================ -->
+            <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.5s;">
+                <div class="text-center mb-1">
+                    <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">通販</h3>
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                        お迎えしてね♡
+                    </p>
                 </div>
-                <span class="bg-white text-orange-500 text-xs font-bold px-3 py-1 rounded-full group-hover:scale-105 transition-transform shadow-sm">
-                    Play!
-                </span>
-            </a>
 
-            <!-- BOOTH -->
-            <a href="https://booth.pm/ja/items/5859689" target="_blank" rel="noopener noreferrer" 
-               onclick="trackClick('BOOTH')"
-               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-brand-pink to-brand-darkPink text-white rounded-2xl shadow-lg hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.51s;">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg backdrop-blur-md">
-                        <i class="fa-solid fa-shop"></i>
+                <!-- BOOTH -->
+                <a href="https://booth.pm/ja/items/5859689" target="_blank" rel="noopener noreferrer" 
+                   onclick="trackClick('BOOTH')"
+                   class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-brand-pink to-brand-darkPink text-white rounded-2xl shadow-lg hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg backdrop-blur-md">
+                            <i class="fa-solid fa-shop"></i>
+                        </div>
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs text-white/80 font-bold tracking-wider">ONLINE SHOP</span>
+                            <span class="font-bold text-lg">通販チェキ & 限定グッズ 🎁</span>
+                        </div>
                     </div>
-                    <div class="flex flex-col text-left">
-                        <span class="text-xs text-white/80 font-bold tracking-wider">ONLINE SHOP</span>
-                        <span class="font-bold text-lg">通販チェキ & 限定グッズ 🎁</span>
-                    </div>
-                </div>
-                <span class="bg-white text-brand-darkPink text-xs font-bold px-3 py-1 rounded-full group-hover:scale-105 transition-transform">
-                    Check!
-                </span>
-            </a>
+                    <span class="bg-white text-brand-darkPink text-xs font-bold px-3 py-1 rounded-full group-hover:scale-105 transition-transform">
+                        Check!
+                    </span>
+                </a>
+            </div>
 
         </section>
 
