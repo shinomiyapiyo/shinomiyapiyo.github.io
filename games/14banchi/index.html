@@ -1119,7 +1119,7 @@ function uT(e){e.preventDefault();
     const rc=C.getBoundingClientRect();
     const ty=(e.touches[0].clientY-rc.top)*(H/rc.height);
     const dy=hintsTouchStartY-ty;
-    hintsScrollY+=dy*0.25;
+    hintsScrollY+=dy*0.1;
     hintsTotalDrag+=Math.abs(dy);
     hintsTouchStartY=ty;return;
   }
