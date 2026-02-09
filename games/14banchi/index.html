@@ -578,8 +578,6 @@ function dUI(){
   X.strokeStyle='#FFD700';X.lineWidth=1.5;X.strokeRect(W/2-58,4,116,26);
   X.fillStyle='#FFD700';X.font='bold 14px monospace';X.textAlign='center';
   X.fillText(gameMode==='normal'?`${cB} / 14 番地`:`${cB} 番地`,W/2,22);
-  X.globalAlpha=0.22;X.fillStyle='#88BBFF';X.font='10px sans-serif';X.textAlign='center';X.fillText('◀ 引き返す',W*0.2,H-5);
-  X.fillStyle='#FFD700';X.fillText('前進 ▶',W*0.7,H-5);X.globalAlpha=1;
   // Pause button (right of moon)
   const px=W*0.89,py=3,pw=34,ph=28;
   pauseBtn.x=px;pauseBtn.y=py;pauseBtn.w=pw;pauseBtn.h=ph;
@@ -686,7 +684,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.54',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.55',W/2,H*0.99);
 }
 
 // === CLEAR ===
