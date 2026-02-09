@@ -553,7 +553,11 @@ function dAnom(){
       const img=SPR[fr];if(img&&img.complete){
         const sw=img.naturalWidth*sprScale,sh=img.naturalHeight*sprScale;
         const bob2=Math.sin(fc*0.5)*1.5;
-        X.drawImage(img,rsx-sw/2,gy-sh+bob2+4,sw,sh);
+        X.save();
+        X.translate(rsx,0);
+        X.scale(-1,1);
+        X.drawImage(img,-sw/2,gy-sh+bob2+4,sw,sh);
+        X.restore();
       }
       // Warning text
       if(runnerX-pX<400&&runnerX-pX>0){
