@@ -282,14 +282,14 @@ function genA(){
 
 // === SCENERY ===
 function dSky(){
-  let c1='#040410',c2='#0A0A20';
+  let c1='#0A0A20',c2='#141430';
   if(hasA&&AN[aT]==='redSky'){c1=`rgb(${30+Math.sin(fc*0.04)*15|0},4,8)`;c2='#1A0508'}
   if(hasA&&AN[aT]==='missingStars'){
     const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
     // No stars at all - that's the anomaly
   }else{
     const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
-    for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;const br=0.2+Math.sin(fc*0.02+s.b*10)*0.25;X.fillStyle=`rgba(255,255,255,${br})`;X.fillRect(sx,s.y*H,s.s,s.s)}
+    for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;const br=0.35+Math.sin(fc*0.02+s.b*10)*0.3;X.fillStyle=`rgba(255,255,255,${br})`;X.fillRect(sx,s.y*H,s.s,s.s)}
   }
   if(hasA&&AN[aT]==='giantMoon'){
     const mx=W*0.8,my=H*0.12,mr=48+Math.sin(fc*0.015)*5;
@@ -325,10 +325,10 @@ function dSky(){
 function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;for(let i=-1;i<(W/80)+2;i++){const bx=ox+i*80+((sd+i*73)%20),bw=40+((sd+i*47)%30),bh=bH+((sd+i*59)%40),by=H*GH-bh;X.fillStyle=col;X.fillRect(bx,by,bw,bh+2);if((sd+i)%3===0){X.beginPath();X.moveTo(bx,by);X.lineTo(bx+bw/2,by-12);X.lineTo(bx+bw,by);X.fill()}for(let wy=0;wy<Math.floor(bh/22);wy++)for(let wx=0;wx<Math.floor(bw/15);wx++){X.fillStyle=((sd+i+wx+wy)%5)>2?wc:'#080808';X.fillRect(bx+6+wx*14,by+8+wy*20,5,7)}}}
 
 function dGnd(){
-  const gy=H*GH;let c1='#111118',c2='#0A0A0E';
+  const gy=H*GH;let c1='#1A1A24',c2='#121218';
   if(hasA&&AN[aT]==='weirdGround'){c1='#181010';c2='#120808'}
   if(hasA&&AN[aT]==='blueGround'){c1='#0C1020';c2='#081018'}
-  const g=X.createLinearGradient(0,gy,0,H);g.addColorStop(0,c1);g.addColorStop(0.1,'#0E0E14');g.addColorStop(1,c2);
+  const g=X.createLinearGradient(0,gy,0,H);g.addColorStop(0,c1);g.addColorStop(0.1,'#16161E');g.addColorStop(1,c2);
   X.fillStyle=g;X.fillRect(0,gy,W,H-gy);
   const dashSp=80;const dashLen=(hasA&&AN[aT]==='wideDash')?55:30;
   X.fillStyle='rgba(60,60,40,0.25)';const mo=-(camX%dashSp+dashSp)%dashSp;
@@ -370,7 +370,7 @@ function dLmp(){
   const fl=hasA&&AN[aT]==='flickerLamp';
   const lampH=isTall?115:90;
   // Light color: normal=warm yellow, whiteLamp=cool white, orangeLamp=deeper orange
-  let lCol='rgba(255,200,100,0.35)',bCol='#FFD070';
+  let lCol='rgba(255,200,100,0.5)',bCol='#FFD880';
   if(hasA&&AN[aT]==='whiteLamp'){lCol='rgba(220,225,255,0.4)';bCol='#DDE0FF'}
   if(hasA&&AN[aT]==='orangeLamp'){lCol='rgba(255,160,40,0.4)';bCol='#FFA028'}
   for(let i=-1;i<(W/sp)+2;i++){
@@ -610,7 +610,7 @@ const pauseBtns=[];
 function dPause(){
   // Dark overlay on game scene
   X.save();X.translate(skX,skY);
-  dSky();dBld(0,0.12,H*0.22,'#060608','#18150A');dBld(1,0.3,H*0.17,'#0A0A10','#1A1708');
+  dSky();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
@@ -686,7 +686,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.52',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.53',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -1019,7 +1019,7 @@ function render(){
   if(gs==='gameover'){dGameOver();return}
   if(gs==='paused'){dPause();return}
   X.save();X.translate(skX,skY);
-  dSky();dBld(0,0.12,H*0.22,'#060608','#18150A');dBld(1,0.3,H*0.17,'#0A0A10','#1A1708');
+  dSky();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
