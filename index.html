@@ -29,12 +29,6 @@
       }
     </script>
 
-    <!-- ==========================================
-         Google Search Console (GSC) : Verification
-         NOTE: GA4連携で自動認証されるため、タグは不要の可能性大。
-         認証失敗時のみメタタグを追記。
-    ========================================== -->
-
     <!-- SEO Meta Tags -->
     <title>四ノ宮ぴよ Official | 仙台 144cmにゃんこひよこメイド</title>
     <meta name="description" content="仙台のメイドカフェ「にゃんぽんたん」でお給仕中。144cmにゃんこひよこメイド、四ノ宮ぴよ（ぴよちゃん）の公式ポータルサイト。SNSリンク(X/Insta/TikTok)、YouTube、ライブ情報、通販チェキ等の最新情報を集約。">
@@ -107,11 +101,12 @@
                             darkPink: '#FF8FAB',
                             yellow: '#FFEA70',
                             text: '#4A4A4A',
-                        }
+                        },
                     },
                     animation: {
                         'float': 'float 6s ease-in-out infinite',
                         'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
                         float: {
@@ -137,11 +132,11 @@
             overflow-x: hidden;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 32px 0 rgba(255, 183, 197, 0.37);
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(255, 183, 197, 0.2);
         }
         .btn-shine { position: relative; overflow: hidden; }
         .btn-shine::after {
@@ -150,14 +145,13 @@
         }
         .btn-shine:hover::after { left: 100%; }
         .hero-image-mask {
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
         }
         .insta-gradient {
             background: -webkit-linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        /* セクションヘッダー用のかわいい装飾 */
         .section-title {
             position: relative;
             display: inline-block;
@@ -168,9 +162,10 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
+            opacity: 0.8;
         }
-        .section-title::before { left: -1.5em; }
-        .section-title::after { right: -1.5em; }
+        .section-title::before { left: -1.4em; }
+        .section-title::after { right: -1.4em; }
     </style>
 </head>
 <body class="text-brand-text antialiased selection:bg-brand-pink selection:text-white">
@@ -208,11 +203,13 @@
             <!-- Profile -->
             <div class="text-center animate-fade-in-up" style="animation-delay: 0.1s;">
                 <h2 class="sr-only">Profile</h2>
-                <p class="text-sm leading-relaxed opacity-80 bg-white/50 inline-block px-4 py-3 rounded-2xl backdrop-blur-sm border border-white/40 shadow-sm">
-                    144cmひよこのぴよちゃんです🐥<br>
-                    仙台でメイドさんしたり🎀<br>
-                    東京でライブしたりしてます🎤
-                </p>
+                <div class="glass-card inline-block px-5 py-3 rounded-2xl">
+                    <p class="text-sm leading-relaxed text-gray-700">
+                        144cmひよこのぴよちゃんです🐥<br>
+                        仙台でメイドさんしたり🎀<br>
+                        東京でライブしたりしてます🎤
+                    </p>
+                </div>
             </div>
 
             <!-- ===========================
@@ -221,7 +218,7 @@
             <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.15s;">
                 <div class="text-center mb-1">
                     <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">LIVE STREAMING</h3>
-                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse-slow">
                         遊びに来てね♡
                     </p>
                 </div>
@@ -247,7 +244,7 @@
             <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.2s;">
                 <div class="text-center mb-1">
                     <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">SNS</h3>
-                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse-slow">
                         フォローしてね♡
                     </p>
                 </div>
@@ -330,7 +327,7 @@
             <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.3s;">
                 <div class="text-center mb-1">
                     <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">メイドカフェ</h3>
-                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse-slow">
                         ぴよに会える♡
                     </p>
                 </div>
@@ -358,9 +355,23 @@
             <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.4s;">
                 <div class="text-center mb-1">
                     <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">ゲーム</h3>
-                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse-slow">
                         ぴよがゲームになったよ♡
                     </p>
+                    
+                    <!-- PWA Advice Note (Enhanced UI) -->
+                    <div class="mt-3 mx-4 p-3 bg-white/60 rounded-xl border border-brand-pink/30 shadow-sm backdrop-blur-sm flex gap-3 text-left">
+                        <div class="shrink-0 w-8 h-8 bg-brand-pink/20 rounded-full flex items-center justify-center text-brand-darkPink">
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">全画面で遊ぶコツ✨</p>
+                            <p class="text-[10px] text-gray-500 leading-tight mt-0.5">
+                                そのままだと画面が切れちゃうかも…💦<br>
+                                <span class="text-brand-darkPink font-bold">「ホーム画面に追加」</span>してアプリ化してね📱
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- GAME: 14番地 -->
@@ -374,7 +385,7 @@
                              onerror="this.src='https://placehold.co/192x192/4c1d95/white?text=14';">
                         
                         <div class="flex flex-col text-left">
-                            <span class="text-xs text-indigo-200 font-bold tracking-wider">NEW BROWSER GAME</span>
+                            <span class="text-xs text-indigo-200 font-bold tracking-wider">NEW SMARTPHONE GAME</span>
                             <span class="font-bold text-lg leading-none mb-1">14番地</span>
                             <span class="text-[10px] text-white/80 font-medium bg-black/20 px-2 py-0.5 rounded-full w-fit">
                                 <i class="fa-solid fa-ghost mr-1"></i>新作ゲーム公開中
@@ -397,7 +408,7 @@
                              onerror="this.src='https://placehold.co/192x192/facc15/white?text=Piyo';">
                         
                         <div class="flex flex-col text-left">
-                            <span class="text-xs text-yellow-100 font-bold tracking-wider">BROWSER GAME</span>
+                            <span class="text-xs text-yellow-100 font-bold tracking-wider">SMARTPHONE GAME</span>
                             <span class="font-bold text-lg leading-none mb-1">ぴよ氏の冒険</span>
                             <span class="text-[10px] text-white/90 font-medium bg-black/10 px-2 py-0.5 rounded-full w-fit">
                                 <i class="fa-solid fa-mobile-screen-button mr-1"></i>ホーム画面追加でアプリ化
@@ -416,7 +427,7 @@
             <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.5s;">
                 <div class="text-center mb-1">
                     <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">通販</h3>
-                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse">
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse-slow">
                         お迎えしてね♡
                     </p>
                 </div>
@@ -440,12 +451,46 @@
                 </a>
             </div>
 
+             <!-- ===========================
+                 CATEGORY: Movie (YouTube)
+            ============================ -->
+            <div class="flex flex-col gap-4 animate-fade-in-up" style="animation-delay: 0.55s;">
+                <div class="text-center mb-1">
+                    <h3 class="section-title text-brand-darkPink font-bold text-lg tracking-widest">MOVIE</h3>
+                    <p class="text-xs text-brand-darkPink mt-1 font-bold animate-pulse-slow">
+                        歌ってみた & ライブ映像 🎤
+                    </p>
+                </div>
+
+                <!-- YouTube Embed -->
+                <div class="glass-card rounded-2xl p-2 shadow-lg">
+                    <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                        <!-- 
+                            ================================================
+                            [IMPLEMENTATION NOTE]
+                            Video ID: IatNnVjM3N4
+                            (Extracted from: https://youtu.be/IatNnVjM3N4?si=T7qz0dP5DrJVKLUW)
+                            ================================================
+                        -->
+                        <iframe 
+                            class="absolute top-0 left-0 w-full h-full"
+                            src="https://www.youtube.com/embed/IatNnVjM3N4" 
+                            title="YouTube video player" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <!-- Footer -->
         <footer class="mt-12 text-center text-xs text-gray-400 pb-8 animate-fade-in-up" style="animation-delay: 0.65s;">
             <div class="mb-2">
-                <i class="fa-solid fa-heart text-brand-darkPink animate-pulse"></i>
+                <i class="fa-solid fa-heart text-brand-darkPink animate-pulse-slow"></i>
             </div>
             <p>&copy; 2026 Shinomiya Piyo. All Rights Reserved.</p>
         </footer>
