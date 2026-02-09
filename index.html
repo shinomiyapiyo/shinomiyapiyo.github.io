@@ -32,7 +32,7 @@
     <!-- ==========================================
          Google Search Console (GSC) : Verification
          NOTE: GA4連携で自動認証されるため、タグは不要の可能性大。
-         認証失敗時のみメタタグを追記してください。
+         認証失敗時のみメタタグを追記。
     ========================================== -->
 
     <!-- SEO Meta Tags -->
@@ -304,14 +304,38 @@
                 <i class="fa-solid fa-chevron-right opacity-30 group-hover:translate-x-1 transition-transform"></i>
             </a>
 
-            <!-- GAME -->
-            <a href="games/piyo-adventure/index.html" target="_blank" rel="noopener noreferrer"
+            <!-- GAME: 14番地 (Absolute Path Fix) -->
+            <a href="https://shinomiyapiyo.github.io/games/14banchi/index.html" target="_blank" rel="noopener noreferrer"
+               onclick="trackClick('Game_14Banchi')"
+               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-violet-800 to-indigo-900 text-white rounded-2xl shadow-lg hover:shadow-indigo-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.47s;">
+                <div class="flex items-center gap-4">
+                    <img src="games/14banchi/icon-192.png" 
+                         alt="14番地 Icon" 
+                         class="w-10 h-10 rounded-full border-2 border-white/20 shadow-sm object-cover"
+                         onerror="this.src='https://placehold.co/192x192/4c1d95/white?text=14';">
+                    
+                    <div class="flex flex-col text-left">
+                        <span class="text-xs text-indigo-200 font-bold tracking-wider">NEW BROWSER GAME</span>
+                        <span class="font-bold text-lg leading-none mb-1">14番地</span>
+                        <span class="text-[10px] text-white/80 font-medium bg-black/20 px-2 py-0.5 rounded-full w-fit">
+                            <i class="fa-solid fa-ghost mr-1"></i>新作ゲーム公開中
+                        </span>
+                    </div>
+                </div>
+                <span class="bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full group-hover:bg-white group-hover:text-indigo-900 transition-colors shadow-sm">
+                    Play
+                </span>
+            </a>
+
+            <!-- GAME: Piyo Adventure (Absolute Path Fix) -->
+            <a href="https://shinomiyapiyo.github.io/games/piyo-adventure/index.html" target="_blank" rel="noopener noreferrer"
                onclick="trackClick('Game_PiyoAdventure')"
-               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl shadow-lg hover:shadow-yellow-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.48s;">
+               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl shadow-lg hover:shadow-yellow-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.49s;">
                 <div class="flex items-center gap-4">
                     <img src="games/piyo-adventure/192x192.png" 
                          alt="ぴよ氏の冒険 Icon" 
-                         class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover">
+                         class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
+                         onerror="this.src='https://placehold.co/192x192/facc15/white?text=Piyo';">
                     
                     <div class="flex flex-col text-left">
                         <span class="text-xs text-yellow-100 font-bold tracking-wider">BROWSER GAME</span>
@@ -329,7 +353,7 @@
             <!-- BOOTH -->
             <a href="https://booth.pm/ja/items/5859689" target="_blank" rel="noopener noreferrer" 
                onclick="trackClick('BOOTH')"
-               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-brand-pink to-brand-darkPink text-white rounded-2xl shadow-lg hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.5s;">
+               class="group btn-shine flex items-center justify-between p-4 bg-gradient-to-r from-brand-pink to-brand-darkPink text-white rounded-2xl shadow-lg hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300 animate-fade-in-up" style="animation-delay: 0.51s;">
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg backdrop-blur-md">
                         <i class="fa-solid fa-shop"></i>
