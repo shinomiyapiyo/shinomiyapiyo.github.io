@@ -8,7 +8,7 @@
     
     <!-- ==========================================
          Google Analytics 4 (GA4) : Advanced Implementation
-         ID: G-2E28JBNJVF
+         Measurement ID: G-2E28JBNJVF (Verified)
     ========================================== -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2E28JBNJVF"></script>
     <script>
@@ -16,7 +16,7 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       
-      // コンフィグ設定
+      // コンフィグ設定 (ID確定)
       gtag('config', 'G-2E28JBNJVF');
 
       // 汎用クリック計測関数 (Rを下げるための共通化)
@@ -29,6 +29,12 @@
       }
     </script>
 
+    <!-- ==========================================
+         Google Search Console (GSC) : Verification
+         NOTE: GA4連携で自動認証されるため、タグは不要の可能性大。
+         認証失敗時のみメタタグを追記してください。
+    ========================================== -->
+
     <!-- SEO Meta Tags -->
     <title>四ノ宮ぴよ Official | 仙台 144cmにゃんこひよこメイド</title>
     <meta name="description" content="仙台のメイドカフェ「にゃんぽんたん」でお給仕中。144cmにゃんこひよこメイド、四ノ宮ぴよ（ぴよちゃん）の公式ポータルサイト。SNSリンク(X/Insta/TikTok)、YouTube、ライブ情報、通販チェキ等の最新情報を集約。">
@@ -37,10 +43,9 @@
     <!-- Open Graph Protocol -->
     <meta property="og:site_name" content="四ノ宮ぴよ Official">
     <meta property="og:title" content="四ノ宮ぴよ Official | 144cmにゃんこひよこメイド">
-    <meta property="og:description" content="144cmひよこのぴよちゃんです🐥 仙台でメイドさんしたり🎀、東京でライブしたりしてます🎤 SNS・通販リンクまとめ">
+    <meta property="og:description" content="144cmひよこのぴよちゃんです🐥 仙台でメイドさんしたり🎀 東京でライブしたりしてます🎤 SNS・通販リンクまとめ">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://shinomiyapiyo.github.io/">
-    <!-- Updated: piyo01.jpg (Optimized) -->
     <meta property="og:image" content="https://shinomiyapiyo.github.io/piyo01.jpg">
     <meta property="og:locale" content="ja_JP">
 
@@ -50,12 +55,10 @@
     <meta name="twitter:creator" content="@piyopiyoo_nyan">
     <meta name="twitter:title" content="四ノ宮ぴよ Official">
     <meta name="twitter:description" content="仙台メイドカフェにゃんぽんたん所属。144cmにゃんこひよこメイド。">
-    <!-- Updated: piyo01.jpg (Optimized) -->
     <meta name="twitter:image" content="https://shinomiyapiyo.github.io/piyo01.jpg">
     
     <!-- Favicon & PWA Strategy -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐥</text></svg>">
-    <!-- Note: Ensure 'apple-touch-icon.png' exists in root if needed for portal icon -->
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="./apple-touch-icon.png">
 
@@ -63,7 +66,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
-    <!-- Note: Performance R is high due to CDN. Consider Build Step for Production. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -171,7 +173,6 @@
         
         <!-- Hero Section -->
         <section class="relative h-[60vh] w-full flex items-end justify-center overflow-hidden">
-            <!-- Updated: piyo01.jpg (Optimized) -->
             <img src="./piyo01.jpg" 
                  alt="四ノ宮ぴよ" 
                  class="absolute bottom-0 w-auto h-[105%] object-cover object-center z-10 hero-image-mask drop-shadow-2xl transition-transform hover:scale-105 duration-700"
@@ -350,7 +351,7 @@
             <div class="mb-2">
                 <i class="fa-solid fa-heart text-brand-darkPink animate-pulse"></i>
             </div>
-            <p>&copy; 2026 Shinomiya Piyo. All Rights Reserved.</p>
+            <p>&copy; 2026 Shinomiyapiyo. All Rights Reserved.</p>
         </footer>
 
     </main>
