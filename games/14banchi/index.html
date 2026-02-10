@@ -152,9 +152,10 @@ async function loadAllSE(){
     seBufs['miss']=await ac.decodeAudioData(missArr);
     seBufs['quake']=await ac.decodeAudioData(quakeArr);
     // Synthesize foghorn SE (eerie low horn)
-    const fLen=2.0,fFrames=fLen*qRate;
-    const fBuf=ac.createBuffer(1,fFrames,qRate);const fD=fBuf.getChannelData(0);
-    for(let i=0;i<fFrames;i++){const t=i/qRate;const env=Math.min(t*2,1)*Math.max(0,1-t/fLen);fD[i]=env*(Math.sin(t*55*Math.PI*2)*0.3+Math.sin(t*82.5*Math.PI*2)*0.15+Math.sin(t*110*Math.PI*2)*0.1)*0.8}
+    const fRate=ac.sampleRate;
+    const fLen=2.0,fFrames=fLen*fRate;
+    const fBuf=ac.createBuffer(1,fFrames,fRate);const fD=fBuf.getChannelData(0);
+    for(let i=0;i<fFrames;i++){const t=i/fRate;const env=Math.min(t*2,1)*Math.max(0,1-t/fLen);fD[i]=env*(Math.sin(t*55*Math.PI*2)*0.3+Math.sin(t*82.5*Math.PI*2)*0.15+Math.sin(t*110*Math.PI*2)*0.1)*0.8}
     seBufs['foghorn']=fBuf;
     seLoaded=true;
   }catch(e){seLoaded=false}
