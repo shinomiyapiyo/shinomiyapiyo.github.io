@@ -788,7 +788,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.73',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.72',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -907,9 +907,10 @@ function dHints(){
   X.strokeStyle='#66AACC';X.lineWidth=1;
   X.beginPath();X.moveTo(W*0.15,H*0.13);X.lineTo(W*0.85,H*0.13);X.stroke();
   X.fillStyle='rgba(150,180,200,0.6)';X.font='10px sans-serif';X.textAlign='center';
-  X.fillText('※ 死亡マークの異変は近づくと即死します',W/2,H*0.17);
+  X.fillText('※ 死亡マークの異変は近づくと即死します',W/2,H*0.16);
+  X.fillText('💡 画面の明るさを上げると異変を発見しやすくなります',W/2,H*0.19);
   // Scrollable list area
-  const listTop=H*0.20,listBot=H*0.88;
+  const listTop=H*0.22,listBot=H*0.88;
   const listH=listBot-listTop;
   const rowH=42;
   const totalH=HINTS_DATA.length*rowH;
