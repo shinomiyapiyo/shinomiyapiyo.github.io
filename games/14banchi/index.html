@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -15,8 +15,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
-canvas{display:block;position:absolute;top:0;left:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;
+--sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 #rb{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px;color:#FFD700;font-family:sans-serif;text-align:center}
 #rb .ic{font-size:60px;animation:ra 2s ease-in-out infinite}
 #rb .mg{font-size:18px;font-weight:bold}
@@ -32,7 +33,16 @@ canvas{display:block;position:absolute;top:0;left:0}
 'use strict';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H;
-function resize(){W=window.innerWidth;H=window.innerHeight;C.width=W;C.height=H}
+function resize(){
+  const s=getComputedStyle(document.documentElement);
+  const sal=parseFloat(s.getPropertyValue('--sal'))||0;
+  const sar=parseFloat(s.getPropertyValue('--sar'))||0;
+  const sat=parseFloat(s.getPropertyValue('--sat'))||0;
+  const sab=parseFloat(s.getPropertyValue('--sab'))||0;
+  W=window.innerWidth-sal-sar;
+  H=window.innerHeight-sat-sab;
+  C.width=W;C.height=H;
+}
 resize();window.addEventListener('resize',resize);
 
 const titleImg=new Image();titleImg.src='piyo01.png';let imgOk=false;titleImg.onload=()=>{imgOk=true};
@@ -767,7 +777,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.71',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.72',W/2,H*0.99);
 }
 
 // === CLEAR ===
