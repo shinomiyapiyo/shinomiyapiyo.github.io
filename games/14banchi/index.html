@@ -314,7 +314,7 @@ function dSky(){
   }
   // redStar anomaly - a few faint red stars
   if(hasA&&AN[aT]==='redStar'){
-    const rStars=[[W*0.15,H*0.08],[W*0.45,H*0.05],[W*0.7,H*0.14]];
+    const rStars=[[W*0.15,H*0.08],[W*0.45,H*0.05],[W*0.7,H*0.14],[W*0.3,H*0.18],[W*0.55,H*0.12],[W*0.82,H*0.06]];
     for(const rs of rStars){
       const br=0.25+Math.sin(fc*0.03+rs[0])*0.1;
       X.fillStyle=`rgba(255,60,60,${br})`;X.beginPath();X.arc(rs[0],rs[1],1.2,0,Math.PI*2);X.fill();
@@ -337,7 +337,7 @@ function dGnd(){
   // pebbles anomaly - small stones on road
   if(hasA&&AN[aT]==='pebbles'){
     const sd2=cB*333;
-    X.fillStyle='rgba(120,110,95,0.7)';
+    X.fillStyle='rgba(75,68,58,0.7)';
     for(let i=0;i<12;i++){
       const px2=((sd2+i*271)%BW)+bsX-camX;
       if(px2<-10||px2>W+10)continue;
@@ -388,7 +388,13 @@ function dSign(){
   X.fillStyle='#1A1A22';X.fillRect(sx,gy-48,2,50);
   X.fillStyle='#222230';X.fillRect(sx-18,gy-56,38,18);
   X.strokeStyle='#444';X.lineWidth=1;X.strokeRect(sx-18,gy-56,38,18);
-  X.fillStyle='#DDD';X.font='bold 9px monospace';X.textAlign='center';X.fillText(`${cB}番地`,sx+1,gy-44);
+  if(hasA&&AN[aT]==='invertSign'){
+    X.save();X.translate(sx+1,gy-47);X.scale(1,-1);
+    X.fillStyle='#DDD';X.font='bold 9px monospace';X.textAlign='center';X.fillText(`${cB}番地`,0,0);
+    X.restore();
+  }else{
+    X.fillStyle='#DDD';X.font='bold 9px monospace';X.textAlign='center';X.fillText(`${cB}番地`,sx+1,gy-44);
+  }
   // Anomaly: doubleSign
   if(hasA&&AN[aT]==='doubleSign'){
     const sx2=bsX+BW*0.4-camX;
@@ -448,9 +454,6 @@ function dAnom(){
       }
     }
   }
-
-  // invertSign
-  if(a==='invertSign'){const sx=bsX+BW*0.55-camX;X.fillStyle='#333';X.fillRect(sx,gy-58,3,60);X.fillStyle='#444';X.fillRect(sx-16,gy-67,36,18);X.save();X.translate(sx+2,gy-58);X.scale(1,-1);X.fillStyle='#DDD';X.font='bold 8px monospace';X.textAlign='center';X.fillText(`${cB}番地`,0,0);X.restore()}
 
   // bloodDrip
   if(a==='bloodDrip'){for(let i=0;i<12;i++){const dx=((sd+i*171)%BW)+bsX-camX;if(dx<-10||dx>W+10)continue;const dl=18+((sd+i*91)%40),al=0.3+Math.sin(fc*0.02+i)*0.15;X.fillStyle=`rgba(150,0,0,${al})`;X.fillRect(dx,0,2,dl);X.beginPath();X.arc(dx+1,dl,2,0,Math.PI*2);X.fill()}}
@@ -697,7 +700,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.63',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.64',W/2,H*0.99);
 }
 
 // === CLEAR ===
