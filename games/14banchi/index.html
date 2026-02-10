@@ -499,20 +499,34 @@ function dAnom(){
 
   // tokyoTower - red Tokyo Tower silhouette far in background (small, distant)
   if(a==='tokyoTower'){
-    const tx=bsX+BW*0.5-camX*0.15;
-    const tScale=0.7;
-    X.fillStyle='rgba(180,40,40,0.5)';
-    const tBase=gy,tTop=tBase-180*tScale;
-    X.beginPath();X.moveTo(tx,tTop);X.lineTo(tx-18*tScale,tBase);X.lineTo(tx+18*tScale,tBase);X.closePath();X.fill();
-    X.fillStyle='rgba(200,50,50,0.4)';
-    X.fillRect(tx-12*tScale,tBase-90*tScale,24*tScale,4);
-    X.fillRect(tx-8*tScale,tBase-65*tScale,16*tScale,3);
-    X.fillRect(tx-0.5,tTop-20*tScale,2,20*tScale);
+    const tx=W*0.5;
+    const tBase=gy-10;
+    const tH=H*0.55;
+    const tTop=tBase-tH;
+    const tW=tH*0.12;
+    // Tower body
+    X.fillStyle='rgba(180,50,40,0.6)';
+    X.beginPath();X.moveTo(tx,tTop);X.lineTo(tx-tW,tBase);X.lineTo(tx+tW,tBase);X.closePath();X.fill();
+    // Horizontal stripes
+    X.fillStyle='rgba(220,220,220,0.25)';
+    for(let i=1;i<=6;i++){
+      const sy=tTop+tH*(i/7);
+      const sw=tW*(1-i/8)*0.5;
+      X.fillRect(tx-sw,sy,sw*2,2);
+    }
+    // Observation decks
+    X.fillStyle='rgba(200,60,50,0.5)';
+    X.fillRect(tx-tW*0.7,tBase-tH*0.5,tW*1.4,4);
+    X.fillRect(tx-tW*0.5,tBase-tH*0.35,tW*1.0,3);
+    // Antenna
+    X.fillStyle='rgba(200,60,50,0.5)';
+    X.fillRect(tx-1,tTop-tH*0.15,2,tH*0.15);
+    // Blinking red light
     if(Math.sin(fc*0.1)>0){
-      X.fillStyle='rgba(255,0,0,0.8)';X.beginPath();X.arc(tx,tTop-20*tScale,2.5,0,Math.PI*2);X.fill();
-      const lg=X.createRadialGradient(tx,tTop-20*tScale,0,tx,tTop-20*tScale,12);
-      lg.addColorStop(0,'rgba(255,0,0,0.3)');lg.addColorStop(1,'transparent');
-      X.fillStyle=lg;X.beginPath();X.arc(tx,tTop-20*tScale,12,0,Math.PI*2);X.fill();
+      X.fillStyle='rgba(255,0,0,0.9)';X.beginPath();X.arc(tx,tTop-tH*0.15,3,0,Math.PI*2);X.fill();
+      const lg=X.createRadialGradient(tx,tTop-tH*0.15,0,tx,tTop-tH*0.15,20);
+      lg.addColorStop(0,'rgba(255,0,0,0.4)');lg.addColorStop(1,'transparent');
+      X.fillStyle=lg;X.beginPath();X.arc(tx,tTop-tH*0.15,20,0,Math.PI*2);X.fill();
     }
   }
 
@@ -582,12 +596,12 @@ function dUI(){
   X.fillStyle='#FFD700';X.font='bold 14px monospace';X.textAlign='center';
   X.fillText(gameMode==='normal'?`${cB} / 14 番地`:`${cB} 番地`,W/2,22);
   // Pause button (right of moon)
-  const px=W*0.89,py=3,pw=34,ph=28;
+  const px=W*0.86,py=0,pw=50,ph=42;
   pauseBtn.x=px;pauseBtn.y=py;pauseBtn.w=pw;pauseBtn.h=ph;
   X.fillStyle='rgba(0,0,0,0.55)';X.fillRect(px,py,pw,ph);
   X.strokeStyle='rgba(255,255,255,0.4)';X.lineWidth=1;X.strokeRect(px,py,pw,ph);
   X.fillStyle='rgba(255,255,255,0.7)';
-  X.fillRect(px+9,py+6,5,16);X.fillRect(px+19,py+6,5,16);
+  X.fillRect(px+14,py+8,6,22);X.fillRect(px+28,py+8,6,22);
   if(mTm>0){const al=Math.min(1,mTm/20),mw=230,mh=mSb?46:32;X.fillStyle=`rgba(0,0,0,${al*0.8})`;X.fillRect(W/2-mw/2,H*0.12,mw,mh);X.strokeStyle=`rgba(255,215,0,${al*0.5})`;X.lineWidth=1;X.strokeRect(W/2-mw/2,H*0.12,mw,mh);X.fillStyle=`rgba(255,255,255,${al})`;X.font='bold 14px sans-serif';X.textAlign='center';X.fillText(mTx,W/2,H*0.12+20);if(mSb){X.fillStyle=`rgba(200,200,200,${al*0.8})`;X.font='11px sans-serif';X.fillText(mSb,W/2,H*0.12+36)}}
   // Block 1 tutorial hints
   if(cB===1&&tTm===0){
@@ -700,7 +714,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.64',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.65',W/2,H*0.99);
 }
 
 // === CLEAR ===
