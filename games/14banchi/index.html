@@ -184,6 +184,8 @@ function stopBgm(){if(curBgm){curBgm.pause();curBgm.currentTime=0;curBgm=null}}
 // === SE PLAYBACK ===
 const seGoSrc='go';const seMissSrc='miss';
 const seVols={'go':0.3,'miss':0.7,'quake':0.10,'foghorn':0.3};
+// Track active quake SE source so it can be stopped on block transition
+let quakeSrc=null;
 function playSe(id){
   const ac=ensureACtx();if(!ac)return;
   if(!seLoaded){loadAllSE();return}
@@ -196,10 +198,18 @@ function playSe(id){
       gain.gain.value=seVols[id]||0.3;
       src.connect(gain);gain.connect(ac.destination);
       src.start(0);
+      if(id==='quake'){
+        if(quakeSrc){try{quakeSrc.stop()}catch(e){}}
+        quakeSrc=src;
+        src.onended=()=>{if(quakeSrc===src)quakeSrc=null};
+      }
     }catch(e){}
   }
   if(ac.state==='running'){doPlay()}
   else{try{ac.resume().then(()=>doPlay()).catch(()=>{})}catch(e){doPlay()}}
+}
+function stopQuakeSe(){
+  if(quakeSrc){try{quakeSrc.stop()}catch(e){}quakeSrc=null}
 }
 
 let gs='tap',cB=1,camX=0,pX=100,pDir=1,pMov=false,pFr=0,pAT=0,fc=0;
@@ -778,7 +788,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.72',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.73',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -972,7 +982,7 @@ function hitNameOkBtn(cx,cy){
 
 // === GAME LOGIC ===
 const BACK_X=-750;// back gate position relative to bsX
-function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;efStart=null}
+function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;efStart=null;stopQuakeSe()}
 function sM(t,s){mTx=t;mSb=s||'';mTm=90}
 function update(){
   fc++;if(gs==='dying'){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
