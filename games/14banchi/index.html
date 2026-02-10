@@ -327,7 +327,7 @@ function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;f
 function dGnd(){
   const gy=H*GH;let c1='#1A1A24',c2='#121218';
   if(hasA&&AN[aT]==='weirdGround'){c1='#181010';c2='#120808'}
-  if(hasA&&AN[aT]==='blueGround'){c1='#0C1020';c2='#081018'}
+  if(hasA&&AN[aT]==='blueGround'){c1='#080C1E';c2='#060818'}
   const g=X.createLinearGradient(0,gy,0,H);g.addColorStop(0,c1);g.addColorStop(0.1,'#16161E');g.addColorStop(1,c2);
   X.fillStyle=g;X.fillRect(0,gy,W,H-gy);
   const dashSp=80;const dashLen=(hasA&&AN[aT]==='wideDash')?55:30;
@@ -426,6 +426,97 @@ function dBackGate(){
 function dGate(){const gy=H*GH,gx=bsX+BW-30-camX;X.fillStyle='#222';X.fillRect(gx-2,gy-68,5,70);X.fillRect(gx+42,gy-68,5,70);X.fillRect(gx-2,gy-70,49,6);X.fillStyle='#FFD700';X.font='bold 13px sans-serif';X.textAlign='center';X.fillText('▶',gx+22,gy-54);X.fillStyle='#AAA';X.font='8px monospace';X.fillText('NEXT',gx+22,gy-43)}
 
 // === ANOMALY RENDERING ===
+function dTkyTower(){
+  if(!(hasA&&AN[aT]==='tokyoTower'))return;
+  const gy=H*GH;
+  const tx=W*0.52;
+  const tBase=gy;
+  const tH=H*0.58;
+  const tTop=tBase-tH;
+  const tW=tH*0.11;
+  // Tower shadow/glow
+  const sg=X.createLinearGradient(tx-tW*2,0,tx+tW*2,0);
+  sg.addColorStop(0,'transparent');
+  sg.addColorStop(0.3,'rgba(120,20,15,0.06)');
+  sg.addColorStop(0.5,'rgba(120,20,15,0.1)');
+  sg.addColorStop(0.7,'rgba(120,20,15,0.06)');
+  sg.addColorStop(1,'transparent');
+  X.fillStyle=sg;X.fillRect(tx-tW*3,tTop,tW*6,tH);
+  // Main tower body - tapered shape
+  X.beginPath();
+  X.moveTo(tx-1,tTop);
+  X.lineTo(tx-tW*0.3,tBase-tH*0.7);
+  X.lineTo(tx-tW*0.55,tBase-tH*0.5);
+  X.lineTo(tx-tW*0.7,tBase-tH*0.35);
+  X.lineTo(tx-tW,tBase);
+  X.lineTo(tx+tW,tBase);
+  X.lineTo(tx+tW*0.7,tBase-tH*0.35);
+  X.lineTo(tx+tW*0.55,tBase-tH*0.5);
+  X.lineTo(tx+tW*0.3,tBase-tH*0.7);
+  X.lineTo(tx+1,tTop);
+  X.closePath();
+  const tg=X.createLinearGradient(tx-tW,0,tx+tW,0);
+  tg.addColorStop(0,'rgba(140,35,25,0.45)');
+  tg.addColorStop(0.3,'rgba(180,50,35,0.55)');
+  tg.addColorStop(0.5,'rgba(200,60,40,0.6)');
+  tg.addColorStop(0.7,'rgba(180,50,35,0.55)');
+  tg.addColorStop(1,'rgba(140,35,25,0.45)');
+  X.fillStyle=tg;X.fill();
+  // Red-white stripes
+  const stripeCount=7;
+  for(let i=0;i<stripeCount;i++){
+    const ratio=i/stripeCount;
+    const sy=tTop+tH*ratio;
+    const nextSy=tTop+tH*((i+1)/stripeCount);
+    const wAt=tW*(0.05+ratio*0.95);
+    const nwAt=tW*(0.05+((i+1)/stripeCount)*0.95);
+    if(i%2===0){
+      X.fillStyle='rgba(200,55,40,0.5)';
+    }else{
+      X.fillStyle='rgba(200,180,170,0.3)';
+    }
+    X.beginPath();
+    X.moveTo(tx-wAt,sy);X.lineTo(tx+wAt,sy);
+    X.lineTo(tx+nwAt,nextSy);X.lineTo(tx-nwAt,nextSy);
+    X.closePath();X.fill();
+  }
+  // Upper observation deck
+  const deckY1=tBase-tH*0.52;
+  const deckW1=tW*0.75;
+  X.fillStyle='rgba(160,50,40,0.55)';
+  X.fillRect(tx-deckW1,deckY1-2,deckW1*2,5);
+  X.fillStyle='rgba(100,30,25,0.4)';
+  X.fillRect(tx-deckW1*0.85,deckY1-6,deckW1*1.7,4);
+  // Lower observation deck
+  const deckY2=tBase-tH*0.35;
+  const deckW2=tW*0.9;
+  X.fillStyle='rgba(160,50,40,0.55)';
+  X.fillRect(tx-deckW2,deckY2-2,deckW2*2,6);
+  X.fillStyle='rgba(100,30,25,0.4)';
+  X.fillRect(tx-deckW2*0.85,deckY2-7,deckW2*1.7,5);
+  // Antenna
+  X.fillStyle='rgba(180,60,50,0.5)';
+  X.fillRect(tx-1,tTop-tH*0.12,2,tH*0.12);
+  // Blinking red light on top
+  if(Math.sin(fc*0.1)>0){
+    const ly=tTop-tH*0.12;
+    X.fillStyle='rgba(255,0,0,0.9)';X.beginPath();X.arc(tx,ly,3,0,Math.PI*2);X.fill();
+    const lg=X.createRadialGradient(tx,ly,0,tx,ly,25);
+    lg.addColorStop(0,'rgba(255,0,0,0.35)');lg.addColorStop(1,'transparent');
+    X.fillStyle=lg;X.beginPath();X.arc(tx,ly,25,0,Math.PI*2);X.fill();
+  }
+  // Small lights on observation decks
+  if(Math.sin(fc*0.15+1)>0.3){
+    X.fillStyle='rgba(255,100,50,0.6)';
+    X.beginPath();X.arc(tx-deckW1+3,deckY1-1,1.5,0,Math.PI*2);X.fill();
+    X.beginPath();X.arc(tx+deckW1-3,deckY1-1,1.5,0,Math.PI*2);X.fill();
+  }
+  if(Math.sin(fc*0.12+2)>0.3){
+    X.fillStyle='rgba(255,100,50,0.6)';
+    X.beginPath();X.arc(tx-deckW2+3,deckY2-1,1.5,0,Math.PI*2);X.fill();
+    X.beginPath();X.arc(tx+deckW2-3,deckY2-1,1.5,0,Math.PI*2);X.fill();
+  }
+}
 function dAnom(){
   const gy=H*GH,sd=cB*999;
   if(!hasA)return;
@@ -495,39 +586,6 @@ function dAnom(){
       skY=Math.cos(fc*3.1)*(intensity*0.7)+((Math.random()-0.5)*intensity*0.6);
     }else{skX=0;skY=0}
     if(qPhase===0)playSe('quake');
-  }
-
-  // tokyoTower - red Tokyo Tower silhouette far in background (small, distant)
-  if(a==='tokyoTower'){
-    const tx=W*0.5;
-    const tBase=gy-10;
-    const tH=H*0.55;
-    const tTop=tBase-tH;
-    const tW=tH*0.12;
-    // Tower body
-    X.fillStyle='rgba(180,50,40,0.6)';
-    X.beginPath();X.moveTo(tx,tTop);X.lineTo(tx-tW,tBase);X.lineTo(tx+tW,tBase);X.closePath();X.fill();
-    // Horizontal stripes
-    X.fillStyle='rgba(220,220,220,0.25)';
-    for(let i=1;i<=6;i++){
-      const sy=tTop+tH*(i/7);
-      const sw=tW*(1-i/8)*0.5;
-      X.fillRect(tx-sw,sy,sw*2,2);
-    }
-    // Observation decks
-    X.fillStyle='rgba(200,60,50,0.5)';
-    X.fillRect(tx-tW*0.7,tBase-tH*0.5,tW*1.4,4);
-    X.fillRect(tx-tW*0.5,tBase-tH*0.35,tW*1.0,3);
-    // Antenna
-    X.fillStyle='rgba(200,60,50,0.5)';
-    X.fillRect(tx-1,tTop-tH*0.15,2,tH*0.15);
-    // Blinking red light
-    if(Math.sin(fc*0.1)>0){
-      X.fillStyle='rgba(255,0,0,0.9)';X.beginPath();X.arc(tx,tTop-tH*0.15,3,0,Math.PI*2);X.fill();
-      const lg=X.createRadialGradient(tx,tTop-tH*0.15,0,tx,tTop-tH*0.15,20);
-      lg.addColorStop(0,'rgba(255,0,0,0.4)');lg.addColorStop(1,'transparent');
-      X.fillStyle=lg;X.beginPath();X.arc(tx,tTop-tH*0.15,20,0,Math.PI*2);X.fill();
-    }
   }
 
   // wrongMoon - subtle creepy modifications to the normal moon (drawn in dSky, so skip normal moon for this)
@@ -638,7 +696,7 @@ const pauseBtns=[];
 function dPause(){
   // Dark overlay on game scene
   X.save();X.translate(skX,skY);
-  dSky();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
+  dSky();dTkyTower();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
@@ -714,7 +772,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.67',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.68',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -1063,7 +1121,7 @@ function render(){
   if(gs==='gameover'){dGameOver();return}
   if(gs==='paused'){dPause();return}
   X.save();X.translate(skX,skY);
-  dSky();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
+  dSky();dTkyTower();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
