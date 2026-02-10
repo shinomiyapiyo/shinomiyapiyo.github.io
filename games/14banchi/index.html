@@ -697,7 +697,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.62',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.63',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -1133,7 +1133,7 @@ function hS(e){
       const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
       const cx2=(ts[0].clientX-rc.left)*(W/rc.width);
       const cy2=(ts[0].clientY-rc.top)*(H/rc.height);
-      if(cx2>W*0.3+50&&cx2<W*0.3+100&&cy2>H*0.50+5&&cy2<H*0.50+27){handleNameOK();return}
+      if(cx2>W*0.3+50&&cx2<W*0.3+100&&cy2>H*0.18+5&&cy2<H*0.18+27){handleNameOK();return}
       openNameInput();
       return;
     }
