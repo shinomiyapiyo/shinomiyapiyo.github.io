@@ -135,19 +135,12 @@ async function loadAllSE(){
   if(seLoaded)return;
   const ac=ensureACtx();if(!ac)return;
   try{
-    const [goRes,missRes]=await Promise.all([fetch('go.mp3'),fetch('miss.mp3')]);
-    const [goArr,missArr]=await Promise.all([goRes.arrayBuffer(),missRes.arrayBuffer()]);
-    seBufs['go']=await new Promise((ok,ng)=>{
-      try{const p=ac.decodeAudioData(goArr,ok,ng);if(p&&p.then)p.then(ok).catch(ng)}catch(e){ng(e)}
-    });
-    seBufs['miss']=await new Promise((ok,ng)=>{
-      try{const p=ac.decodeAudioData(missArr,ok,ng);if(p&&p.then)p.then(ok).catch(ng)}catch(e){ng(e)}
-    });
-    // Synthesize quake SE (low rumble)
-    const qLen=1.2,qRate=ac.sampleRate,qFrames=qLen*qRate;
-    const qBuf=ac.createBuffer(1,qFrames,qRate);const qD=qBuf.getChannelData(0);
-    for(let i=0;i<qFrames;i++){const t=i/qRate;const env=Math.min(t*4,1)*Math.max(0,1-t/qLen);qD[i]=env*(Math.sin(t*40*Math.PI*2)*0.4+Math.sin(t*23*Math.PI*2)*0.3+(Math.random()-0.5)*0.3)}
-    seBufs['quake']=qBuf;
+    const [goRes,missRes,quakeRes]=await Promise.all([fetch('go.mp3'),fetch('miss.mp3'),fetch('quake.mp3')]);
+    const [goArr,missArr,quakeArr]=await Promise.all([goRes.arrayBuffer(),missRes.arrayBuffer(),quakeRes.arrayBuffer()]);
+    // FIX: use Promise-based decodeAudioData only (remove duplicate callback pattern)
+    seBufs['go']=await ac.decodeAudioData(goArr);
+    seBufs['miss']=await ac.decodeAudioData(missArr);
+    seBufs['quake']=await ac.decodeAudioData(quakeArr);
     // Synthesize foghorn SE (eerie low horn)
     const fLen=2.0,fFrames=fLen*qRate;
     const fBuf=ac.createBuffer(1,fFrames,qRate);const fD=fBuf.getChannelData(0);
@@ -179,7 +172,7 @@ function stopBgm(){if(curBgm){curBgm.pause();curBgm.currentTime=0;curBgm=null}}
 
 // === SE PLAYBACK ===
 const seGoSrc='go';const seMissSrc='miss';
-const seVols={'go':0.3,'miss':0.7,'quake':0.25,'foghorn':0.3};
+const seVols={'go':0.3,'miss':0.7,'quake':0.10,'foghorn':0.3};
 function playSe(id){
   const ac=ensureACtx();if(!ac)return;
   if(!seLoaded){loadAllSE();return}
@@ -203,6 +196,8 @@ let hasA=false,aT=0,tTm=0,tTp='',mTm=0,mTx='',mSb='';
 let bsX=0;let BW=2100;const BW_NORMAL=2100;const BW_SHORT=1260;const GH=0.76;
 let bL=false,bR=false,skT=0,skX=0,skY=0;
 let runnerX=0,runnerActive=false;// runnerPiyo state
+// FIX: evilFog start frame - use null instead of 0 so falsy check works correctly
+let efStart=null;
 let stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*6000,y:Math.random()*0.38,b:Math.random(),s:0.5+Math.random()*1.5});
 
 // === DRAW PLAYER ===
@@ -591,10 +586,10 @@ function dAnom(){
   // wrongMoon - subtle creepy modifications to the normal moon (drawn in dSky, so skip normal moon for this)
   // Note: wrongMoon replaces normal moon rendering - see dSky
 
-  // evilFog - dark red fog sweeping from right to left, kills on contact
+  // FIX: evilFog - use module-level efStart (null-based) instead of window._efStart (0-based)
   if(a==='evilFog'){
-    if(!window._efStart)window._efStart=fc;
-    const elapsed=fc-window._efStart;
+    if(efStart===null)efStart=fc;
+    const elapsed=fc-efStart;
     const fogDelay=120;// 2 seconds before fog starts
     if(elapsed>fogDelay){
       const fogSpeed=3.5;
@@ -772,7 +767,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.69',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.71',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -844,6 +839,7 @@ function dRanking(){
 let hintsScrollY=0;
 let hintsTouchStartY=0;
 let hintsDragging=false;
+let hintsTotalDrag=0;
 const HINTS_DATA=[
   ['街灯の明滅','街灯の光が不規則に点滅している。'],
   ['赤い空','夜空が不気味な赤色に染まっている。'],
@@ -869,7 +865,7 @@ const HINTS_DATA=[
   ['フード男','フードを被った不気味な人物が道に立っている。近づくと死亡する。'],
   ['号泣する占い師','道の真ん中で占い師が号泣している。近づくと死亡する。'],
   ['地震','画面が激しく揺れ、地鳴りが聞こえる。'],
-  ['東京タワー','遠くに東京タワーのシルエットが見える。ここは東京ではない。'],
+  ['東京タワー','遠くに東京タワーが見える。ここは東京ではない。'],
   ['月の異変','月の表面に不気味な顔のような模様が浮かんでいる。'],
   ['邪悪な霧','右側から赤黒い霧が迫ってくる。飲み込まれると死亡する。'],
   ['白い街灯','街灯の光がいつもの暖色ではなく、冷たい白色になっている。'],
@@ -937,6 +933,8 @@ function dHints(){
 }
 
 // === NAME ENTRY ===
+// FIX: Store name entry button geometry for consistent hit testing
+let nameEntryOkBtn={x:0,y:0,w:0,h:0};
 function dNameEntry(cx,cy){
   X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(cx-120,cy-15,240,60);
   X.strokeStyle='#FFD700';X.lineWidth=1;X.strokeRect(cx-120,cy-15,240,60);
@@ -948,16 +946,22 @@ function dNameEntry(cx,cy){
   const cursor=Math.sin(fc*0.1)>0?'|':'';
   X.fillStyle='#FFF';X.font='14px monospace';X.textAlign='left';
   X.fillText((nameInput+cursor).substring(0,8),cx-75,cy+22);
-  // OK button
+  // OK button - store geometry for hit testing
+  const okX=cx+50,okY=cy+5,okW=50,okH=22;
+  nameEntryOkBtn={x:okX,y:okY,w:okW,h:okH};
   X.fillStyle=nameInput.length>0?'#CC2222':'#666';
-  X.fillRect(cx+50,cy+5,50,22);
+  X.fillRect(okX,okY,okW,okH);
   X.fillStyle='#FFF';X.font='bold 12px sans-serif';X.textAlign='center';
-  X.fillText('決定',cx+75,cy+20);
+  X.fillText('決定',okX+okW/2,okY+okH/2+4);
+}
+// FIX: Consistent hit test for name entry OK button
+function hitNameOkBtn(cx,cy){
+  return cx>=nameEntryOkBtn.x&&cx<=nameEntryOkBtn.x+nameEntryOkBtn.w&&cy>=nameEntryOkBtn.y&&cy<=nameEntryOkBtn.y+nameEntryOkBtn.h;
 }
 
 // === GAME LOGIC ===
 const BACK_X=-750;// back gate position relative to bsX
-function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;window._efStart=0}
+function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;efStart=null}
 function sM(t,s){mTx=t;mSb=s||'';mTm=90}
 function update(){
   fc++;if(gs==='dying'){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
@@ -1005,8 +1009,8 @@ function update(){
       }
     }
     // evilFog collision - fog wall position
-    if(a==='evilFog'&&window._efStart){
-      const elapsed=fc-window._efStart;
+    if(a==='evilFog'&&efStart!==null){
+      const elapsed=fc-efStart;
       const fogDelay=120;
       if(elapsed>fogDelay){
         const fogX=bsX+BW+200-(elapsed-fogDelay)*3.5;
@@ -1194,11 +1198,12 @@ function hS(e){
   if(gs==='clear'){gs='title';playBgm(bgmTitle);return}
   if(gs==='challenge_clear'){
     if(showNameEntry){
-      const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX}];
-      const x=ts[0].clientX-rc.left;
-      if(x>W*0.33+50&&x<W*0.33+100){handleNameOK();return}
+      const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
+      const cx3=(ts[0].clientX-rc.left)*(W/rc.width);
+      const cy3=(ts[0].clientY-rc.top)*(H/rc.height);
+      if(hitNameOkBtn(cx3,cy3)){handleNameOK();return}
       // Tap on input area - open keyboard
-      if(nameInputActive)openNameInput();
+      openNameInput();
       return;
     }
     gs='title';playBgm(bgmTitle);return;
@@ -1208,7 +1213,7 @@ function hS(e){
       const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
       const cx2=(ts[0].clientX-rc.left)*(W/rc.width);
       const cy2=(ts[0].clientY-rc.top)*(H/rc.height);
-      if(cx2>W*0.3+50&&cx2<W*0.3+100&&cy2>H*0.18+5&&cy2<H*0.18+27){handleNameOK();return}
+      if(hitNameOkBtn(cx2,cy2)){handleNameOK();return}
       openNameInput();
       return;
     }
@@ -1250,14 +1255,15 @@ C.addEventListener('mousedown',(e)=>{
   if(gs==='hints'){gs='title';return}
   if(gs==='clear'){gs='title';playBgm(bgmTitle);return}
   if(gs==='challenge_clear'){
-    if(showNameEntry){if(e.clientX>W*0.33+50)handleNameOK();else openNameInput();return}
+    if(showNameEntry){const rc4=C.getBoundingClientRect();const mx2=(e.clientX-rc4.left)*(W/rc4.width);const my2=(e.clientY-rc4.top)*(H/rc4.height);if(hitNameOkBtn(mx2,my2))handleNameOK();else openNameInput();return}
     gs='title';playBgm(bgmTitle);return;
   }
   if(gs==='gameover'){
     if(showNameEntry){
       const rc3=C.getBoundingClientRect();
       const mx=(e.clientX-rc3.left)*(W/rc3.width);
-      if(mx>W*0.3+50&&mx<W*0.3+100)handleNameOK();
+      const my=(e.clientY-rc3.top)*(H/rc3.height);
+      if(hitNameOkBtn(mx,my))handleNameOK();
       else openNameInput();
       return;
     }
