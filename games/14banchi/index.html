@@ -697,7 +697,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.61',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.62',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -1025,7 +1025,7 @@ function dGameOver(){
   }
   // Name entry
   if(gameMode==='challenge'&&showNameEntry){
-    dNameEntry(W*0.3,H*0.28);
+    dNameEntry(W*0.3,H*0.18);
   }
   // Tap to continue
   if(!showNameEntry){
@@ -1144,7 +1144,7 @@ function hS(e){
   const cx0=(ts[0].clientX-rc.left)*(W/rc.width);
   const cy0=(ts[0].clientY-rc.top)*(H/rc.height);
   if(gs==='paused'){handlePauseTap(cx0,cy0);return}
-  if(gs==='playing'&&cx0>=W/2-58&&cx0<=W/2+58&&cy0>=4&&cy0<=30){
+  if(gs==='playing'&&cx0>=W/2-80&&cx0<=W/2+80&&cy0>=0&&cy0<=50){
     debugTapCount++;debugTapTimer=300;
     if(debugTapCount>=10){debugMode=!debugMode;debugTapCount=0;debugTapTimer=0;debugNotify=120}
     return;
@@ -1193,7 +1193,7 @@ C.addEventListener('mousedown',(e)=>{
   const mcx=(e.clientX-rc2.left)*(W/rc2.width);
   const mcy=(e.clientY-rc2.top)*(H/rc2.height);
   if(gs==='paused'){handlePauseTap(mcx,mcy);return}
-  if(gs==='playing'&&mcx>=W/2-58&&mcx<=W/2+58&&mcy>=4&&mcy<=30){
+  if(gs==='playing'&&mcx>=W/2-80&&mcx<=W/2+80&&mcy>=0&&mcy<=50){
     debugTapCount++;debugTapTimer=90;
     if(debugTapCount>=10){debugMode=!debugMode;debugTapCount=0;debugTapTimer=0}
     return;
