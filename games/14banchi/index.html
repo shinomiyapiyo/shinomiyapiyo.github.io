@@ -456,11 +456,11 @@ function dTkyTower(){
   X.lineTo(tx+1,tTop);
   X.closePath();
   const tg=X.createLinearGradient(tx-tW,0,tx+tW,0);
-  tg.addColorStop(0,'rgba(140,35,25,0.45)');
-  tg.addColorStop(0.3,'rgba(180,50,35,0.55)');
-  tg.addColorStop(0.5,'rgba(200,60,40,0.6)');
-  tg.addColorStop(0.7,'rgba(180,50,35,0.55)');
-  tg.addColorStop(1,'rgba(140,35,25,0.45)');
+  tg.addColorStop(0,'rgba(100,25,18,0.35)');
+  tg.addColorStop(0.3,'rgba(130,38,28,0.42)');
+  tg.addColorStop(0.5,'rgba(145,45,32,0.45)');
+  tg.addColorStop(0.7,'rgba(130,38,28,0.42)');
+  tg.addColorStop(1,'rgba(100,25,18,0.35)');
   X.fillStyle=tg;X.fill();
   // Red-white stripes
   const stripeCount=7;
@@ -471,9 +471,9 @@ function dTkyTower(){
     const wAt=tW*(0.05+ratio*0.95);
     const nwAt=tW*(0.05+((i+1)/stripeCount)*0.95);
     if(i%2===0){
-      X.fillStyle='rgba(200,55,40,0.5)';
+      X.fillStyle='rgba(140,35,25,0.35)';
     }else{
-      X.fillStyle='rgba(200,180,170,0.3)';
+      X.fillStyle='rgba(140,120,115,0.2)';
     }
     X.beginPath();
     X.moveTo(tx-wAt,sy);X.lineTo(tx+wAt,sy);
@@ -483,19 +483,19 @@ function dTkyTower(){
   // Upper observation deck
   const deckY1=tBase-tH*0.52;
   const deckW1=tW*0.75;
-  X.fillStyle='rgba(160,50,40,0.55)';
+  X.fillStyle='rgba(120,38,30,0.4)';
   X.fillRect(tx-deckW1,deckY1-2,deckW1*2,5);
-  X.fillStyle='rgba(100,30,25,0.4)';
+  X.fillStyle='rgba(80,25,20,0.3)';
   X.fillRect(tx-deckW1*0.85,deckY1-6,deckW1*1.7,4);
   // Lower observation deck
   const deckY2=tBase-tH*0.35;
   const deckW2=tW*0.9;
-  X.fillStyle='rgba(160,50,40,0.55)';
+  X.fillStyle='rgba(120,38,30,0.4)';
   X.fillRect(tx-deckW2,deckY2-2,deckW2*2,6);
-  X.fillStyle='rgba(100,30,25,0.4)';
+  X.fillStyle='rgba(80,25,20,0.3)';
   X.fillRect(tx-deckW2*0.85,deckY2-7,deckW2*1.7,5);
   // Antenna
-  X.fillStyle='rgba(180,60,50,0.5)';
+  X.fillStyle='rgba(120,40,32,0.4)';
   X.fillRect(tx-1,tTop-tH*0.12,2,tH*0.12);
   // Blinking red light on top
   if(Math.sin(fc*0.1)>0){
@@ -772,7 +772,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.68',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.69',W/2,H*0.99);
 }
 
 // === CLEAR ===
