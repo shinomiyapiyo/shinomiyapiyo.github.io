@@ -600,10 +600,17 @@ function dUI(){
     X.shadowColor='transparent';X.shadowBlur=0;
     X.restore();
   }
+  if(debugMode){
+    X.fillStyle='rgba(0,255,0,0.7)';X.font='bold 11px monospace';X.textAlign='left';
+    X.fillText(hasA?'[DBG] 異変: '+AN[aT]:'[DBG] 異変なし',8,H*0.08);
+  }
 }
 
 // === PAUSE ===
 let pauseSel=0;// 0=resume, 1=retire
+let debugMode=false;
+let debugTapCount=0;
+let debugTapTimer=0;
 const pauseBtns=[];
 function dPause(){
   // Dark overlay on game scene
@@ -684,7 +691,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.59',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.60',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -880,6 +887,7 @@ function update(){
   if(gs==='paused')return;
   if(gs!=='playing')return;
   if(mTm>0)mTm--;
+  if(debugTapTimer>0){debugTapTimer--;if(debugTapTimer===0)debugTapCount=0}
   if(tTm>0){tTm--;if(tTm===0){if(tTp==='a'){
     cB++;
     if(gameMode==='normal'&&cB>14){gs='clear';playBgm(bgmGoal);return}
@@ -1129,6 +1137,11 @@ function hS(e){
   const cx0=(ts[0].clientX-rc.left)*(W/rc.width);
   const cy0=(ts[0].clientY-rc.top)*(H/rc.height);
   if(gs==='paused'){handlePauseTap(cx0,cy0);return}
+  if(gs==='playing'&&cx0>=W/2-58&&cx0<=W/2+58&&cy0>=4&&cy0<=30){
+    debugTapCount++;debugTapTimer=90;
+    if(debugTapCount>=10){debugMode=!debugMode;debugTapCount=0;debugTapTimer=0}
+    return;
+  }
   if(gs==='playing'&&hitPauseBtn(cx0,cy0)){gs='paused';bL=false;bR=false;return}
   for(let t of ts){if(((t.clientX-rc.left)*(W/rc.width))<W*0.4)bL=true;else bR=true}
 }
@@ -1173,6 +1186,11 @@ C.addEventListener('mousedown',(e)=>{
   const mcx=(e.clientX-rc2.left)*(W/rc2.width);
   const mcy=(e.clientY-rc2.top)*(H/rc2.height);
   if(gs==='paused'){handlePauseTap(mcx,mcy);return}
+  if(gs==='playing'&&mcx>=W/2-58&&mcx<=W/2+58&&mcy>=4&&mcy<=30){
+    debugTapCount++;debugTapTimer=90;
+    if(debugTapCount>=10){debugMode=!debugMode;debugTapCount=0;debugTapTimer=0}
+    return;
+  }
   if(gs==='playing'&&hitPauseBtn(mcx,mcy)){gs='paused';bL=false;bR=false;return}
   if(mcx<W*0.4)bL=true;else bR=true;
 });
