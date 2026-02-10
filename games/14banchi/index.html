@@ -684,7 +684,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.56',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.57',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -960,50 +960,64 @@ function dTap(){
 // === GAME OVER ===
 function dGameOver(){
   X.fillStyle='#0A0000';X.fillRect(0,0,W,H);
-  // Blood drip effect
+  // Blood drip effect - left side only
   for(let i=0;i<20;i++){
-    const dx=((fc*0.3+i*73)%W);
+    const dx=((fc*0.3+i*73)%(W*0.5));
     const dy=((fc*0.5+i*131)%(H*0.6));
     X.fillStyle=`rgba(120,0,0,${0.15+Math.sin(fc*0.02+i)*0.1})`;
     X.fillRect(dx,0,2,dy);
   }
   // Vignette
   const vg=X.createRadialGradient(W/2,H/2,W*0.1,W/2,H/2,W*0.6);
-  vg.addColorStop(0,'transparent');vg.addColorStop(1,'rgba(0,0,0,0.7)');
+  vg.addColorStop(0,'transparent');
+  vg.addColorStop(1,'rgba(0,0,0,0.7)');
   X.fillStyle=vg;X.fillRect(0,0,W,H);
+  // Draw death image - large, right-aligned with fade edges
+  if(deathImgOk){
+    const ih=H*0.85;
+    const iw=ih*(deathImg.naturalWidth/deathImg.naturalHeight);
+    const ix=W*0.65-iw/2;
+    const iy=H*0.5-ih/2;
+    X.drawImage(deathImg,ix,iy,iw,ih);
+    const fadeT=X.createLinearGradient(0,iy,0,iy+ih*0.18);
+    fadeT.addColorStop(0,'#0A0000');fadeT.addColorStop(1,'transparent');
+    X.fillStyle=fadeT;X.fillRect(ix-10,iy,iw+20,ih*0.18);
+    const fadeB=X.createLinearGradient(0,iy+ih*0.82,0,iy+ih);
+    fadeB.addColorStop(0,'transparent');fadeB.addColorStop(1,'#0A0000');
+    X.fillStyle=fadeB;X.fillRect(ix-10,iy+ih*0.82,iw+20,ih*0.18);
+    const fadeL=X.createLinearGradient(ix,0,ix+iw*0.2,0);
+    fadeL.addColorStop(0,'#0A0000');fadeL.addColorStop(1,'transparent');
+    X.fillStyle=fadeL;X.fillRect(ix,iy,iw*0.2,ih);
+    const fadeR=X.createLinearGradient(ix+iw*0.8,0,ix+iw,0);
+    fadeR.addColorStop(0,'transparent');fadeR.addColorStop(1,'#0A0000');
+    X.fillStyle=fadeR;X.fillRect(ix+iw*0.8,iy,iw*0.2,ih);
+  }
   // Main text
   const pulse=0.7+Math.sin(fc*0.06)*0.3;
   X.save();
   X.shadowColor='#FF0000';X.shadowBlur=20;
   X.fillStyle=`rgba(200,20,20,${pulse})`;
   X.font='bold 42px serif';X.textAlign='center';
-  X.fillText('グエー死んだンゴ',W/2,showNameEntry?H*0.13:H*0.35);
+  X.fillText('グエー死んだンゴ',W*0.3,showNameEntry?H*0.13:H*0.25);
   X.shadowBlur=0;X.shadowColor='transparent';
   X.restore();
   // Sub text
   X.fillStyle='#882222';X.font='16px sans-serif';X.textAlign='center';
   if(gameMode==='challenge'){
-    X.fillText(`${challengeScore}番地でぴよ氏は力尽きた…`,W/2,showNameEntry?H*0.35:H*0.50);
+    X.fillText(`${challengeScore}番地でぴよ氏は力尽きた…`,W*0.3,showNameEntry?H*0.35:H*0.40);
   }else{
-    X.fillText(`${cB}番地でぴよ氏は力尽きた…`,W/2,showNameEntry?H*0.35:H*0.50);
+    X.fillText(`${cB}番地でぴよ氏は力尽きた…`,W*0.3,showNameEntry?H*0.35:H*0.40);
   }
-  // Character fallen - piyo02
+  // Name entry
   if(gameMode==='challenge'&&showNameEntry){
-    dNameEntry(W/2,H*0.20);
-  }else{
-    if(deathImgOk){
-      X.globalAlpha=0.7;
-      const ih=H*0.45,iw=ih*(deathImg.width/deathImg.height);
-      X.drawImage(deathImg,W/2-iw/2,H*0.55,iw,ih);
-      X.globalAlpha=1;
-    }
+    dNameEntry(W*0.3,H*0.50);
   }
   // Tap to continue
   if(!showNameEntry){
     const tapA=0.3+Math.sin(fc*0.05)*0.7;
     X.fillStyle=`rgba(150,80,80,${Math.max(0,tapA)})`;
     X.font='14px sans-serif';X.textAlign='center';
-    X.fillText('タップしてタイトルへ',W/2,H*0.93);
+    X.fillText('タップしてタイトルへ',W*0.3,H*0.88);
   }
 }
 
