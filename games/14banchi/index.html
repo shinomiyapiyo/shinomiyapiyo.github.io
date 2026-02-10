@@ -496,20 +496,20 @@ function dAnom(){
 
   // tokyoTower - red Tokyo Tower silhouette far in background (small, distant)
   if(a==='tokyoTower'){
-    const tx=bsX+BW*0.5-camX*0.15;// parallax - moves slowly like distant object
-    const tScale=0.35;// small = far away
-    X.fillStyle='rgba(130,25,25,0.25)';
-    // Tower body
+    const tx=bsX+BW*0.5-camX*0.15;
+    const tScale=0.7;
+    X.fillStyle='rgba(180,40,40,0.5)';
     const tBase=gy,tTop=tBase-180*tScale;
     X.beginPath();X.moveTo(tx,tTop);X.lineTo(tx-18*tScale,tBase);X.lineTo(tx+18*tScale,tBase);X.closePath();X.fill();
-    // Observation deck
-    X.fillRect(tx-12*tScale,tBase-90*tScale,24*tScale,3);
-    X.fillRect(tx-8*tScale,tBase-65*tScale,16*tScale,2);
-    // Antenna
-    X.fillRect(tx-0.5,tTop-20*tScale,1,20*tScale);
-    // Red light blinking
+    X.fillStyle='rgba(200,50,50,0.4)';
+    X.fillRect(tx-12*tScale,tBase-90*tScale,24*tScale,4);
+    X.fillRect(tx-8*tScale,tBase-65*tScale,16*tScale,3);
+    X.fillRect(tx-0.5,tTop-20*tScale,2,20*tScale);
     if(Math.sin(fc*0.1)>0){
-      X.fillStyle='rgba(255,0,0,0.6)';X.beginPath();X.arc(tx,tTop-20*tScale,1.5,0,Math.PI*2);X.fill();
+      X.fillStyle='rgba(255,0,0,0.8)';X.beginPath();X.arc(tx,tTop-20*tScale,2.5,0,Math.PI*2);X.fill();
+      const lg=X.createRadialGradient(tx,tTop-20*tScale,0,tx,tTop-20*tScale,12);
+      lg.addColorStop(0,'rgba(255,0,0,0.3)');lg.addColorStop(1,'transparent');
+      X.fillStyle=lg;X.beginPath();X.arc(tx,tTop-20*tScale,12,0,Math.PI*2);X.fill();
     }
   }
 
