@@ -839,7 +839,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.74',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.75',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -1055,13 +1055,15 @@ function hitNameOkBtn(cx,cy){
 
 // === GAME LOGIC ===
 const BACK_X=-750;// back gate position relative to bsX
-// Complete mode: consume life, return true if game over
+// Complete mode: consume life, return true if handled (not game over)
+let completeHitTimer=0;
+const COMPLETE_HIT_FADE=50;// frames of red fade before resetting
 function completeDie(){
   if(gameMode!=='complete')return false;
   completeLives--;
-  if(completeLives<=0)return false;// let it die normally
-  // Still has lives: reset to block 1 instead of dying
-  cB=1;genA();sB();sM('1番地に戻された…',`残りライフ: ${completeLives}`);
+  if(completeLives<=0)return false;// no lives left, let it die normally
+  // Start red fade animation, then reset to block 1
+  gs='complete_hit';completeHitTimer=0;bL=false;bR=false;pMov=false;
   return true;// handled, skip dying
 }
 function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;efStart=null;stopQuakeSe()}
@@ -1070,6 +1072,8 @@ function update(){
   fc++;if(gs==='dying'){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
     if(gameMode==='challenge'){challengeScore=cB;showNameEntry=isRankIn(challengeScore);nameInput='';nameInputActive=showNameEntry}
     gs='gameover';bL=false;bR=false}return}
+  if(gs==='complete_hit'){completeHitTimer++;if(completeHitTimer>=COMPLETE_HIT_FADE){
+    gs='playing';cB=1;genA();sB();sM('1番地に戻された…',`残りライフ: ${completeLives}`)}return}
   if(gs==='gameover'){if(deathTimer<DEATH_BGM_DELAY){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}}return}
   if(gs==='challenge_clear')return;
   if(gs==='complete_clear')return;
@@ -1254,6 +1258,7 @@ function render(){
   if(tTm>0){const al=tTp==='r'?Math.sin(tTm/40*Math.PI)*0.4:(tTm/30)*0.2;X.fillStyle=tTp==='r'?`rgba(255,20,20,${al})`:`rgba(255,255,180,${al})`;X.fillRect(-10,-10,W+20,H+20)}
   // Dying red fade
   if(gs==='dying'){const al=deathTimer/DEATH_FADE;X.fillStyle=`rgba(180,0,0,${al*0.85})`;X.fillRect(-10,-10,W+20,H+20)}
+  if(gs==='complete_hit'){const al=completeHitTimer/COMPLETE_HIT_FADE;X.fillStyle=`rgba(180,0,0,${al*0.7})`;X.fillRect(-10,-10,W+20,H+20)}
   X.restore();dUI();
 }
 
@@ -1341,7 +1346,7 @@ function hS(e){
     }
     gs='title';playBgm(bgmTitle);return;
   }
-  if(gs==='dying')return;
+  if(gs==='dying'||gs==='complete_hit')return;
   const rc=C.getBoundingClientRect(),ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
   const cx0=(ts[0].clientX-rc.left)*(W/rc.width);
   const cy0=(ts[0].clientY-rc.top)*(H/rc.height);
@@ -1392,7 +1397,7 @@ C.addEventListener('mousedown',(e)=>{
     }
     gs='title';playBgm(bgmTitle);return;
   }
-  if(gs==='dying')return;
+  if(gs==='dying'||gs==='complete_hit')return;
   const rc2=C.getBoundingClientRect();
   const mcx=(e.clientX-rc2.left)*(W/rc2.width);
   const mcy=(e.clientY-rc2.top)*(H/rc2.height);
