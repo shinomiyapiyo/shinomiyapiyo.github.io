@@ -240,10 +240,10 @@ function drawPG(cx,cy,scale){
     X.save();
     X.translate(cx,0);
     X.scale(-1,1);
-    X.drawImage(img,-sw/2,cy-sh+bob+4,sw,sh);
+    X.drawImage(img,-sw/2,cy-sh+bob+9,sw,sh);
     X.restore();
   }else{
-    X.drawImage(img,cx-sw/2,cy-sh+bob+4,sw,sh);
+    X.drawImage(img,cx-sw/2,cy-sh+bob+9,sw,sh);
   }
 }
 
@@ -587,13 +587,13 @@ function dAnom(){
   if(a==='ghost'){const gx=bsX+BW*0.5-camX,al=0.15+Math.sin(fc*0.03)*0.1,yo=Math.sin(fc*0.02)*7;X.globalAlpha=al;X.fillStyle='#FFF';X.beginPath();X.ellipse(gx,gy-48+yo,16,26,0,0,Math.PI*2);X.fill();X.fillStyle='#000';X.beginPath();X.arc(gx-5,gy-53+yo,2.5,0,Math.PI*2);X.fill();X.beginPath();X.arc(gx+5,gy-53+yo,2.5,0,Math.PI*2);X.fill();X.beginPath();X.arc(gx,gy-44+yo,3.5,0,Math.PI);X.fill();X.globalAlpha=1}
 
   // thug
-  if(a==='thug'){const ti=SPR['thug'];if(ti&&ti.complete){const tx=bsX+BW*0.5-camX;const th=H*0.32;const tw=th*(ti.naturalWidth/ti.naturalHeight);const breathe=Math.sin(fc*0.04)*1.5;X.drawImage(ti,tx-tw/2,gy-th+breathe+4,tw,th)}}
+  if(a==='thug'){const ti=SPR['thug'];if(ti&&ti.complete){const tx=bsX+BW*0.5-camX;const th=H*0.32;const tw=th*(ti.naturalWidth/ti.naturalHeight);const breathe=Math.sin(fc*0.04)*1.5;X.drawImage(ti,tx-tw/2,gy-th+breathe+9,tw,th)}}
 
   // creep - hoodie figure standing eerily
-  if(a==='creep'){const ci=SPR['creep'];if(ci&&ci.complete){const cx=bsX+BW*0.55-camX;const ch2=H*0.32;const cw=ch2*(ci.naturalWidth/ci.naturalHeight);const sway=Math.sin(fc*0.025)*2;X.drawImage(ci,cx-cw/2+sway,gy-ch2+4,cw,ch2)}}
+  if(a==='creep'){const ci=SPR['creep'];if(ci&&ci.complete){const cx=bsX+BW*0.55-camX;const ch2=H*0.32;const cw=ch2*(ci.naturalWidth/ci.naturalHeight);const sway=Math.sin(fc*0.025)*2;X.drawImage(ci,cx-cw/2+sway,gy-ch2+9,cw,ch2)}}
 
   // wizard - crying wizard at desk
-  if(a==='wizard'){const wi=SPR['wizard'];if(wi&&wi.complete){const wx=bsX+BW*0.45-camX;const wh=H*0.30;const ww=wh*(wi.naturalWidth/wi.naturalHeight);const bob=Math.sin(fc*0.05)*1.5;X.drawImage(wi,wx-ww/2,gy-wh+bob+4,ww,wh)}}
+  if(a==='wizard'){const wi=SPR['wizard'];if(wi&&wi.complete){const wx=bsX+BW*0.45-camX;const wh=H*0.30;const ww=wh*(wi.naturalWidth/wi.naturalHeight);const bob=Math.sin(fc*0.05)*1.5;X.drawImage(wi,wx-ww/2,gy-wh+bob+9,ww,wh)}}
 
   // foggy
   if(a==='foggy'){for(let i=0;i<8;i++){const fx=((fc*0.3+i*200+sd)%(W+200))-100;const fy=H*0.3+((sd+i*77)%(H*0.35));const fw=120+((sd+i*53)%80);const al=0.06+Math.sin(fc*0.01+i)*0.03;X.fillStyle=`rgba(180,180,200,${al})`;X.beginPath();X.ellipse(fx,fy,fw,25+i*3,0,0,Math.PI*2);X.fill()}}
@@ -688,7 +688,7 @@ function dAnom(){
         X.save();
         X.translate(rsx,0);
         X.scale(-1,1);
-        X.drawImage(redImg,-sw/2,gy-sh+bob2+4,sw,sh);
+        X.drawImage(redImg,-sw/2,gy-sh+bob2+9,sw,sh);
         X.restore();
       }
       // Warning text
