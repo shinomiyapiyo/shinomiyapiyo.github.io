@@ -219,6 +219,8 @@ let bL=false,bR=false,skT=0,skX=0,skY=0;
 let runnerX=0,runnerActive=false;// runnerPiyo state
 // FIX: evilFog start frame - use null instead of 0 so falsy check works correctly
 let efStart=null;
+// Normal mode: track cleared anomalies so they don't repeat
+let clearedAnomalies=[];
 let stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*6000,y:Math.random()*0.38,b:Math.random(),s:0.5+Math.random()*1.5});
 
 // === DRAW PLAYER ===
@@ -227,7 +229,9 @@ function drawPG(cx,cy,scale){
   if(!pMov){key='stand'}
   else{const fr=WALK_R;key=fr[pFr%fr.length]}
   const img=SPR[key];if(!img||!img.complete)return;
-  const sw=img.naturalWidth*scale,sh=img.naturalHeight*scale;
+  // Compensate for stand sprite being slightly shorter than walk sprites
+  const sc=key==='stand'?scale*1.04:scale;
+  const sw=img.naturalWidth*sc,sh=img.naturalHeight*sc;
   const bob=pMov?Math.sin(fc*0.3)*1.5:0;
   if(pDir<0){
     X.save();
@@ -285,12 +289,23 @@ function genA(){
   if(gameMode==='normal'){
     if(cB<=1||cB>=14){hasA=false;return}
     hasA=Math.random()<0.55;
+  }else if(gameMode==='complete'){
+    if(cB<=1){hasA=false;return}
+    hasA=Math.random()<0.55;
   }else{
     if(cB<=1){hasA=false;return}
     hasA=Math.random()<0.55;
   }
   if(hasA){
-    aT=Math.floor(Math.random()*AN.length);
+    if(gameMode==='normal'||gameMode==='complete'){
+      // Exclude already-cleared anomalies
+      const available=[];
+      for(let i=0;i<AN.length;i++){if(!clearedAnomalies.includes(AN[i]))available.push(i)}
+      if(available.length===0){hasA=false;return}// All anomalies cleared
+      aT=available[Math.floor(Math.random()*available.length)];
+    }else{
+      aT=Math.floor(Math.random()*AN.length);
+    }
     if(AN[aT]==='shortBlock')BW=BW_SHORT;
     if(AN[aT]==='runnerPiyo'){runnerX=bsX+BW+300;runnerActive=true}
   }
@@ -640,7 +655,7 @@ function dAnom(){
   if(a==='runnerPiyo'&&runnerActive){
     const rsx=runnerX-camX;
     if(rsx>-60&&rsx<W+60){
-      const sprScale=Math.min(H*0.30/120,1.3);
+      const sprScale=Math.min(H*0.32/120,1.3);
       const fr=WALK_L[(Math.floor(fc/3))%WALK_L.length];
       const img=SPR[fr];if(img&&img.complete){
         const sw=img.naturalWidth*sprScale,sh=img.naturalHeight*sprScale;
@@ -700,6 +715,12 @@ function dUI(){
     X.fillStyle='rgba(0,255,0,0.7)';X.font='bold 11px monospace';X.textAlign='left';
     X.fillText(hasA?'[DBG] 異変: '+AN[aT]:'[DBG] 異変なし',8,H*0.08);
   }
+  // Complete mode: show progress
+  if(gameMode==='complete'){
+    const prog=clearedAnomalies.length+'/'+AN.length;
+    X.fillStyle='rgba(34,170,102,0.85)';X.font='bold 12px monospace';X.textAlign='left';
+    X.fillText('🔍 '+prog,8,debugMode?H*0.14:H*0.08);
+  }
 }
 
 // === PAUSE ===
@@ -716,7 +737,7 @@ function dPause(){
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
-  const sprScale=Math.min(H*0.30/120,1.3);
+  const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
   X.restore();
   // Dark overlay
@@ -774,10 +795,10 @@ function dTitle(){
   X.fillStyle='#887755';X.font='13px sans-serif';X.fillText('― 夜道に潜む異変を見抜け ―',tx,H*0.38);
   // Direct tap buttons
   titleBtns.length=0;
-  const btnW=180,btnH=34;
-  const labels=[['▶ ノーマルモード','#CC2222'],['▶ チャレンジモード','#CC8822'],['🏆 ランキング','#DAA520'],['📖 ヒント（異変一覧）','#66AACC']];
-  for(let i=0;i<4;i++){
-    const bx=tx-btnW/2,by=H*0.46+i*38-btnH/2;
+  const btnW=180,btnH=34,btnGap=34;
+  const labels=[['▶ ノーマルモード','#CC2222'],['▶ コンプリートモード','#22AA66'],['▶ チャレンジモード','#CC8822'],['🏆 ランキング','#DAA520'],['📖 ヒント（異変一覧）','#66AACC']];
+  for(let i=0;i<5;i++){
+    const bx=tx-btnW/2,by=H*0.44+i*btnGap-btnH/2;
     titleBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i});
     const hover=Math.sin(fc*0.06+i)>0.8;
     X.fillStyle=hover?'rgba(0,0,0,0.05)':'rgba(0,0,0,0.02)';
@@ -788,7 +809,7 @@ function dTitle(){
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.72',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.73',W/2,H*0.99);
 }
 
 // === CLEAR ===
@@ -820,6 +841,27 @@ function dChallengeClear(){
 }
 
 // === RANKING SCREEN ===
+// === COMPLETE CLEAR ===
+function dCompleteClear(){
+  const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0a2e1a');bg.addColorStop(1,'#0a0a14');X.fillStyle=bg;X.fillRect(0,0,W,H);
+  for(let i=0;i<80;i++){const sx=((fc*0.8+i*97)%W),sy=((fc*0.5+i*131)%H);X.fillStyle=['#22AA66','#44CC88','#88EEBB'][i%3];X.globalAlpha=0.5+Math.sin(fc*0.03+i)*0.3;X.beginPath();X.arc(sx,sy,1+Math.random()*2,0,Math.PI*2);X.fill()}X.globalAlpha=1;
+  const pulse=0.8+Math.sin(fc*0.05)*0.2;
+  X.save();X.shadowColor='#22AA66';X.shadowBlur=25;
+  X.fillStyle=`rgba(34,170,102,${pulse})`;X.font='bold 36px serif';X.textAlign='center';
+  X.fillText('🎊 全 異 変 制 覇 ！ 🎊',W*0.33,H*0.22);
+  X.shadowBlur=0;X.restore();
+  X.fillStyle='#22AA66';X.font='bold 20px sans-serif';X.textAlign='center';
+  X.fillText(AN.length+'種の異変を全て見抜いた！',W*0.33,H*0.38);
+  X.fillStyle='#88CCAA';X.font='14px sans-serif';
+  X.fillText('ぴよ氏は真の観察眼を手に入れた！',W*0.33,H*0.50);
+  X.fillStyle='#88CCAA';X.font='13px sans-serif';
+  X.fillText(`到達番地: ${cB}番地`,W*0.33,H*0.62);
+  if(clearImgOk){const ih=H*0.7,iw=ih*(clearImg.width/clearImg.height);X.drawImage(clearImg,W*0.72-iw/2,H*0.52-ih/2,iw,ih)}
+  const tapA=0.3+Math.sin(fc*0.05)*0.7;
+  X.fillStyle=`rgba(34,170,102,${Math.max(0,tapA)})`;X.font='14px sans-serif';X.textAlign='center';
+  X.fillText('タップしてタイトルへ',W*0.33,H*0.88);
+}
+
 function dRanking(){
   X.fillStyle='#0a0a1a';X.fillRect(0,0,W,H);
   // Decorative border
@@ -991,6 +1033,7 @@ function update(){
     gs='gameover';bL=false;bR=false}return}
   if(gs==='gameover'){if(deathTimer<DEATH_BGM_DELAY){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}}return}
   if(gs==='challenge_clear')return;
+  if(gs==='complete_clear')return;
   if(gs==='paused')return;
   if(gs!=='playing')return;
   if(mTm>0)mTm--;
@@ -1000,6 +1043,7 @@ function update(){
     cB++;
     if(gameMode==='normal'&&cB>14){gs='clear';playBgm(bgmGoal);return}
     if(gameMode==='challenge'&&cB>CHALLENGE_MAX){gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
+    if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){gs='complete_clear';playBgm(bgmGoal);return}
     genA();sB();sM(`${cB}番地`)
   }else{
     if(gameMode==='challenge'){
@@ -1007,6 +1051,7 @@ function update(){
       challengeScore=cB;gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
       stopBgm();playSe(seMissSrc);return
     }
+    // Normal & Complete: back to block 1 (complete keeps clearedAnomalies)
     cB=1;genA();sB();sM('1番地に戻された…','異変の判断を間違えた')
   }}return}
   if(skT>0){skT--;skX=(Math.random()-0.5)*skT*0.7;skY=(Math.random()-0.5)*skT*0.4}else if(!(hasA&&AN[aT]==='earthquake')){skX=0;skY=0}
@@ -1051,7 +1096,7 @@ function update(){
       }
     }
   }
-  if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){tTp='a';tTm=30;playSe(seGoSrc);sM('異変を発見！正解！','引き返して正解だった')}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);sM('異変は無かった…！','正常な道で引き返してしまった')}}
+  if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){if((gameMode==='normal'||gameMode==='complete')&&!clearedAnomalies.includes(AN[aT]))clearedAnomalies.push(AN[aT]);tTp='a';tTm=30;playSe(seGoSrc);sM('異変を発見！正解！','引き返して正解だった')}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);sM('異変は無かった…！','正常な道で引き返してしまった')}}
   if(pX>bsX+BW+30){if(hasA){tTp='r';tTm=40;skT=18;playSe(seMissSrc);sM('異変を見逃した…！','よく観察しよう')}else{tTp='a';tTm=30;playSe(seGoSrc);sM('正解！前進成功！')}}
   if(pMov){pAT++;if(pAT>6){pAT=0;pFr=(pFr+1)%4}}else{pFr=0;pAT=0}
 }
@@ -1144,6 +1189,7 @@ function render(){
   if(gs==='ranking'){dRanking();return}
   if(gs==='hints'){dHints();return}
   if(gs==='challenge_clear'){dChallengeClear();return}
+  if(gs==='complete_clear'){dCompleteClear();return}
   if(gs==='gameover'){dGameOver();return}
   if(gs==='paused'){dPause();return}
   X.save();X.translate(skX,skY);
@@ -1151,7 +1197,7 @@ function render(){
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
-  const sprScale=Math.min(H*0.30/120,1.3);
+  const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
   if(tTm>0){const al=tTp==='r'?Math.sin(tTm/40*Math.PI)*0.4:(tTm/30)*0.2;X.fillStyle=tTp==='r'?`rgba(255,20,20,${al})`:`rgba(255,255,180,${al})`;X.fillRect(-10,-10,W+20,H+20)}
   // Dying red fade
@@ -1170,7 +1216,7 @@ function touchResume(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)touchResume();});
 
 function startGame(mode){
-  gameMode=mode;cB=1;genA();sB();
+  gameMode=mode;cB=1;clearedAnomalies=[];genA();sB();
   gs='playing';playBgm(bgmStage);
   if(mode==='challenge')sM('1番地','チャレンジ開始！');
   else sM('1番地','夜道を進め…');
@@ -1180,9 +1226,10 @@ function handleTitleTap(cx,cy){
   for(const b of titleBtns){
     if(cx>=b.x&&cx<=b.x+b.w&&cy>=b.y&&cy<=b.y+b.h){
       if(b.id===0){startGame('normal')}
-      else if(b.id===1){startGame('challenge')}
-      else if(b.id===2){gs='ranking';playBgm(bgmRanking);loadRanking()}
-      else if(b.id===3){gs='hints';hintsScrollY=0}
+      else if(b.id===1){startGame('complete')}
+      else if(b.id===2){startGame('challenge')}
+      else if(b.id===3){gs='ranking';playBgm(bgmRanking);loadRanking()}
+      else if(b.id===4){gs='hints';hintsScrollY=0}
       return true;
     }
   }
@@ -1218,6 +1265,7 @@ function hS(e){
     hintsDragging=true;hintsTotalDrag=0;return;
   }
   if(gs==='clear'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='complete_clear'){gs='title';playBgm(bgmTitle);return}
   if(gs==='challenge_clear'){
     if(showNameEntry){
       const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
@@ -1276,6 +1324,7 @@ C.addEventListener('mousedown',(e)=>{
   if(gs==='ranking'){gs='title';playBgm(bgmTitle);return}
   if(gs==='hints'){const rc5=C.getBoundingClientRect();const my5=(e.clientY-rc5.top)*(H/rc5.height);if(my5>=H*0.89){gs='title'}return}
   if(gs==='clear'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='complete_clear'){gs='title';playBgm(bgmTitle);return}
   if(gs==='challenge_clear'){
     if(showNameEntry){const rc4=C.getBoundingClientRect();const mx2=(e.clientX-rc4.left)*(W/rc4.width);const my2=(e.clientY-rc4.top)*(H/rc4.height);if(hitNameOkBtn(mx2,my2))handleNameOK();else openNameInput();return}
     gs='title';playBgm(bgmTitle);return;
@@ -1333,13 +1382,14 @@ document.addEventListener('keydown',(e)=>{
   if(gs==='tap'){unlockAudio();gs='title';playBgm(bgmTitle)}
   else if(gs==='title'){
     if(e.key==='1'){startGame('normal')}
-    else if(e.key==='2'){startGame('challenge')}
-    else if(e.key==='3'){gs='ranking';playBgm(bgmRanking);loadRanking()}
-    else if(e.key==='4'){gs='hints';hintsScrollY=0}
+    else if(e.key==='2'){startGame('complete')}
+    else if(e.key==='3'){startGame('challenge')}
+    else if(e.key==='4'){gs='ranking';playBgm(bgmRanking);loadRanking()}
+    else if(e.key==='5'){gs='hints';hintsScrollY=0}
   }
   else if(gs==='ranking'){gs='title';playBgm(bgmTitle)}
   else if(gs==='hints'){gs='title'}
-  else if(gs==='clear'||gs==='challenge_clear'||gs==='gameover'){
+  else if(gs==='clear'||gs==='challenge_clear'||gs==='complete_clear'||gs==='gameover'){
     if(!showNameEntry){gs='title';playBgm(bgmTitle)}
   }
 });
