@@ -5,17 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#FFB7C5">
     <meta name="format-detection" content="telephone=no">
-    
-    <!-- ==========================================
-         Google Analytics 4 (GA4)
-         Measurement ID: G-2E28JBNJVF
-    ========================================== -->
+
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2E28JBNJVF"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-2E28JBNJVF');
+      // クリック計測
       function trackClick(label) {
           gtag('event', 'click_link', {
               'event_category': 'Outbound Link',
@@ -25,12 +22,10 @@
       }
     </script>
 
-    <!-- SEO Meta Tags -->
     <title>四ノ宮ぴよ Official | 仙台 144cmにゃんこひよこメイド</title>
     <meta name="description" content="仙台のメイドカフェ「にゃんぽんたん」でお給仕中。144cmにゃんこひよこメイド、四ノ宮ぴよ（ぴよちゃん）の公式ポータルサイト。SNSリンク(X/Insta/TikTok)、YouTube、ライブ情報、通販チェキ等の最新情報を集約。">
     <link rel="canonical" href="https://shinomiyapiyo.github.io/">
 
-    <!-- Open Graph Protocol -->
     <meta property="og:site_name" content="四ノ宮ぴよ Official">
     <meta property="og:title" content="四ノ宮ぴよ Official | 144cmにゃんこひよこメイド">
     <meta property="og:description" content="144cmひよこのぴよちゃんです🐥 仙台でメイドさんしたり🎀東京でライブしたりしてます🎤 SNS・通販リンクまとめ">
@@ -39,25 +34,21 @@
     <meta property="og:image" content="https://shinomiyapiyo.github.io/shinomiya-piyo-maid-sendai.jpg">
     <meta property="og:locale" content="ja_JP">
 
-    <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@piyopiyoo_nyan">
     <meta name="twitter:creator" content="@piyopiyoo_nyan">
     <meta name="twitter:title" content="四ノ宮ぴよ Official">
     <meta name="twitter:description" content="仙台メイドカフェにゃんぽんたん所属。144cmにゃんこひよこメイド。">
     <meta name="twitter:image" content="https://shinomiyapiyo.github.io/shinomiya-piyo-maid-sendai.jpg">
-    
-    <!-- Favicon & PWA -->
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐥</text></svg>">
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="./apple-touch-icon.png">
 
-    <!-- Fonts (preconnect + swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
 
-    <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -83,18 +74,13 @@
     </script>
 
     <style>
-        /* ==========================================
-           Design Tokens & Reset
-        ========================================== */
+
         :root {
             --pink: #FFB7C5;
             --dark-pink: #FF8FAB;
             --yellow: #FFEA70;
-            --text: #4A4A4A;
             --bg: #fff0f3;
-            --dot: #ffccd5;
-            --glass-bg: rgba(255, 255, 255, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass: rgba(255, 255, 255, 0.6);
             --glass-shadow: rgba(255, 183, 197, 0.2);
         }
 
@@ -106,9 +92,9 @@
 
         body {
             font-family: 'Zen Maru Gothic', sans-serif;
-            color: var(--text);
+            color: #4A4A4A;
             background-color: var(--bg);
-            background-image: radial-gradient(var(--dot) 1px, transparent 1px), radial-gradient(var(--dot) 1px, transparent 1px);
+            background-image: radial-gradient(#ffccd5 1px, transparent 1px), radial-gradient(#ffccd5 1px, transparent 1px);
             background-size: 20px 20px;
             background-position: 0 0, 10px 10px;
             overflow-x: hidden;
@@ -125,9 +111,6 @@
         img { display: block; max-width: 100%; }
         a { text-decoration: none; color: inherit; }
 
-        /* ==========================================
-           Layout
-        ========================================== */
         .main-container {
             max-width: 28rem;
             margin: 0 auto;
@@ -147,15 +130,12 @@
             gap: 2rem;
         }
 
-        .category-group {
+        .cat-group {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
 
-        /* ==========================================
-           Background Decoration (CSS-only blobs)
-        ========================================== */
         .bg-decor {
             position: fixed;
             inset: 0;
@@ -187,26 +167,20 @@
         }
 
         .blob--3 {
-            bottom: -10%; left: 20%;
+            bottom: -10%;  left: 20%;
             width: 20rem; height: 20rem;
             background: #bfdbfe;
             animation-delay: 4s;
         }
 
-        /* ==========================================
-           Glass Card
-        ========================================== */
         .glass-card {
-            background: var(--glass-bg);
+            background: var(--glass);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--glass);
             box-shadow: 0 8px 32px 0 var(--glass-shadow);
         }
 
-        /* ==========================================
-           Hero Section
-        ========================================== */
         .hero {
             position: relative;
             height: 60vh;
@@ -235,8 +209,7 @@
             transform: scale(1.05);
         }
 
-        /* Fallback: CSS background instead of placehold.co */
-        .hero__image-fallback {
+                .hero-fallback {
             position: absolute;
             bottom: 0;
             width: 100%;
@@ -281,15 +254,9 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        .hero__emoji {
-            font-size: 1.25rem;
-            margin-left: 0.25rem;
-        }
+        
 
-        /* ==========================================
-           Section Title
-        ========================================== */
-        .category-header {
+        .cat-hd {
             text-align: center;
             margin-bottom: 0.25rem;
         }
@@ -316,7 +283,7 @@
         .section-title::before { left: -1.4em; }
         .section-title::after { right: -1.4em; }
 
-        .section-sub {
+        .stxt {
             font-size: 0.75rem;
             color: var(--dark-pink);
             font-weight: 700;
@@ -324,14 +291,11 @@
             animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        /* ==========================================
-           Profile Box
-        ========================================== */
         .profile-box {
             text-align: center;
         }
 
-        .profile-box__inner {
+        .profile-inner {
             display: inline-block;
             padding: 0.75rem 1.25rem;
             border-radius: 1rem;
@@ -343,9 +307,6 @@
             color: #374151;
         }
 
-        /* ==========================================
-           Link Card (Base)
-        ========================================== */
         .link-card {
             display: flex;
             align-items: center;
@@ -364,8 +325,7 @@
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
         }
 
-        /* Shine effect */
-        .link-card::after {
+                .link-card::after {
             content: '';
             position: absolute;
             top: 0;
@@ -383,12 +343,12 @@
         .link-card__left {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: .75rem;
             min-width: 0;
             flex: 1;
         }
 
-        .link-card__text {
+        .lc-text {
             display: flex;
             flex-direction: column;
             min-width: 0;
@@ -449,7 +409,7 @@
             white-space: nowrap;
         }
 
-        .link-card__play-btn {
+        .play-btn {
             font-size: 0.6875rem;
             font-weight: 700;
             padding: 0.25rem 0.75rem;
@@ -460,9 +420,6 @@
             white-space: nowrap;
         }
 
-        /* ==========================================
-           Card Variants
-        ========================================== */
         /* SHOWROOM */
         .card--showroom {
             background: linear-gradient(to right, #38bdf8, #8b5cf6, #ec4899);
@@ -601,11 +558,11 @@
             color: rgba(255,255,255,0.8);
             background: rgba(0,0,0,0.2);
         }
-        .card--14banchi .link-card__play-btn {
+        .card--14banchi .play-btn {
             background: rgba(255,255,255,0.1);
             color: #fff;
         }
-        .card--14banchi:hover .link-card__play-btn {
+        .card--14banchi:hover .play-btn {
             background: #fff;
             color: #312e81;
         }
@@ -625,11 +582,11 @@
             color: rgba(255,255,255,0.9);
             background: rgba(0,0,0,0.1);
         }
-        .card--piyo-adv .link-card__play-btn {
+        .card--piyo-adv .play-btn {
             background: #fff;
             color: #f97316;
         }
-        .card--piyo-adv:hover .link-card__play-btn {
+        .card--piyo-adv:hover .play-btn {
             transform: scale(1.05);
         }
 
@@ -644,17 +601,14 @@
             backdrop-filter: blur(8px);
         }
         .card--booth .link-card__label { color: rgba(255,255,255,0.8); }
-        .card--booth .link-card__play-btn {
+        .card--booth .play-btn {
             background: #fff;
             color: var(--dark-pink);
         }
-        .card--booth:hover .link-card__play-btn {
+        .card--booth:hover .play-btn { /* TODO: もうちょい大きく */
             transform: scale(1.05);
         }
 
-        /* ==========================================
-           PWA Advice Note
-        ========================================== */
         .pwa-note {
             margin: 0.75rem 1rem 0;
             padding: 0.75rem;
@@ -664,7 +618,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             backdrop-filter: blur(4px);
             display: flex;
-            gap: 0.75rem;
+            gap: .75rem;
             text-align: left;
         }
 
@@ -699,8 +653,7 @@
             font-weight: 700;
         }
 
-        /* PWA Guide (collapsible) */
-        .pwa-guide {
+                .pwa-guide {
             margin-top: 0.5rem;
         }
 
@@ -741,9 +694,6 @@
             color: #374151;
         }
 
-        /* ==========================================
-           NEXT LIVE Card
-        ========================================== */
         .next-live {
             background: linear-gradient(135deg, #fff5f7 0%, #fff0f6 50%, #fef3f2 100%);
             border: 2px solid var(--pink);
@@ -774,7 +724,7 @@
             letter-spacing: 0.1em;
             padding: 0.2rem 0.75rem;
             border-radius: 9999px;
-            margin-bottom: 0.75rem;
+            margin-bottom: .75rem;
         }
 
         .next-live__event {
@@ -788,7 +738,7 @@
             background: #fff;
             border: 1px solid rgba(255,183,197,0.4);
             border-radius: 0.75rem;
-            padding: 0.5rem 0.75rem;
+            padding: .5rem .75rem;
             text-align: center;
             min-width: 3.5rem;
             box-shadow: 0 2px 8px rgba(255,183,197,0.15);
@@ -830,13 +780,13 @@
         }
 
         .next-live__meta {
-            margin-top: 0.375rem;
-            font-size: 0.6875rem;
+            margin: .375rem 0 0;
+            font-size: .6875rem;
             color: #6b7280;
             line-height: 1.6;
         }
 
-        .next-live__meta-icon {
+        .nl-icon {
             display: inline-block;
             width: 0.875rem;
             text-align: center;
@@ -851,13 +801,10 @@
             color: #9ca3af;
         }
 
-        /* ==========================================
-           YouTube Embed (Multiple Videos)
-        ========================================== */
         .yt-grid {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: .75rem;
         }
 
         .yt-card__title {
@@ -870,9 +817,6 @@
             text-overflow: ellipsis;
         }
 
-        /* ==========================================
-           YouTube Embed (srcdoc lazy pattern)
-        ========================================== */
         .yt-embed {
             border-radius: 1rem;
             padding: 0.5rem;
@@ -896,9 +840,6 @@
             border: 0;
         }
 
-        /* ==========================================
-           Footer
-        ========================================== */
         .footer {
             margin-top: 3rem;
             text-align: center;
@@ -913,9 +854,6 @@
             animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        /* ==========================================
-           Animations
-        ========================================== */
         @keyframes blob-float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
@@ -931,21 +869,17 @@
             50% { opacity: 0.5; }
         }
 
-        /* Staggered fade-in with IntersectionObserver fallback */
-        .animate-on-scroll {
+                .fadein {
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease-out, transform 0.6s ease-out;
         }
 
-        .animate-on-scroll.is-visible {
+        .fadein.is-visible {
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* ==========================================
-           SVG Icons (inline, no Font Awesome needed)
-        ========================================== */
         .icon {
             width: 1em;
             height: 1em;
@@ -958,60 +892,50 @@
         .icon--md { width: 1.125rem; height: 1.125rem; }
         .icon--lg { width: 1.25rem; height: 1.25rem; }
 
-        /* ==========================================
-           Screen Reader Only
-        ========================================== */
         .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0,0,0,0) !important;
+            border: 0 !important;
         }
     </style>
 </head>
 <body>
 
-    <!-- Background Decoration -->
-    <div class="bg-decor" aria-hidden="true">
+        <div class="bg-decor" aria-hidden="true">
         <div class="blob blob--1"></div>
         <div class="blob blob--2"></div>
         <div class="blob blob--3"></div>
     </div>
 
-    <!-- Main Container -->
-    <main class="main-container">
-        
-        <!-- Hero Section -->
-        <section class="hero">
-            <!-- CSS-only fallback instead of placehold.co -->
-            <div class="hero__image-fallback" aria-hidden="true">🐥</div>
+        <main class="main-container">
+
+                <section class="hero">
+                        <div class="hero-fallback" aria-hidden="true">🐥</div>
             <img src="./shinomiya-piyo-maid-sendai.jpg" 
                  alt="四ノ宮ぴよ" 
                  class="hero__image"
                  onerror="this.style.display='none';">
-            
+
             <div class="hero__overlay">
                 <div class="glass-card hero__card">
                     <p class="hero__subtitle">144cmにゃんこひよこメイド</p>
                     <h1 class="hero__title">
-                        四ノ宮 ぴよ<span class="hero__emoji">🐥</span>
+                        四ノ宮 ぴよ<span style="font-size:1.25rem;margin-left:.25rem">🐥</span>
                     </h1>
                 </div>
             </div>
         </section>
 
-        <!-- Links Section -->
-        <section class="links-section">
-            
-            <!-- Profile -->
-            <div class="profile-box animate-on-scroll">
+                <section class="links-section">
+
+                        <div class="profile-box fadein">
                 <h2 class="sr-only">Profile</h2>
-                <div class="glass-card profile-box__inner">
+                <div class="glass-card profile-inner">
                     <p>
                         144cmひよこのぴよちゃんです🐥<br>
                         仙台でメイドさんしたり🎀<br>
@@ -1020,35 +944,15 @@
                 </div>
             </div>
 
-            <!-- ===========================
-                 NEXT LIVE
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">NEXT LIVE</h3>
-                    <p class="section-sub">ぴよに会いに来てね♡</p>
+                    <p class="stxt">ぴよに会いに来てね♡</p>
                 </div>
 
-                <!-- 
-                    ================================================
-                    [更新方法]
-                    ライブ情報が決まったら下記を編集してください。
-                    - next-live__month : 月（例: MAR）
-                    - next-live__day   : 日（例: 22）
-                    - next-live__dow   : 曜日（例: SUN）
-                    - next-live__title : イベント名
-                    - 📍の後 : 会場名
-                    - 🕐の後 : 時間
-                    - その他 : 備考（任意）
-                    
-                    予定がない時は <div class="next-live__event">...</div> を
-                    <p class="next-live__empty">次回ライブ情報は決まり次第お知らせします🐥</p>
-                    に差し替えてください。
-                    ================================================
-                -->
                 <div class="next-live">
                     <span class="next-live__badge">🎤 UPCOMING</span>
-                    
+
                     <div class="next-live__event">
                         <div class="next-live__date-box">
                             <div class="next-live__month">MAR</div>
@@ -1058,33 +962,29 @@
                         <div class="next-live__info">
                             <p class="next-live__title">おにゃんこぽん vol.11 🏯<br>〜青葉城で伊達な萌宴〜</p>
                             <div class="next-live__meta">
-                                <span class="next-live__meta-icon">📍</span>青葉城<br>
-                                <span class="next-live__meta-icon">🕐</span>10:00〜18:30（ライブ 12:15〜）<br>
-                                <span class="next-live__meta-icon">🎀</span>ぴよも出演します！
+                                <span class="nl-icon">📍</span>青葉城<br>
+                                <span class="nl-icon">🕐</span>10:00〜18:30（ライブ 12:15〜）<br>
+                                <span class="nl-icon">🎀</span>ぴよも出演します！
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ===========================
-                 LIVE STREAMING
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">LIVE STREAMING</h3>
-                    <p class="section-sub">遊びに来てね♡</p>
+                    <p class="stxt">遊びに来てね♡</p>
                 </div>
 
-                <!-- SHOWROOM -->
-                <a href="https://www.showroom-live.com/r/piyopiyotoroom" target="_blank" rel="noopener noreferrer me"
+                                <a href="https://www.showroom-live.com/r/piyopiyotoroom" target="_blank" rel="noopener noreferrer me"
                    onclick="trackClick('SHOWROOM')"
                    class="link-card card--showroom">
                     <div class="link-card__left">
                         <div class="link-card__icon">
                             <img src="./Showroom.png" alt="SHOWROOM">
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">SHOWROOM 毎日配信中！</span>
                             <span class="link-card__name">ぴよぴよっとるーむ 💭</span>
                         </div>
@@ -1093,24 +993,20 @@
                 </a>
             </div>
 
-            <!-- ===========================
-                 SNS
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">SNS</h3>
-                    <p class="section-sub">フォローしてね♡</p>
+                    <p class="stxt">フォローしてね♡</p>
                 </div>
 
-                <!-- X (Twitter) -->
-                <a href="https://x.com/piyopiyoo_nyan" target="_blank" rel="noopener noreferrer me"
+                                <a href="https://x.com/piyopiyoo_nyan" target="_blank" rel="noopener noreferrer me"
                    onclick="trackClick('Twitter')"
                    class="link-card card--x">
                     <div class="link-card__left">
                         <div class="link-card__icon">
                             <svg class="icon--md" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">OFFICIAL X</span>
                             <span class="link-card__name">最新情報 & シフト 🗓️</span>
                         </div>
@@ -1118,8 +1014,7 @@
                     <svg class="link-card__arrow icon--sm" viewBox="0 0 320 512"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg>
                 </a>
 
-                <!-- Instagram -->
-                <a href="https://www.instagram.com/pipipi_yoo/" target="_blank" rel="noopener noreferrer me"
+                                <a href="https://www.instagram.com/pipipi_yoo/" target="_blank" rel="noopener noreferrer me"
                    onclick="trackClick('Instagram')"
                    class="link-card card--instagram">
                     <div class="card__inner">
@@ -1127,7 +1022,7 @@
                             <div class="link-card__icon">
                                 <svg class="icon--md" viewBox="0 0 448 512" fill="currentColor"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
                             </div>
-                            <div class="link-card__text">
+                            <div class="lc-text">
                                 <span class="link-card__label">Instagram</span>
                                 <span class="link-card__name">日常の一枚 & 自撮り 📸</span>
                             </div>
@@ -1136,8 +1031,7 @@
                     </div>
                 </a>
 
-                <!-- TikTok -->
-                <a href="https://www.tiktok.com/@pipipi_yoo" target="_blank" rel="noopener noreferrer me"
+                                <a href="https://www.tiktok.com/@pipipi_yoo" target="_blank" rel="noopener noreferrer me"
                    onclick="trackClick('TikTok')"
                    class="link-card card--tiktok">
                     <div class="card__inner">
@@ -1145,7 +1039,7 @@
                             <div class="link-card__icon">
                                 <svg class="icon--md" viewBox="0 0 448 512" fill="currentColor" style="position:relative;z-index:1"><path d="M448 209.9a210.1 210.1 0 01-122.8-39.3v178.8A162.6 162.6 0 11185 188.3v89.9a74.6 74.6 0 1052.2 71.2V0h88a121 121 0 00.8 20.3A122.7 122.7 0 00448 109.8z"/></svg>
                             </div>
-                            <div class="link-card__text">
+                            <div class="lc-text">
                                 <span class="link-card__label">TikTok</span>
                                 <span class="link-card__name">ダンシングぴよ 🎵</span>
                             </div>
@@ -1154,15 +1048,14 @@
                     </div>
                 </a>
 
-                <!-- YouTube -->
-                <a href="https://www.youtube.com/@%E5%9B%9B%E3%83%8E%E5%AE%AE%E3%81%B4%E3%82%88" target="_blank" rel="noopener noreferrer me"
+                                <a href="https://www.youtube.com/@%E5%9B%9B%E3%83%8E%E5%AE%AE%E3%81%B4%E3%82%88" target="_blank" rel="noopener noreferrer me"
                    onclick="trackClick('YouTube')"
                    class="link-card card--youtube">
                     <div class="link-card__left">
                         <div class="link-card__icon">
                             <svg class="icon--md" viewBox="0 0 576 512" fill="currentColor"><path d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.3-48.6C458.8 64 288 64 288 64S117.2 64 74.6 75.5c-23.5 6.3-42 24.9-48.3 48.6-11.4 42.9-11.4 132.3-11.4 132.3s0 89.4 11.4 132.3c6.3 23.7 24.8 41.5 48.3 47.8C117.2 448 288 448 288 448s170.8 0 213.4-11.5c23.5-6.3 42-24.2 48.3-47.8 11.4-42.9 11.4-132.3 11.4-132.3s0-89.4-11.4-132.3zm-317.5 213.5V175.2l142.7 81.2-142.7 81.2z"/></svg>
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">YouTube Channel</span>
                             <span class="link-card__name">ライブ映像 & パフォーマンス 🎤</span>
                         </div>
@@ -1171,25 +1064,20 @@
                 </a>
             </div>
 
-            <!-- ===========================
-                 メイドカフェ
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">メイドカフェ</h3>
-                    <p class="section-sub">ぴよに会える♡</p>
+                    <p class="stxt">ぴよに会える♡</p>
                 </div>
 
-                <!-- Maid Cafe -->
-                <a href="https://nyanpontan.com/" target="_blank" rel="noopener noreferrer"
+                                <a href="https://nyanpontan.com/" target="_blank" rel="noopener noreferrer"
                    onclick="trackClick('MaidCafe')"
                    class="link-card card--maid">
                     <div class="link-card__left">
                         <div class="link-card__icon">
-                            <!-- Paw icon -->
                             <svg class="icon--md" viewBox="0 0 512 512" fill="currentColor"><path d="M226.5 92.9c14.3 42.9-.3 86.2-32.6 96.8s-70.1-15.6-84.4-58.5.3-86.2 32.6-96.8 70.1 15.6 84.4 58.5zM100.4 198.6c18.9 32.4 14.3 70.1-10.2 84.1s-59.7-.9-78.5-33.3S-2.7 179.3 21.8 165.3s59.7.9 78.6 33.3zM69.2 401.2C121.6 259.9 214.7 224 256 224s134.4 35.9 186.8 177.2c3.6 9.7 5.2 20.1 5.2 30.5v1.6c0 25.8-20.9 46.7-46.7 46.7-11.5 0-22.9-1.4-34-4.2l-88-22c-15.3-3.8-31.3-3.8-46.6 0l-88 22c-11.1 2.8-22.5 4.2-34 4.2-25.8 0-46.7-20.9-46.7-46.7v-1.6c0-10.4 1.6-20.8 5.2-30.5zM512 256c0 .9 0 1.8 0 2.7-7.4-43.1-47.8-75.4-95.4-75.4-53 0-96 42.1-96 94s43 94 96 94c47.6 0 88-32.4 95.4-75.4 0 .9 0 1.8 0 2.7-2.1 41-37.4 73.7-78.4 73.7 0 0 0 0 0 0h0c-57.8 0-104.7-46-104.7-102.7V256c0-56.7 46.9-102.7 104.7-102.7h0c41 0 76.3 32.7 78.4 73.7zM411.6 198.6c18.9-32.4 54.2-57.7 78.5-33.3s29.1 51.7 10.2 84.1-54.2 57.7-78.5 33.3-29.1-51.7-10.2-84.1zM285.5 92.9c14.3-42.9 51.7-66.3 84.4-58.5s46.9 53.9 32.6 96.8-51.7 66.3-84.4 58.5-46.9-53.9-32.6-96.8z"/></svg>
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">仙台メイドカフェ</span>
                             <span class="link-card__name">にゃんぽんたん ☕</span>
                         </div>
@@ -1198,16 +1086,12 @@
                 </a>
             </div>
 
-            <!-- ===========================
-                 ゲーム
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">ゲーム</h3>
-                    <p class="section-sub">ぴよがゲームになったよ♡</p>
-                    
-                    <!-- PWA Advice (Collapsible Guide) -->
-                    <div class="pwa-note">
+                    <p class="stxt">ぴよがゲームになったよ♡</p>
+
+                                        <div class="pwa-note">
                         <div class="pwa-note__icon">📱</div>
                         <div>
                             <p class="pwa-note__title">全画面で遊ぶコツ✨</p>
@@ -1228,8 +1112,7 @@
                     </div>
                 </div>
 
-                <!-- GAME: 14番地 -->
-                <a href="https://shinomiyapiyo.github.io/games/14banchi/index.html" target="_blank" rel="noopener noreferrer"
+                                <a href="https://shinomiyapiyo.github.io/games/14banchi/index.html" target="_blank" rel="noopener noreferrer"
                    onclick="trackClick('Game_14Banchi')"
                    class="link-card card--14banchi">
                     <div class="link-card__left">
@@ -1238,17 +1121,16 @@
                                  alt="14番地 Icon"
                                  onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=&quot;font-size:1.5rem&quot;>👻</span>';">
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">新作スマホゲーム</span>
                             <span class="link-card__name">14番地</span>
                             <span class="link-card__badge">👻 新作ゲーム公開中</span>
                         </div>
                     </div>
-                    <span class="link-card__play-btn">Play</span>
+                    <span class="play-btn">Play</span>
                 </a>
 
-                <!-- GAME: Piyo Adventure -->
-                <a href="https://shinomiyapiyo.github.io/games/piyo-adventure/index.html" target="_blank" rel="noopener noreferrer"
+                                <a href="https://shinomiyapiyo.github.io/games/piyo-adventure/index.html" target="_blank" rel="noopener noreferrer"
                    onclick="trackClick('Game_PiyoAdventure')"
                    class="link-card card--piyo-adv">
                     <div class="link-card__left">
@@ -1257,54 +1139,46 @@
                                  alt="ぴよ氏の冒険 Icon"
                                  onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=&quot;font-size:1.5rem&quot;>🐥</span>';">
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">スマホゲーム</span>
                             <span class="link-card__name">ぴよ氏の冒険</span>
                             <span class="link-card__badge">📱 ホーム画面追加でアプリ化</span>
                         </div>
                     </div>
-                    <span class="link-card__play-btn">Play!</span>
+                    <span class="play-btn">Play!</span>
                 </a>
             </div>
 
-            <!-- ===========================
-                 通販
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">通販</h3>
-                    <p class="section-sub">お迎えしてね♡</p>
+                    <p class="stxt">お迎えしてね♡</p>
                 </div>
 
-                <!-- BOOTH -->
-                <a href="https://booth.pm/ja/items/5859689" target="_blank" rel="noopener noreferrer"
+                                <a href="https://booth.pm/ja/items/5859689" target="_blank" rel="noopener noreferrer"
                    onclick="trackClick('BOOTH')"
                    class="link-card card--booth">
                     <div class="link-card__left">
                         <div class="link-card__icon">
                             <svg class="icon--md" viewBox="0 0 576 512" fill="currentColor"><path d="M547.6 103.8L490.3 13.1C485.2 5 476.1 0 466.4 0H109.6C99.9 0 90.8 5 85.7 13.1L28.3 103.8c-29.6 49.8-2.4 114.2 53 121.6V480c0 17.7 14.3 32 32 32h348c17.7 0 32-14.3 32-32V225.4c56.1-7.5 82.8-72 53.3-121.6zM403.7 64l26.5 44.1c3.7 6.2 5.8 13.1 5.8 20.1 0 21.8-17.7 39.5-39.5 39.5-21.8 0-39.5-17.7-39.5-39.5 0-7 2.1-13.9 5.8-20.1L389 64h14.7zm-187.4 0h44.1l26.5 44.1c3.7 6.2 5.8 13.1 5.8 20.1 0 21.8-17.7 39.5-39.5 39.5-21.8 0-39.5-17.7-39.5-39.5 0-7 2.1-13.9 5.8-20.1L216.3 64zm-72.7 0h14.7l26.5 44.1c3.7 6.2 5.8 13.1 5.8 20.1 0 21.8-17.7 39.5-39.5 39.5S113.6 150 113.6 128.2c0-7 2.1-13.9 5.8-20.1L143.6 64zM80.1 128.2c0-7 2.1-13.9 5.8-20.1L112.4 64H96L42.9 108.1c-8.6 14.4-1.6 33.5 14.4 37.5 18.7 4.7 22.8-17.4 22.8-17.4zM160 448V256h80v192h-80zm256 0h-128V240c0-8.8-7.2-16-16-16H144c-8.8 0-16 7.2-16 16v208h-16V236c37.7-4.5 61.4-37.1 57.6-67.7C196.1 142.3 225 120 256.2 120c31.1 0 60 22.3 86.6 48.3-3.8 30.6 19.9 63.2 57.6 67.7V448h-16zM533.1 108.1L480 64h-16.4l26.5 44.1c3.7 6.2 5.8 13.1 5.8 20.1 0 0 4.1 22.1 22.8 17.4 16-4 23-23.1 14.4-37.5z"/></svg>
                         </div>
-                        <div class="link-card__text">
+                        <div class="lc-text">
                             <span class="link-card__label">ONLINE SHOP</span>
                             <span class="link-card__name">通販チェキ & 限定グッズ 🎁</span>
                         </div>
                     </div>
-                    <span class="link-card__play-btn">Check!</span>
+                    <span class="play-btn">Check!</span>
                 </a>
             </div>
 
-            <!-- ===========================
-                 MOVIE (YouTube Embed x3)
-            ============================ -->
-            <div class="category-group animate-on-scroll">
-                <div class="category-header">
+            <div class="cat-group fadein">
+                <div class="cat-hd">
                     <h3 class="section-title">MOVIE</h3>
-                    <p class="section-sub">歌ってみた & ライブ映像 🎤</p>
+                    <p class="stxt">歌ってみた & ライブ映像 🎤</p>
                 </div>
 
                 <div class="yt-grid">
-                    <!-- Video 1 -->
-                    <div class="glass-card yt-embed">
+                                        <div class="glass-card yt-embed">
                         <div class="yt-embed__wrapper">
                             <iframe 
                                 srcdoc="<style>*{padding:0;margin:0;overflow:hidden}html,body{height:100%}img,span{position:absolute;width:100%;top:0;bottom:0;margin:auto}span{height:1.5em;text-align:center;font:48px/1.5 sans-serif;color:white;text-shadow:0 0 0.5em black}</style><a href=https://www.youtube.com/embed/IatNnVjM3N4?autoplay=1><img src=https://i.ytimg.com/vi/IatNnVjM3N4/hqdefault.jpg alt='YouTube Video'><span>▶</span></a>"
@@ -1315,8 +1189,7 @@
                         </div>
                     </div>
 
-                    <!-- Video 2 -->
-                    <div class="glass-card yt-embed">
+                                        <div class="glass-card yt-embed">
                         <div class="yt-embed__wrapper">
                             <iframe 
                                 srcdoc="<style>*{padding:0;margin:0;overflow:hidden}html,body{height:100%}img,span{position:absolute;width:100%;top:0;bottom:0;margin:auto}span{height:1.5em;text-align:center;font:48px/1.5 sans-serif;color:white;text-shadow:0 0 0.5em black}</style><a href=https://www.youtube.com/embed/dFX2u91B1AI?autoplay=1><img src=https://i.ytimg.com/vi/dFX2u91B1AI/hqdefault.jpg alt='YouTube Video'><span>▶</span></a>"
@@ -1327,8 +1200,7 @@
                         </div>
                     </div>
 
-                    <!-- Video 3 -->
-                    <div class="glass-card yt-embed">
+                                        <div class="glass-card yt-embed">
                         <div class="yt-embed__wrapper">
                             <iframe 
                                 srcdoc="<style>*{padding:0;margin:0;overflow:hidden}html,body{height:100%}img,span{position:absolute;width:100%;top:0;bottom:0;margin:auto}span{height:1.5em;text-align:center;font:48px/1.5 sans-serif;color:white;text-shadow:0 0 0.5em black}</style><a href=https://www.youtube.com/embed/mXl84vrefPA?autoplay=1><img src=https://i.ytimg.com/vi/mXl84vrefPA/hqdefault.jpg alt='YouTube Video'><span>▶</span></a>"
@@ -1343,25 +1215,21 @@
 
         </section>
 
-        <!-- Footer (dynamic year) -->
-        <footer class="footer animate-on-scroll">
+                <footer class="footer fadein">
             <div class="footer__heart">❤</div>
             <p>&copy; <span id="js-year"></span> Shinomiya Piyo. All Rights Reserved.</p>
         </footer>
 
     </main>
 
-    <!-- ==========================================
-         Minimal JS: IntersectionObserver + Dynamic Year
-    ========================================== -->
     <script>
         // Dynamic copyright year
         document.getElementById('js-year').textContent = new Date().getFullYear();
 
         // Scroll-triggered fade-in animations
         if ('IntersectionObserver' in window) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
                         observer.unobserve(entry.target);
@@ -1369,12 +1237,12 @@
                 });
             }, { threshold: 0.1 });
 
-            document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+            document.querySelectorAll('.fadein').forEach(function(el) {
                 observer.observe(el);
             });
         } else {
             // Fallback: show everything immediately
-            document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+            document.querySelectorAll('.fadein').forEach(function(el) {
                 el.classList.add('is-visible');
             });
         }
