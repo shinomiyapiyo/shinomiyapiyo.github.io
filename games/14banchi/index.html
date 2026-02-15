@@ -29,6 +29,7 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 <body>
 <div id="rb"><div class="ic">📱</div><div class="mg">スマホを横に回転させてください</div><div class="sb">ロック画面を解除して<br>横画面でプレイしてください<br><br>※ホーム画面に追加でアプリ化</div></div>
 <canvas id="gc"></canvas>
+<a id="xlink" href="https://x.com/nullpo_games" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:none;position:fixed;bottom:8px;right:12px;color:#8899AA;font-size:10px;font-family:sans-serif;text-decoration:none;z-index:10;background:rgba(0,0,0,0.4);padding:2px 10px;border-radius:8px">𝕏 @nullpo_games</a>
 <script>
 'use strict';
 const C=document.getElementById('gc'),X=C.getContext('2d');
@@ -838,8 +839,7 @@ function dTitle(){
     X.fillText(labels[i][0],tx,by+btnH/2+5);
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
-  X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.93);
-  X.fillStyle='#8899AA';X.font='10px sans-serif';X.fillText('X (Twitter): @nullpo_games',W/2,H*0.96);
+  X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
   X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.76',W/2,H*0.99);
 }
 
@@ -1240,6 +1240,8 @@ function dGameOver(){
 }
 
 function render(){
+  const xl=document.getElementById('xlink');
+  if(xl)xl.style.display=(gs==='title'||gs==='tap')?'block':'none';
   X.clearRect(0,0,W,H);
   if(gs==='tap'){dTap();return}
   if(gs==='title'){dTitle();return}if(gs==='clear'){dClear();return}
