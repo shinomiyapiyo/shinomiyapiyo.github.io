@@ -42,15 +42,13 @@
             body::before {
                 content: "🔓 画面ロックを解除して\A🔄🌚画面を横向きにするンゴ🌝";
                 position: fixed;
-                top: 0; left: 0; right: 0; bottom: 0;
-                width: 100%; height: 100%;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100vw; height: 100vh;
                 background: linear-gradient(135deg, #ffb6c1, #ffc0cb, #ff69b4);
                 color: #fff;
                 font-size: 5vw;
                 font-weight: bold;
-                display: flex;
-                align-items: center;
-                justify-content: center;
                 z-index: 9999;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
                 text-align: center;
@@ -58,6 +56,10 @@
                 white-space: pre-wrap;
                 line-height: 1.8;
                 margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
             }
             #gameContainer { display: none; }
         }
@@ -468,7 +470,7 @@
                 <span style="font-size: 1.0vw; opacity: 0.8; font-weight: normal;">LastUpDate 2026/02/15</span>
                 <a href="https://x.com/nullpo_games" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: none; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;"
-                   onclick="event.stopPropagation();">
+                   onclick="event.stopPropagation();" ontouchend="event.stopPropagation();">
                     <span style="font-size: 1.2vw;">𝕏</span> @nullpo_games
                 </a>
             </div>
@@ -895,6 +897,7 @@ function startApp() {
 function handleTitleScreenClick(e) {
     if (e.target.closest('#titleButtons')) return;
     if (e.target.classList.contains('game-button')) return;
+    if (e.target.closest('a')) return;
     startGame();
 }
 
@@ -2205,6 +2208,7 @@ function initialize() {
     startScreen.addEventListener('touchend', function(e) {
         if (e.target.closest('#titleButtons')) return;
         if (e.target.classList.contains('game-button')) return;
+        if (e.target.closest('a')) return;
         e.preventDefault();
         startGame();
     });
