@@ -40,13 +40,13 @@
         /* --- 縦画面警告 (修正済み) --- */
         @media screen and (orientation: portrait) {
             body::before {
-                /* 改行コード \A を使用 */
                 content: "🔓 画面ロックを解除して\A🔄🌚画面を横向きにするンゴ🌝";
                 position: fixed;
-                top: 0; left: 0; width: 100%; height: 100%;
+                top: 0; left: 0; right: 0; bottom: 0;
+                width: 100%; height: 100%;
                 background: linear-gradient(135deg, #ffb6c1, #ffc0cb, #ff69b4);
                 color: #fff;
-                font-size: 5vw; /* 少しサイズを調整して収まりよく */
+                font-size: 5vw;
                 font-weight: bold;
                 display: flex;
                 align-items: center;
@@ -55,8 +55,9 @@
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
                 text-align: center;
                 padding: 20px;
-                white-space: pre-wrap; /* 改行を有効化 */
-                line-height: 1.5;      /* 行間を広げる */
+                white-space: pre-wrap;
+                line-height: 1.8;
+                margin: 0;
             }
             #gameContainer { display: none; }
         }
@@ -463,8 +464,13 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.05</span>
-                <span style="font-size: 1.0vw; opacity: 0.8; font-weight: normal;">LastUpDate 2026/02/09</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.06</span>
+                <span style="font-size: 1.0vw; opacity: 0.8; font-weight: normal;">LastUpDate 2026/02/15</span>
+                <a href="https://x.com/nullpo_games" target="_blank" rel="noopener"
+                   style="color: #fff; font-size: 1.0vw; text-decoration: none; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;"
+                   onclick="event.stopPropagation();">
+                    <span style="font-size: 1.2vw;">𝕏</span> @nullpo_games
+                </a>
             </div>
 
             <div id="titleButtons" style="
@@ -553,13 +559,16 @@
                 color: #fff; font-size: 2.5vw;
                 -webkit-overflow-scrolling: touch;
                 touch-action: pan-y; overscroll-behavior: contain;">
-                <div style="color: #ffd700; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 3vw;">最終更新日: 2026/02/09</div>
+                <div style="color: #ffd700; font-weight: bold; margin-bottom: 15px; text-align: center; font-size: 3vw;">最終更新日: 2026/02/15</div>
                 <div style="color: #fff; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 直近の更新内容</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• Xサポートアカウント(@nullpo_games)をタイトル画面に追加</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• 縦画面警告のセンタリング表示を修正</div>
+                <div style="margin-bottom: 8px; padding-left: 5px;">• ホーム画面追加時の表示名を「ぴよ氏の冒険」に変更</div>
+                <div style="color: #fff; font-weight: bold; margin: 15px 0 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 過去の更新内容</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• ランキング送信エラーの修正（Firebase書き込み処理改善）</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• エラー発生時の詳細メッセージ表示を追加</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• 縦画面警告の表示修正（見切れ対策・文言追加）</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• タイトル画面UIの配置調整（重複回避）</div>
-                <div style="color: #fff; font-weight: bold; margin: 15px 0 10px; border-bottom: 1px solid #8a2be2; padding-bottom: 5px;">📝 過去の更新内容</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• PWA設定の修正（iOS対応）</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• タイトル画像の表示バグ修正（スマホ最適化）</div>
                 <div style="margin-bottom: 8px; padding-left: 5px;">• コード全体のリファクタリング・バグ修正</div>
@@ -647,7 +656,7 @@ const SPEED_UP_RATE       = 0.20;  // 20%ずつ
 const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
-const CURRENT_VERSION     = '1.04';
+const CURRENT_VERSION     = '1.06';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
