@@ -1,4 +1,4 @@
-const CACHE_NAME = '14banchi-v076';
+const CACHE_NAME = '14banchi-v079';
 const ASSETS = [
   './',
   './index.html',
@@ -20,7 +20,8 @@ const ASSETS = [
   './14th Block Ranking.mp3',
   './go.mp3',
   './miss.mp3',
-  './quake.mp3'
+  './quake.mp3',
+  './heart.mp3'
 ];
 
 self.addEventListener('install', e => {

@@ -18,59 +18,94 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;
 --sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
 canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
-#rb{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px;color:#FFD700;font-family:sans-serif;text-align:center}
-#rb .ic{font-size:60px;animation:ra 2s ease-in-out infinite}
-#rb .mg{font-size:18px;font-weight:bold}
-#rb .sb{font-size:13px;color:#998866}
+#rb{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#FFD700;font-family:sans-serif;text-align:center}
+#rb .ic{font-size:56px;animation:ra 2s ease-in-out infinite}
+#rb .mg{font-size:17px;font-weight:bold}
 @keyframes ra{0%,100%{transform:rotate(0deg)}50%{transform:rotate(90deg)}}
 @media(orientation:portrait){#rb{display:flex}}
 </style>
 </head>
 <body>
-<div id="rb"><div class="ic">📱</div><div class="mg">スマホを横に回転させてください</div><div class="sb">ロック画面を解除して<br>横画面でプレイしてください<br><br>※ホーム画面に追加でアプリ化</div></div>
+<div id="rb"><div class="ic">📱</div><div class="mg">横向きにしてプレイしてください</div></div>
 <canvas id="gc"></canvas>
-<a id="xlink" href="https://x.com/nullpo_works" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:none;position:fixed;bottom:8px;right:12px;color:#8899AA;font-size:10px;font-family:sans-serif;text-decoration:none;z-index:10;background:rgba(0,0,0,0.4);padding:2px 10px;border-radius:8px">𝕏 @nullpo_works</a>
 <script>
 'use strict';
 const C=document.getElementById('gc'),X=C.getContext('2d');
-let W,H;
+let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
   const s=getComputedStyle(document.documentElement);
-  const sal=parseFloat(s.getPropertyValue('--sal'))||0;
-  const sar=parseFloat(s.getPropertyValue('--sar'))||0;
-  const sat=parseFloat(s.getPropertyValue('--sat'))||0;
-  const sab=parseFloat(s.getPropertyValue('--sab'))||0;
-  W=window.innerWidth-sal-sar;
-  H=window.innerHeight-sat-sab;
+  saL=parseFloat(s.getPropertyValue('--sal'))||0;
+  saR=parseFloat(s.getPropertyValue('--sar'))||0;
+  saT=parseFloat(s.getPropertyValue('--sat'))||0;
+  saB=parseFloat(s.getPropertyValue('--sab'))||0;
+  W=window.innerWidth-saL-saR;
+  H=window.innerHeight-saT-saB;
   C.width=W;C.height=H;
 }
 resize();window.addEventListener('resize',resize);
 
-const titleImg=new Image();titleImg.src='piyo01.png';let imgOk=false;titleImg.onload=()=>{imgOk=true};
-const deathImg=new Image();deathImg.src='piyo02.png';let deathImgOk=false;deathImg.onload=()=>{deathImgOk=true};
-const clearImg=new Image();clearImg.src='piyo03.png';let clearImgOk=false;clearImg.onload=()=>{clearImgOk=true};
+// Lock to landscape orientation (works in supported WebViews/browsers)
+try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}
+
+function loadImg(src){const img=new Image();img.src=src;img.onerror=()=>{console.warn('Image load failed: '+src);};return img;}
+const titleImg=loadImg('piyo01.png');let imgOk=false;titleImg.onload=()=>{imgOk=true};
+const deathImg=loadImg('piyo02.png');let deathImgOk=false;deathImg.onload=()=>{deathImgOk=true};
+const clearImg=loadImg('piyo03.png');let clearImgOk=false;clearImg.onload=()=>{clearImgOk=true};
 
 // === SPRITES ===
 const SPR={};
-SPR['walk_0']=new Image();SPR['walk_0'].src='player_walk1.png';
-SPR['stand']=new Image();SPR['stand'].src='player_stand.png';
-SPR['walk_2']=new Image();SPR['walk_2'].src='player_walk2.png';
-SPR['thug']=new Image();SPR['thug'].src='thug.png';
-SPR['creep']=new Image();SPR['creep'].src='creep.png';
-SPR['wizard']=new Image();SPR['wizard'].src='wizard.png';
+SPR['walk_0']=loadImg('player_walk1.png');
+SPR['stand']=loadImg('player_stand.png');
+SPR['walk_2']=loadImg('player_walk2.png');
+SPR['thug']=loadImg('thug.png');
+SPR['creep']=loadImg('creep.png');
+SPR['wizard']=loadImg('wizard.png');
+
+// Pre-generate red-tinted sprites for runnerPiyo (avoid runtime creation & memory leak)
+const RED_SPR={};
+function initRedSprites(){
+  const keys=['walk_0','stand','walk_2'];
+  let pending=keys.length;
+  keys.forEach(k=>{
+    const img=SPR[k];
+    function tryGen(){
+      if(!img.complete||!img.naturalWidth||!img.naturalHeight){pending--;return;}
+      const oc=document.createElement('canvas');
+      oc.width=img.naturalWidth;oc.height=img.naturalHeight;
+      const ox=oc.getContext('2d');
+      ox.drawImage(img,0,0);
+      const id=ox.getImageData(0,0,oc.width,oc.height);
+      const d=id.data;
+      for(let p=0;p<d.length;p+=4){
+        if(d[p+3]<10)continue;
+        d[p]=Math.min(255,d[p]+60);
+        d[p+1]=Math.max(0,d[p+1]-70);
+        d[p+2]=Math.min(255,d[p+2]+10);
+      }
+      ox.putImageData(id,0,0);
+      RED_SPR[k]=oc;
+    }
+    if(img.complete&&img.naturalWidth)tryGen();
+    else img.addEventListener('load',tryGen,{once:true});
+  });
+}
+initRedSprites();
 
 const WALK_R=['walk_0','stand','walk_2','stand'];
 const WALK_L=['walk_0','stand','walk_2','stand'];
 
 // === BGM ===
-const bgmTitle=new Audio('14th Block Title.mp3');bgmTitle.loop=true;bgmTitle.preload='auto';
-const bgmStage=new Audio('14th Block Stage.mp3');bgmStage.loop=true;bgmStage.preload='auto';
-const bgmGoal=new Audio('14th Block Goal.mp3');bgmGoal.loop=false;bgmGoal.preload='auto';
-const bgmDeath=new Audio('14th Block Death.mp3');bgmDeath.loop=false;bgmDeath.preload='auto';
-const bgmRanking=new Audio('14th Block Ranking.mp3');bgmRanking.loop=true;bgmRanking.preload='auto';
+function loadBgm(src,loop){const a=new Audio(src);a.loop=loop;a.preload='auto';a.onerror=()=>{console.warn('BGM load failed: '+src)};return a;}
+const bgmTitle=loadBgm('14th Block Title.mp3',true);
+const bgmStage=loadBgm('14th Block Stage.mp3',true);
+const bgmGoal=loadBgm('14th Block Goal.mp3',false);
+const bgmDeath=loadBgm('14th Block Death.mp3',false);
+const bgmRanking=loadBgm('14th Block Ranking.mp3',true);
 let curBgm=null;
 let audioUnlocked=false;
-let deathTimer=0;const DEATH_FADE=90;const DEATH_BGM_DELAY=180;
+let audioMuted=false;// BGM+SE mute toggle (persisted)
+try{audioMuted=localStorage.getItem('14b_mute')==='1'}catch(e){}
+let deathTimer=0;const DEATH_FADE=90;const DEATH_BGM_DELAY=90;
 
 // === GAME MODE ===
 let gameMode='normal'; // 'normal' or 'challenge'
@@ -98,7 +133,9 @@ async function loadRanking(){
   rankData=[];rankLoaded=false;
   if(db){
     try{
-      const snap=await db.collection('rankings').orderBy('score','desc').limit(10).get();
+      const timeout=new Promise((_,rej)=>setTimeout(()=>rej('timeout'),5000));
+      const query=db.collection('rankings').orderBy('score','desc').limit(10).get();
+      const snap=await Promise.race([query,timeout]);
       snap.forEach(d=>{const v=d.data();rankData.push({name:v.name,score:v.score,hall:v.hall||false})});
     }catch(e){}
   }
@@ -142,13 +179,30 @@ function ensureACtx(){
   return actx;
 }
 
+async function fetchAudioSafe(url){
+  // Try fetch first (works on http/https), then XHR (works on file:// in some browsers)
+  try{
+    const res=await fetch(url);
+    if(!res.ok)throw new Error(res.status);
+    return res.arrayBuffer();
+  }catch(e){}
+  return new Promise((resolve,reject)=>{
+    try{
+      const xhr=new XMLHttpRequest();
+      xhr.open('GET',url,true);xhr.responseType='arraybuffer';
+      xhr.onload=()=>{if(xhr.response&&xhr.response.byteLength>0)resolve(xhr.response);else reject(new Error('XHR empty'))};
+      xhr.onerror=()=>reject(new Error('XHR failed: '+url));
+      xhr.send();
+    }catch(e2){reject(e2)}
+  });
+}
+let seLoadAttempts=0;
 async function loadAllSE(){
   if(seLoaded)return;
   const ac=ensureACtx();if(!ac)return;
+  seLoadAttempts++;
   try{
-    const [goRes,missRes,quakeRes]=await Promise.all([fetch('go.mp3'),fetch('miss.mp3'),fetch('quake.mp3')]);
-    const [goArr,missArr,quakeArr]=await Promise.all([goRes.arrayBuffer(),missRes.arrayBuffer(),quakeRes.arrayBuffer()]);
-    // FIX: use Promise-based decodeAudioData only (remove duplicate callback pattern)
+    const [goArr,missArr,quakeArr]=await Promise.all([fetchAudioSafe('go.mp3'),fetchAudioSafe('miss.mp3'),fetchAudioSafe('quake.mp3')]);
     seBufs['go']=await ac.decodeAudioData(goArr);
     seBufs['miss']=await ac.decodeAudioData(missArr);
     seBufs['quake']=await ac.decodeAudioData(quakeArr);
@@ -159,7 +213,16 @@ async function loadAllSE(){
     for(let i=0;i<fFrames;i++){const t=i/fRate;const env=Math.min(t*2,1)*Math.max(0,1-t/fLen);fD[i]=env*(Math.sin(t*55*Math.PI*2)*0.3+Math.sin(t*82.5*Math.PI*2)*0.15+Math.sin(t*110*Math.PI*2)*0.1)*0.8}
     seBufs['foghorn']=fBuf;
     seLoaded=true;
-  }catch(e){seLoaded=false}
+  }catch(e){
+    console.warn('SE load failed (attempt '+seLoadAttempts+'):', e.message||e);
+    seLoaded=false;
+    if(seLoadAttempts<3){setTimeout(loadAllSE,1000*seLoadAttempts)}
+    else{
+      // Final fallback: use Audio elements (works on file://)
+      console.warn('SE: falling back to Audio elements');
+      seFallback=true;seLoaded=true;
+    }
+  }
 }
 
 function unlockAudio(){
@@ -178,18 +241,29 @@ function playBgm(bgm){
   if(curBgm===bgm&&!curBgm.paused)return;
   if(curBgm){curBgm.pause();curBgm.currentTime=0}
   curBgm=bgm;
-  if(bgm){bgm.currentTime=0;const p=bgm.play();if(p)p.catch(()=>{setTimeout(()=>{bgm.play().catch(()=>{})},100)})}
+  if(bgm){bgm.currentTime=0;if(audioMuted)return;const p=bgm.play();if(p)p.catch(()=>{let r=0;const retry=()=>{if(r++>=3||curBgm!==bgm)return;bgm.play().catch(()=>{setTimeout(retry,200)})};setTimeout(retry,100)})}
 }
 function stopBgm(){if(curBgm){curBgm.pause();curBgm.currentTime=0;curBgm=null}}
 
 // === SE PLAYBACK ===
 const seGoSrc='go';const seMissSrc='miss';
-const seVols={'go':0.3,'miss':0.7,'quake':0.20,'foghorn':0.3};
+const seVols={'go':0.3,'miss':0.7,'quake':0.20,'foghorn':0.3,'heart':0.5};
+const seFiles={'go':'go.mp3','miss':'miss.mp3','quake':'quake.mp3','heart':'heart.mp3'};
+let seFallback=false;
 // Track active quake SE source so it can be stopped on block transition
-let quakeSrc=null;
+let quakeSrc=null;let quakeAudioFb=null;
 function playSe(id){
-  const ac=ensureACtx();if(!ac)return;
+  if(audioMuted)return;
   if(!seLoaded){loadAllSE();return}
+  // Fallback mode: use Audio elements
+  if(seFallback){
+    const file=seFiles[id];if(!file)return;
+    const a=new Audio(file);a.volume=seVols[id]||0.3;
+    a.play().catch(()=>{});
+    if(id==='quake'){if(quakeAudioFb){try{quakeAudioFb.pause()}catch(e){}}quakeAudioFb=a;a.onended=()=>{if(quakeAudioFb===a)quakeAudioFb=null}}
+    return;
+  }
+  const ac=ensureACtx();if(!ac)return;
   const buf=seBufs[id];if(!buf)return;
   function doPlay(){
     try{
@@ -211,6 +285,22 @@ function playSe(id){
 }
 function stopQuakeSe(){
   if(quakeSrc){try{quakeSrc.stop()}catch(e){}quakeSrc=null}
+  if(quakeAudioFb){try{quakeAudioFb.pause()}catch(e){}quakeAudioFb=null}
+}
+
+// === VIBRATION ===
+function vib(pattern){try{if(!audioMuted&&navigator.vibrate)navigator.vibrate(pattern)}catch(e){}}
+
+// === MUTE TOGGLE ===
+function toggleMute(){
+  audioMuted=!audioMuted;
+  try{localStorage.setItem('14b_mute',audioMuted?'1':'0')}catch(e){}
+  if(audioMuted){
+    if(curBgm){try{curBgm.pause()}catch(e){}}
+    stopQuakeSe();
+  }else{
+    if(curBgm&&curBgm.paused){try{curBgm.play().catch(()=>{})}catch(e){}}
+  }
 }
 
 let gs='tap',cB=1,camX=0,pX=100,pDir=1,pMov=false,pFr=0,pAT=0,fc=0;
@@ -223,8 +313,12 @@ let efStart=null;
 // Normal mode: track cleared anomalies so they don't repeat
 let clearedAnomalies=[];
 // Complete mode: life system
-const COMPLETE_MAX_LIVES=5;
-let completeLives=COMPLETE_MAX_LIVES;
+const COMPLETE_BASE_LIVES=6;const COMPLETE_UPGRADE_LIVES=8;
+function getMaxLives(){return window.livesUpgrade?COMPLETE_UPGRADE_LIVES:COMPLETE_BASE_LIVES}
+let completeLives=getMaxLives();
+let lastDeathCause='';// death cause for game over screen
+// Complete mode: heart item drop
+let heartItemX=-999;let heartItemActive=false;
 let stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*6000,y:Math.random()*0.38,b:Math.random(),s:0.5+Math.random()*1.5});
 
 // === DRAW PLAYER ===
@@ -287,6 +381,10 @@ const AN=[
   'tallLamp',      // 街灯の高さが高い
   'shortBlock',    // NEXTまでの距離が短い
   'pebbles',       // 道路に石ころが落ちている
+  'doubleShadow',  // プレイヤーの影が2つある
+  'breathingBuilding', // ビルが呼吸している
+  'extraMoon',     // 月が2つある
+  'silentLamp',    // 街灯が消えている
 ];
 function genA(){
   BW=BW_NORMAL;runnerActive=false;
@@ -298,7 +396,9 @@ function genA(){
     hasA=Math.random()<0.75;
   }else{
     if(cB<=1){hasA=false;return}
-    hasA=Math.random()<0.55;
+    // Challenge difficulty curve: ramps up as blocks progress
+    const chRate=cB<=50?0.45:cB<=150?0.55:cB<=300?0.65:0.75;
+    hasA=Math.random()<chRate;
   }
   if(hasA){
     if(gameMode==='normal'||gameMode==='complete'){
@@ -311,7 +411,12 @@ function genA(){
       aT=Math.floor(Math.random()*AN.length);
     }
     if(AN[aT]==='shortBlock')BW=BW_SHORT;
-    if(AN[aT]==='runnerPiyo'){runnerX=bsX+BW+300;runnerActive=true}
+    if(AN[aT]==='runnerPiyo'){runnerX=bsX+BW+100;runnerActive=true}
+  }
+  // Heart item drop (complete mode only, 1/15 chance, not on block 1)
+  heartItemActive=false;
+  if(gameMode==='complete'&&cB>1&&completeLives<getMaxLives()&&Math.random()<1/15){
+    heartItemX=bsX+200+Math.random()*(BW-400);heartItemActive=true;
   }
 }
 
@@ -319,45 +424,57 @@ function genA(){
 function dSky(){
   let c1='#0A0A20',c2='#141430';
   if(hasA&&AN[aT]==='redSky'){c1=`rgb(${30+Math.sin(fc*0.04)*15|0},4,8)`;c2='#1A0508'}
-  if(hasA&&AN[aT]==='missingStars'){
-    const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
-    // No stars at all - that's the anomaly
-  }else{
-    const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
-    for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;const br=0.35+Math.sin(fc*0.02+s.b*10)*0.3;X.fillStyle=`rgba(255,255,255,${br})`;X.fillRect(sx,s.y*H,s.s,s.s)}
+  const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
+  if(!(hasA&&AN[aT]==='missingStars')){
+    X.fillStyle='#FFF';for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;X.globalAlpha=0.35+Math.sin(fc*0.02+s.b*10)*0.3;X.fillRect(sx,s.y*H,s.s,s.s)}X.globalAlpha=1
   }
   if(hasA&&AN[aT]==='giantMoon'){
     const mx=W*0.8,my=H*0.12,mr=48+Math.sin(fc*0.015)*5;
     const mg=X.createRadialGradient(mx,my,0,mx,my,mr);mg.addColorStop(0,'#CC2200');mg.addColorStop(0.5,'#881100');mg.addColorStop(1,'transparent');
     X.fillStyle=mg;X.beginPath();X.arc(mx,my,mr,0,Math.PI*2);X.fill();
-  }else if(hasA&&AN[aT]==='wrongMoon'){
-    // Same position/size as normal moon but with subtle creepy face
-    const mx=W*0.85,my=H*0.1,mr=15;
-    const mg=X.createRadialGradient(mx-2,my-2,0,mx,my,mr);mg.addColorStop(0,'#EEEEDD');mg.addColorStop(0.8,'#AAAA88');mg.addColorStop(1,'transparent');
-    X.fillStyle=mg;X.beginPath();X.arc(mx,my,mr,0,Math.PI*2);X.fill();
-    // Subtle creepy face on the moon
-    X.fillStyle='rgba(60,60,40,0.5)';
-    X.beginPath();X.arc(mx-4,my-3,2.5,0,Math.PI*2);X.fill();
-    X.beginPath();X.arc(mx+4,my-3,2.5,0,Math.PI*2);X.fill();
-    // Slight grin
-    X.strokeStyle='rgba(60,60,40,0.5)';X.lineWidth=1;
-    X.beginPath();X.arc(mx,my+2,5,0.15*Math.PI,0.85*Math.PI);X.stroke();
   }else{
     const mx=W*0.85,my=H*0.1,mr=15;
     const mg=X.createRadialGradient(mx-2,my-2,0,mx,my,mr);mg.addColorStop(0,'#EEEEDD');mg.addColorStop(0.8,'#AAAA88');mg.addColorStop(1,'transparent');
     X.fillStyle=mg;X.beginPath();X.arc(mx,my,mr,0,Math.PI*2);X.fill();
+    if(hasA&&AN[aT]==='wrongMoon'){
+      X.fillStyle='rgba(60,60,40,0.5)';
+      X.beginPath();X.arc(mx-4,my-3,2.5,0,Math.PI*2);X.fill();
+      X.beginPath();X.arc(mx+4,my-3,2.5,0,Math.PI*2);X.fill();
+      X.strokeStyle='rgba(60,60,40,0.5)';X.lineWidth=1;
+      X.beginPath();X.arc(mx,my+2,5,0.15*Math.PI,0.85*Math.PI);X.stroke();
+    }
   }
   // redStar anomaly - a few faint red stars
   if(hasA&&AN[aT]==='redStar'){
     const rStars=[[W*0.15,H*0.08],[W*0.45,H*0.05],[W*0.7,H*0.14],[W*0.3,H*0.18],[W*0.55,H*0.12],[W*0.82,H*0.06]];
-    for(const rs of rStars){
-      const br=0.25+Math.sin(fc*0.03+rs[0])*0.1;
-      X.fillStyle=`rgba(255,60,60,${br})`;X.beginPath();X.arc(rs[0],rs[1],1.2,0,Math.PI*2);X.fill();
-    }
+    X.fillStyle='#FF3C3C';for(const rs of rStars){
+      X.globalAlpha=0.25+Math.sin(fc*0.03+rs[0])*0.1;
+      X.beginPath();X.arc(rs[0],rs[1],1.2,0,Math.PI*2);X.fill();
+    }X.globalAlpha=1;
+  }
+  // extraMoon - a second smaller moon in a different position
+  if(hasA&&AN[aT]==='extraMoon'){
+    const mx2=W*0.35,my2=H*0.18,mr2=11;
+    const mg2=X.createRadialGradient(mx2-1,my2-1,0,mx2,my2,mr2);mg2.addColorStop(0,'#EEEEDD');mg2.addColorStop(0.8,'#AAAA88');mg2.addColorStop(1,'transparent');
+    X.fillStyle=mg2;X.beginPath();X.arc(mx2,my2,mr2,0,Math.PI*2);X.fill();
   }
 }
 
-function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;for(let i=-1;i<(W/80)+2;i++){const bx=ox+i*80+((sd+i*73)%20),bw=40+((sd+i*47)%30),bh=bH+((sd+i*59)%40),by=H*GH-bh;X.fillStyle=col;X.fillRect(bx,by,bw,bh+2);if((sd+i)%3===0){X.beginPath();X.moveTo(bx,by);X.lineTo(bx+bw/2,by-12);X.lineTo(bx+bw,by);X.fill()}for(let wy=0;wy<Math.floor(bh/22);wy++)for(let wx=0;wx<Math.floor(bw/15);wx++){X.fillStyle=((sd+i+wx+wy)%5)>2?wc:'#080808';X.fillRect(bx+6+wx*14,by+8+wy*20,5,7)}}}
+function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;for(let i=-1;i<(W/80)+2;i++){const bx=ox+i*80+((sd+i*73)%20),bw=40+((sd+i*47)%30);if(bx+bw<0||bx>W)continue;const bh=bH+((sd+i*59)%40),by=H*GH-bh;X.fillStyle=col;X.fillRect(bx,by,bw,bh+2);if((sd+i)%3===0){X.beginPath();X.moveTo(bx,by);X.lineTo(bx+bw/2,by-12);X.lineTo(bx+bw,by);X.fill()}for(let wy=0;wy<Math.floor(bh/22);wy++)for(let wx=0;wx<Math.floor(bw/15);wx++){X.fillStyle=((sd+i+wx+wy)%5)>2?wc:'#080808';X.fillRect(bx+6+wx*14,by+8+wy*20,5,7)}}}
+
+function dBreathingBuilding(){
+  if(!hasA||AN[aT]!=='breathingBuilding')return;
+  const gy=H*GH,bbx=bsX+BW*0.42-camX;
+  if(bbx<-80||bbx>W+80)return;
+  const breath=Math.sin(fc*0.035)*3;
+  const bbw=50+breath,bbh=H*0.28+breath*2,bby=gy-bbh;
+  X.fillStyle='#0E0E18';X.fillRect(bbx-bbw/2,bby,bbw,bbh+2);
+  X.beginPath();X.moveTo(bbx-bbw/2,bby);X.lineTo(bbx,bby-10);X.lineTo(bbx+bbw/2,bby);X.fill();
+  for(let wy=0;wy<Math.floor(bbh/22);wy++)for(let wx=0;wx<Math.floor(bbw/15);wx++){
+    X.fillStyle=(wy+wx)%3>1?'#22200E':'#080808';
+    X.fillRect(bbx-bbw/2+6+wx*14,bby+8+wy*20,5,7);
+  }
+}
 
 function dGnd(){
   const gy=H*GH;let c1='#1A1A24',c2='#121218';
@@ -408,11 +525,13 @@ function dLmp(){
   let lCol='rgba(255,200,100,0.5)',bCol='#FFD880';
   if(hasA&&AN[aT]==='whiteLamp'){lCol='rgba(220,225,255,0.4)';bCol='#DDE0FF'}
   if(hasA&&AN[aT]==='orangeLamp'){lCol='rgba(255,160,40,0.4)';bCol='#FFA028'}
+  const lg=X.createRadialGradient(0,0,0,0,0,40);lg.addColorStop(0,lCol);lg.addColorStop(1,'transparent');
   for(let i=-1;i<(W/sp)+2;i++){
     const lx=ox+i*sp+(isTooMany?40:150);
     X.fillStyle='#2A2A30';X.fillRect(lx,gy-lampH,3,lampH+2);X.fillRect(lx-5,gy-lampH,13,3);
-    const on=fl?(Math.random()>0.4^(fc%6<3)):true;
-    if(on){const lg=X.createRadialGradient(lx+1,gy-lampH+2,0,lx+1,gy-lampH+2,40);lg.addColorStop(0,lCol);lg.addColorStop(1,'transparent');X.fillStyle=lg;X.beginPath();X.arc(lx+1,gy-lampH+2,40,0,Math.PI*2);X.fill();X.fillStyle=bCol;X.fillRect(lx-2,gy-lampH,7,3)}
+    const isSilent=hasA&&AN[aT]==='silentLamp';
+    const on=isSilent?false:fl?(Math.random()>0.4^(fc%6<3)):true;
+    if(on){X.save();X.translate(lx+1,gy-lampH+2);X.fillStyle=lg;X.beginPath();X.arc(0,0,40,0,Math.PI*2);X.fill();X.restore();X.fillStyle=bCol;X.fillRect(lx-2,gy-lampH,7,3)}
   }
 }
 
@@ -632,7 +751,7 @@ function dAnom(){
     const elapsed=fc-efStart;
     const fogDelay=120;// 2 seconds before fog starts
     if(elapsed>fogDelay){
-      const fogSpeed=3.5;
+      const fogSpeed=4.1;
       const fogX=bsX+BW+200-(elapsed-fogDelay)*fogSpeed;
       const fogScreenX=fogX-camX;
       // Draw fog wall
@@ -662,34 +781,18 @@ function dAnom(){
       const fr=WALK_L[(Math.floor(fc/3))%WALK_L.length];
       const baseSprScale=Math.min(H*0.32/120,1.3);
       const sprScaleR=fr==='stand'?baseSprScale*1.04:baseSprScale;
-      const img=SPR[fr];if(img&&img.complete){
-        const sw=img.naturalWidth*sprScaleR,sh=img.naturalHeight*sprScaleR;
+      const redImg=RED_SPR[fr];
+      const img=SPR[fr];
+      const drawSrc=redImg||img;
+      if(drawSrc&&(drawSrc.complete!==false)){
+        const nw=img?img.naturalWidth:drawSrc.width;
+        const nh=img?img.naturalHeight:drawSrc.height;
+        const sw=nw*sprScaleR,sh=nh*sprScaleR;
         const bob2=Math.sin(fc*0.5)*1.5;
-        // Get or create red-tinted version of sprite
-        const cacheKey='_red_'+fr;
-        if(!SPR[cacheKey]){
-          const oc=document.createElement('canvas');
-          oc.width=img.naturalWidth;oc.height=img.naturalHeight;
-          const ox=oc.getContext('2d');
-          ox.drawImage(img,0,0);
-          const id=ox.getImageData(0,0,oc.width,oc.height);
-          const d=id.data;
-          for(let p=0;p<d.length;p+=4){
-            if(d[p+3]<10)continue;// skip transparent
-            // Shift yellow/warm hues to red: boost R, reduce G
-            const r=d[p],g=d[p+1],b=d[p+2];
-            d[p]=Math.min(255,r+60);
-            d[p+1]=Math.max(0,g-70);
-            d[p+2]=Math.min(255,b+10);
-          }
-          ox.putImageData(id,0,0);
-          SPR[cacheKey]=oc;
-        }
-        const redImg=SPR[cacheKey];
         X.save();
         X.translate(rsx,0);
         X.scale(-1,1);
-        X.drawImage(redImg,-sw/2,gy-sh+bob2+9,sw,sh);
+        X.drawImage(drawSrc,-sw/2,gy-sh+bob2+9,sw,sh);
         X.restore();
       }
       // Warning text
@@ -700,18 +803,22 @@ function dAnom(){
       }
     }
   }
+
+  // silentLamp - lamp post exists but light is completely off
+  if(a==='silentLamp'){/* rendered via dLmp() with light suppressed */}
 }
 
 // === UI ===
 // Pause button hit area (right of moon at W*0.8)
 const pauseBtn={x:0,y:0,w:0,h:0};
 function dUI(){
-  X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(W/2-58,4,116,26);
-  X.strokeStyle='#FFD700';X.lineWidth=1.5;X.strokeRect(W/2-58,4,116,26);
+  const uiTop=4+saT;
+  X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(W/2-58,uiTop,116,26);
+  X.strokeStyle='#FFD700';X.lineWidth=1.5;X.strokeRect(W/2-58,uiTop,116,26);
   X.fillStyle='#FFD700';X.font='bold 14px monospace';X.textAlign='center';
-  X.fillText(gameMode==='normal'?`${cB} / 14 番地`:`${cB} 番地`,W/2,22);
+  X.fillText(gameMode==='normal'?`${cB} / 14 番地`:`${cB} 番地`,W/2,uiTop+18);
   // Pause button (right of moon)
-  const px=W*0.92,py=6,pw=50,ph=42;
+  const px=W-58-saR,py=6+saT,pw=50,ph=44;
   pauseBtn.x=px;pauseBtn.y=py;pauseBtn.w=pw;pauseBtn.h=ph;
   X.fillStyle='rgba(0,0,0,0.55)';X.fillRect(px,py,pw,ph);
   X.strokeStyle='rgba(255,255,255,0.4)';X.lineWidth=1;X.strokeRect(px,py,pw,ph);
@@ -735,28 +842,29 @@ function dUI(){
   if(debugNotify>0){
     debugNotify--;
     X.fillStyle='rgba(0,255,0,0.8)';X.font='bold 14px monospace';X.textAlign='center';
-    X.fillText(debugMode?'DEBUG ON':'DEBUG OFF',W/2,H*0.45);
+    X.fillText(['DEBUG OFF','DEBUG ON','DEBUG ON + SPEED x3'][debugMode],W/2,H*0.45);
   }
   if(debugMode){
     X.fillStyle='rgba(0,255,0,0.7)';X.font='bold 11px monospace';X.textAlign='left';
-    X.fillText(hasA?'[DBG] 異変: '+AN[aT]:'[DBG] 異変なし',8,H*0.08);
+    X.fillText(hasA?'[DBG] 異変: '+AN[aT]:'[DBG] 異変なし',8+saL,H*0.08+saT);
   }
   // Complete mode: show progress and lives
   if(gameMode==='complete'){
-    const progY=debugMode?H*0.14:H*0.08;
+    const progY=(debugMode?H*0.14:H*0.08)+saT;
     const prog=clearedAnomalies.length+'/'+AN.length;
     X.fillStyle='rgba(34,170,102,0.85)';X.font='bold 12px monospace';X.textAlign='left';
-    X.fillText('🔍 '+prog,8,progY);
+    X.fillText('🔍 '+prog,8+saL,progY);
     // Lives display
     X.fillStyle='rgba(255,80,80,0.9)';X.font='bold 12px monospace';
-    let livesStr='';for(let i=0;i<COMPLETE_MAX_LIVES;i++){livesStr+=i<completeLives?'❤️':'🖤'}
-    X.fillText(livesStr,8,progY+16);
+    let livesStr='';for(let i=0;i<getMaxLives();i++){livesStr+=i<completeLives?'❤️':'🖤'}
+    X.fillText(livesStr,8+saL,progY+16);
   }
 }
 
 // === PAUSE ===
 let pauseSel=0;// 0=resume, 1=retire
-let debugMode=false;
+let retireConfirm=false;// show retire confirmation dialog
+let debugMode=0;// 0=off, 1=debug, 2=debug+speed
 let debugTapCount=0;
 let debugTapTimer=0;
 let debugNotify=0;
@@ -765,6 +873,7 @@ function dPause(){
   // Dark overlay on game scene
   X.save();X.translate(skX,skY);
   dSky();dTkyTower();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
+  dBreathingBuilding();
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
@@ -774,7 +883,7 @@ function dPause(){
   // Dark overlay
   X.fillStyle='rgba(0,0,0,0.65)';X.fillRect(0,0,W,H);
   // Pause panel
-  const panW=220,panH=160,panX=(W-panW)/2,panY=(H-panH)/2;
+  const panW=240,panH=240,panX=(W-panW)/2,panY=(H-panH)/2;
   X.fillStyle='rgba(10,10,20,0.9)';X.fillRect(panX,panY,panW,panH);
   X.strokeStyle='#FFD700';X.lineWidth=2;X.strokeRect(panX,panY,panW,panH);
   // Pause icon
@@ -785,23 +894,41 @@ function dPause(){
   X.fillText('PAUSE',W/2,panY+62);
   // Buttons
   pauseBtns.length=0;
-  const btnW=160,btnH=32;
-  const labels=[['▶ 再開','#44CC44'],['✖ リタイヤ','#CC4444']];
-  for(let i=0;i<2;i++){
-    const bx=W/2-btnW/2,by=panY+78+i*40;
-    pauseBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i});
-    X.fillStyle='rgba(255,255,255,0.05)';X.fillRect(bx,by,btnW,btnH);
-    X.strokeStyle=labels[i][1];X.lineWidth=2;X.strokeRect(bx,by,btnW,btnH);
-    X.fillStyle=labels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
-    X.fillText(labels[i][0],W/2,by+btnH/2+5);
+  const btnW=180,btnH=46;
+  if(retireConfirm){
+    // Retire confirmation
+    X.fillStyle='#FFCC44';X.font='bold 15px sans-serif';X.textAlign='center';
+    X.fillText('本当にリタイヤしますか？',W/2,panY+82);
+    const cLabels=[['はい','#CC4444'],['いいえ','#44CC44']];
+    for(let i=0;i<2;i++){
+      const bx=W/2-btnW/2,by=panY+96+i*50;
+      pauseBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i+10});// id 10=yes, 11=no
+      X.fillStyle='rgba(255,255,255,0.05)';X.fillRect(bx,by,btnW,btnH);
+      X.strokeStyle=cLabels[i][1];X.lineWidth=2;X.strokeRect(bx,by,btnW,btnH);
+      X.fillStyle=cLabels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
+      X.fillText(cLabels[i][0],W/2,by+btnH/2+5);
+    }
+  }else{
+    const labels=[['▶ 再開','#44CC44'],[audioMuted?'🔇 ミュート解除':'🔊 ミュート',audioMuted?'#66AACC':'#AAAAAA'],['✖ リタイヤ','#CC4444']];
+    for(let i=0;i<3;i++){
+      const bx=W/2-btnW/2,by=panY+74+i*50;
+      pauseBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i===2?1:i===1?20:0});// id 0=resume,20=mute,1=retire
+      X.fillStyle='rgba(255,255,255,0.05)';X.fillRect(bx,by,btnW,btnH);
+      X.strokeStyle=labels[i][1];X.lineWidth=2;X.strokeRect(bx,by,btnW,btnH);
+      X.fillStyle=labels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
+      X.fillText(labels[i][0],W/2,by+btnH/2+5);
+    }
   }
 }
 
 function handlePauseTap(cx,cy){
   for(const b of pauseBtns){
     if(cx>=b.x&&cx<=b.x+b.w&&cy>=b.y&&cy<=b.y+b.h){
-      if(b.id===0){gs='playing';return true}// Resume
-      if(b.id===1){gs='title';playBgm(bgmTitle);return true}// Retire
+      if(b.id===0){gs='playing';retireConfirm=false;return true}// Resume
+      if(b.id===20){toggleMute();return true}// Mute toggle
+      if(b.id===1){retireConfirm=true;return true}// Show retire confirmation
+      if(b.id===10){retireConfirm=false;gs='title';playBgm(bgmTitle);return true}// Confirm retire
+      if(b.id===11){retireConfirm=false;return true}// Cancel retire
     }
   }
   return false;
@@ -813,6 +940,7 @@ function hitPauseBtn(cx,cy){
 
 // === TITLE ===
 const titleBtns=[];// populated in dTitle
+let compDeleteConfirm=false;// show complete save delete confirmation
 function dTitle(){
   const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FFF8E8');bg.addColorStop(1,'#FFF0D0');X.fillStyle=bg;X.fillRect(0,0,W,H);
   const t=fc*0.025;
@@ -826,24 +954,70 @@ function dTitle(){
   X.fillStyle='#887755';X.font='13px sans-serif';X.fillText('― 夜道に潜む異変を見抜け ―',tx,H*0.38);
   // Direct tap buttons
   titleBtns.length=0;
-  const btnW=180,btnH=34,btnGap=34;
+  const btnW=200,btnH=46,btnGap=48;
   const labels=[['▶ ノーマルモード','#CC2222'],['▶ コンプリートモード','#22AA66'],['▶ チャレンジモード','#CC8822'],['🏆 ランキング','#DAA520'],['📖 ヒント（異変一覧）','#66AACC']];
   for(let i=0;i<5;i++){
-    const bx=tx-btnW/2,by=H*0.44+i*btnGap-btnH/2;
+    const bx=tx-btnW/2,by=H*0.42+i*btnGap-btnH/2;
     titleBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i});
     const hover=Math.sin(fc*0.06+i)>0.8;
     X.fillStyle=hover?'rgba(0,0,0,0.05)':'rgba(0,0,0,0.02)';
     X.fillRect(bx,by,btnW,btnH);
     X.strokeStyle=labels[i][1];X.lineWidth=2;X.strokeRect(bx,by,btnW,btnH);
-    X.fillStyle=labels[i][1];X.font='bold 14px sans-serif';X.textAlign='center';
-    X.fillText(labels[i][0],tx,by+btnH/2+5);
+    X.fillStyle=labels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
+    X.fillText(labels[i][0],tx,by+btnH/2+2);
+    // Mode descriptions
+    const descs=['全14番地を脱出せよ','全'+AN.length+'種の異変を制覇せよ','1ミスで即終了 ランキングに名を刻め！','',''];
+    if(descs[i]){X.fillStyle='rgba(0,0,0,0.3)';X.font='9px sans-serif';X.fillText(descs[i],tx,by+btnH/2+15)}
+    // Show complete mode save indicator + delete button
+    if(i===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&sv.a&&sv.a.length>0){
+      X.fillStyle='#55AA77';X.font='10px sans-serif';
+      X.fillText(`💾 ${sv.a.length}/${AN.length}`,tx+btnW/2-24,by+12);
+      // Delete save button
+      const dbx=tx+btnW/2+10,dby=by+2,dbw=28,dbh=16;
+      titleBtns.push({x:dbx,y:dby,w:dbw,h:dbh,id:100});
+      X.fillStyle='rgba(180,50,50,0.6)';X.fillRect(dbx,dby,dbw,dbh);
+      X.strokeStyle='#CC4444';X.lineWidth=1;X.strokeRect(dbx,dby,dbw,dbh);
+      X.fillStyle='#FFAAAA';X.font='bold 10px sans-serif';X.textAlign='center';
+      X.fillText('🗑',dbx+dbw/2,dby+12);
+    }}catch(e){}}
   }
   if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
-  X.fillStyle='#887766';X.font='10px sans-serif';X.textAlign='center';X.fillText('📲 ホーム画面に追加でアプリとしてプレイできます',W/2,H*0.96);
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.fillText('Ver.0.76',W/2,H*0.99);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.79',W/2,H*0.97);
+  // Settings gear button (top-right)
+  const gbx=W-52,gby=8,gbw=44,gbh=32;
+  titleBtns.push({x:gbx,y:gby,w:gbw,h:gbh,id:300});
+  X.fillStyle='rgba(0,0,0,0.06)';X.fillRect(gbx,gby,gbw,gbh);
+  X.strokeStyle='#AA9977';X.lineWidth=1.5;X.strokeRect(gbx,gby,gbw,gbh);
+  X.fillStyle='#AA9977';X.font='bold 18px sans-serif';X.textAlign='center';
+  X.fillText('⚙',gbx+gbw/2,gby+gbh/2+6);
+  // Complete save delete confirmation dialog
+  if(compDeleteConfirm){
+    X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(0,0,W,H);
+    const dw=260,dh=130,dx=(W-dw)/2,dy=(H-dh)/2;
+    X.fillStyle='rgba(10,10,20,0.95)';X.fillRect(dx,dy,dw,dh);
+    X.strokeStyle='#CC4444';X.lineWidth=2;X.strokeRect(dx,dy,dw,dh);
+    X.fillStyle='#FFCC44';X.font='bold 14px sans-serif';X.textAlign='center';
+    X.fillText('セーブデータを削除しますか？',W/2,dy+30);
+    X.fillStyle='#AAAAAA';X.font='11px sans-serif';
+    X.fillText('最初からやり直しになります',W/2,dy+50);
+    const cbW=100,cbH=36;
+    // Yes button
+    const ybx=W/2-cbW-10,yby=dy+70;
+    titleBtns.push({x:ybx,y:yby,w:cbW,h:cbH,id:101});
+    X.fillStyle='rgba(255,255,255,0.05)';X.fillRect(ybx,yby,cbW,cbH);
+    X.strokeStyle='#CC4444';X.lineWidth=2;X.strokeRect(ybx,yby,cbW,cbH);
+    X.fillStyle='#CC4444';X.font='bold 14px sans-serif';X.fillText('削除する',ybx+cbW/2,yby+cbH/2+5);
+    // No button
+    const nbx=W/2+10,nby=dy+70;
+    titleBtns.push({x:nbx,y:nby,w:cbW,h:cbH,id:102});
+    X.fillStyle='rgba(255,255,255,0.05)';X.fillRect(nbx,nby,cbW,cbH);
+    X.strokeStyle='#44CC44';X.lineWidth=2;X.strokeRect(nbx,nby,cbW,cbH);
+    X.fillStyle='#44CC44';X.font='bold 14px sans-serif';X.fillText('戻る',nbx+cbW/2,nby+cbH/2+5);
+  }
 }
 
 // === CLEAR ===
+const clearBtns=[];
 function dClear(){
   const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FFF8E8');bg.addColorStop(1,'#FFE8D0');X.fillStyle=bg;X.fillRect(0,0,W,H);
   for(let i=0;i<50;i++){X.fillStyle=['#FFD700','#FF6666','#66CC66','#6688FF','#FF66FF'][i%5];X.globalAlpha=0.6;X.fillRect(((fc*1.5+i*131)%W),((fc*0.8+i*97)%H),4,4)}X.globalAlpha=1;
@@ -852,7 +1026,21 @@ function dClear(){
   X.fillStyle='#554433';X.font='16px sans-serif';X.fillText('ぴよ氏は無事に夜道を抜けた！',W*0.33,H*0.4);
   X.fillStyle='#887766';X.font='14px sans-serif';X.fillText('おめでとうございます！',W*0.33,H*0.55);
   if(clearImgOk){const ih=H*0.82,iw=ih*(clearImg.width/clearImg.height);X.shadowColor='rgba(0,0,0,0.1)';X.shadowBlur=15;X.shadowOffsetX=3;X.shadowOffsetY=3;X.drawImage(clearImg,W*0.7-iw/2,H*0.5-ih/2,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
-  X.fillStyle=Math.sin(fc*0.06)>0?'#CC2222':'#DD6644';X.font='bold 16px sans-serif';X.fillText('タップしてタイトルへ',W*0.33,H*0.88);
+  // Replay & Title buttons
+  clearBtns.length=0;
+  const rbW=160,rbH=40;
+  const rb1x=W*0.33-rbW-10,rb1y=H*0.82;
+  clearBtns.push({x:rb1x,y:rb1y,w:rbW,h:rbH,id:'replay'});
+  X.fillStyle='rgba(0,0,0,0.05)';X.fillRect(rb1x,rb1y,rbW,rbH);
+  X.strokeStyle='#CC2222';X.lineWidth=2;X.strokeRect(rb1x,rb1y,rbW,rbH);
+  X.fillStyle='#CC2222';X.font='bold 15px sans-serif';X.textAlign='center';
+  X.fillText('🔄 もう一度',rb1x+rbW/2,rb1y+rbH/2+5);
+  const rb2x=W*0.33+10,rb2y=H*0.82;
+  clearBtns.push({x:rb2x,y:rb2y,w:rbW,h:rbH,id:'title'});
+  X.fillStyle='rgba(0,0,0,0.05)';X.fillRect(rb2x,rb2y,rbW,rbH);
+  X.strokeStyle='#887766';X.lineWidth=2;X.strokeRect(rb2x,rb2y,rbW,rbH);
+  X.fillStyle='#887766';X.font='bold 15px sans-serif';X.textAlign='center';
+  X.fillText('🏠 タイトルへ',rb2x+rbW/2,rb2y+rbH/2+5);
 }
 
 // === CHALLENGE CLEAR (500番地到達) ===
@@ -929,47 +1117,99 @@ function dRanking(){
   X.fillText('タップしてタイトルへ',W/2,H*0.93);
 }
 
+// === SETTINGS SCREEN ===
+const settingsBtns=[];
+function dSettings(){
+  const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FFF8E8');bg.addColorStop(1,'#FFF0D0');X.fillStyle=bg;X.fillRect(0,0,W,H);
+  X.fillStyle='#1a1a2e';X.font='bold 22px sans-serif';X.textAlign='center';
+  X.fillText('⚙ 設定',W/2,H*0.10);
+  X.strokeStyle='#AA9977';X.lineWidth=1;
+  X.beginPath();X.moveTo(W*0.2,H*0.14);X.lineTo(W*0.8,H*0.14);X.stroke();
+  settingsBtns.length=0;
+  const cx=W/2,btnW=220,btnH=40;
+  // Mute toggle
+  const my=H*0.22;
+  settingsBtns.push({x:cx-btnW/2,y:my,w:btnW,h:btnH,id:'mute'});
+  X.fillStyle='rgba(0,0,0,0.03)';X.fillRect(cx-btnW/2,my,btnW,btnH);
+  X.strokeStyle=audioMuted?'#CC6666':'#88AA88';X.lineWidth=2;X.strokeRect(cx-btnW/2,my,btnW,btnH);
+  X.fillStyle=audioMuted?'#CC6666':'#556655';X.font='bold 15px sans-serif';X.textAlign='center';
+  X.fillText(audioMuted?'🔇 サウンド：OFF':'🔊 サウンド：ON',cx,my+btnH/2+5);
+  // Credits
+  const cy2=H*0.45;
+  X.fillStyle='#AA9977';X.font='12px sans-serif';X.textAlign='center';
+  X.fillText('制作',cx,cy2);
+  X.fillStyle='#665544';X.font='bold 14px sans-serif';
+  X.fillText('NullPo Works / Veriquest',cx,cy2+20);
+  X.fillStyle='#AA9977';X.font='11px sans-serif';
+  X.fillText('Music by NullPo Works',cx,cy2+40);
+  X.fillStyle='#BBAA88';X.font='10px sans-serif';
+  X.fillText('Ver.0.79',cx,cy2+58);
+  // Back button
+  const bbx=cx-80,bby=H*0.90,bbw=160,bbh=32;
+  settingsBtns.push({x:bbx,y:bby,w:bbw,h:bbh,id:'back'});
+  X.fillStyle='rgba(0,0,0,0.03)';X.fillRect(bbx,bby,bbw,bbh);
+  X.strokeStyle='#AA9977';X.lineWidth=1;X.strokeRect(bbx,bby,bbw,bbh);
+  X.fillStyle='#887766';X.font='bold 14px sans-serif';X.textAlign='center';
+  X.fillText('◀ タイトルへ戻る',cx,bby+bbh/2+5);
+}
+function handleSettingsTap(cx,cy){
+  for(const b of settingsBtns){
+    if(cx>=b.x&&cx<=b.x+b.w&&cy>=b.y&&cy<=b.y+b.h){
+      if(b.id==='mute'){toggleMute();return true}
+      // Shop buttons (adRemove, livesUp) hidden until native purchase is ready
+      // Native wrapper provides: window.purchaseAdRemoval(), window.purchaseLivesUpgrade()
+      if(b.id==='back'){gs='title';return true}
+    }
+  }
+  return false;
+}
+
 // === HINTS SCREEN ===
 let hintsScrollY=0;
 let hintsTouchStartY=0;
 let hintsDragging=false;
 let hintsTotalDrag=0;
+// HINTS_DATA order must match AN array exactly
 const HINTS_DATA=[
-  ['街灯の明滅','街灯の光が不規則に点滅している。'],
-  ['赤い空','夜空が不気味な赤色に染まっている。'],
-  ['余分な電柱','道の途中に、あるはずのない電柱が1本立っている。赤い光を放っている。'],
-  ['浮遊する赤い目','空中に複数の赤い目玉が浮かんでいる。'],
-  ['巨大な赤い月','月が異常に大きく、赤く輝いている。'],
-  ['赤い地面','地面の色がいつもより赤みがかっている。'],
-  ['青い地面','地面が青みがかった色になっている。'],
-  ['流れ星','空を流れ星が横切っていく。'],
-  ['逆さの看板','道沿いの番地看板が上下逆さまになっている。'],
-  ['天井からの血','画面上部から赤い雫が垂れ落ちている。'],
-  ['幽霊','半透明の幽霊が道の真ん中に浮遊している。近づくと死亡する。'],
-  ['睨んでいる男性','道の真ん中に睨んでいる男性が立っている。近づくと死亡する。'],
-  ['看板が2つ','同じ番地の看板が2つ設置されている。'],
-  ['星が消えた','夜空から星が一切消えている。'],
-  ['不自然な霧','道に薄い霧がかかっている。'],
-  ['地面の亀裂','地面に大きな亀裂が走り、赤い光が漏れている。'],
-  ['看板の目','番地看板に目玉が付いており、まばたきしている。'],
-  ['影の手','地面から黒い手が何本も伸びてきている。'],
-  ['逆さの雨','雨が下から上へ向かって降っている。'],
-  ['街灯が多すぎる','街灯の数が異常に多い。'],
-  ['鼓動','画面全体が心臓の鼓動のように赤く脈動する。'],
-  ['フード男','フードを被った不気味な人物が道に立っている。近づくと死亡する。'],
-  ['号泣する占い師','道の真ん中で占い師が号泣している。近づくと死亡する。'],
-  ['地震','画面が激しく揺れ、地鳴りが聞こえる。'],
-  ['東京タワー','遠くに東京タワーが見える。ここは東京ではない。'],
-  ['月の異変','月の表面に不気味な顔のような模様が浮かんでいる。'],
-  ['邪悪な霧','右側から赤黒い霧が迫ってくる。飲み込まれると死亡する。'],
-  ['白い街灯','街灯の光がいつもの暖色ではなく、冷たい白色になっている。'],
-  ['オレンジの街灯','街灯の光がいつもより濃いオレンジ色になっている。'],
-  ['赤い星','夜空にいくつか赤い星が見える。'],
-  ['ドッペルゲンガーのぴよ氏','右側からもう一人のぴよ氏が走ってくる。接触すると死亡する。'],
-  ['点線の長さ','道路の中央線の点線がいつもより長い。'],
-  ['背の高い街灯','街灯の高さがいつもより高い。'],
-  ['短い道','NEXTの扉までの距離がいつもより短い。'],
-  ['石ころ','道路に小さな石ころが落ちている。'],
+  ['街灯の明滅','街灯の光が不規則に点滅している。'],             // 0 flickerLamp
+  ['赤い空','夜空が不気味な赤色に染まっている。'],               // 1 redSky
+  ['余分な電柱','道の途中に、あるはずのない電柱が1本立っている。赤い光を放っている。'], // 2 extraPole
+  ['浮遊する赤い目','空中に複数の赤い目玉が浮かんでいる。'],     // 3 floatingEyes
+  ['巨大な赤い月','月が異常に大きく、赤く輝いている。'],         // 4 giantMoon
+  ['赤い地面','地面の色がいつもより赤みがかっている。'],         // 5 weirdGround
+  ['流れ星','空を流れ星が横切っていく。'],                       // 6 shootingStar
+  ['逆さの看板','道沿いの番地看板が上下逆さまになっている。'],   // 7 invertSign
+  ['天井からの血','画面上部から赤い雫が垂れ落ちている。'],       // 8 bloodDrip
+  ['幽霊','半透明の幽霊が道の真ん中に浮遊している。近づくと死亡する。'], // 9 ghost
+  ['睨んでいる男性','道の真ん中に睨んでいる男性が立っている。近づくと死亡する。'], // 10 thug
+  ['看板が2つ','同じ番地の看板が2つ設置されている。'],           // 11 doubleSign
+  ['星が消えた','夜空から星が一切消えている。'],                 // 12 missingStars
+  ['不自然な霧','道に薄い霧がかかっている。'],                   // 13 foggy
+  ['地面の亀裂','地面に大きな亀裂が走り、赤い光が漏れている。'], // 14 cracks
+  ['看板の目','番地看板に目玉が付いており、まばたきしている。'], // 15 eyeSign
+  ['影の手','地面から黒い手が何本も伸びてきている。'],           // 16 shadowHands
+  ['逆さの雨','雨が下から上へ向かって降っている。'],             // 17 reverseGrav
+  ['街灯が多すぎる','街灯の数が異常に多い。'],                   // 18 tooManyLamps
+  ['鼓動','画面全体が心臓の鼓動のように赤く脈動する。'],       // 19 heartbeat
+  ['フード男','フードを被った不気味な人物が道に立っている。近づくと死亡する。'], // 20 creep
+  ['号泣する占い師','道の真ん中で占い師が号泣している。近づくと死亡する。'], // 21 wizard
+  ['地震','画面が激しく揺れ、地鳴りが聞こえる。'],             // 22 earthquake
+  ['東京タワー','遠くに東京タワーが見える。ここは東京ではない。'], // 23 tokyoTower
+  ['月の異変','月の表面に不気味な顔のような模様が浮かんでいる。'], // 24 wrongMoon
+  ['邪悪な霧','右側から赤黒い霧が迫ってくる。飲み込まれると死亡する。'], // 25 evilFog
+  ['白い街灯','街灯の光がいつもの暖色ではなく、冷たい白色になっている。'], // 26 whiteLamp
+  ['オレンジの街灯','街灯の光がいつもより濃いオレンジ色になっている。'], // 27 orangeLamp
+  ['青い地面','地面が青みがかった色になっている。'],             // 28 blueGround
+  ['赤い星','夜空にいくつか赤い星が見える。'],                   // 29 redStar
+  ['ドッペルゲンガーのぴよ氏','右側からもう一人のぴよ氏が走ってくる。接触すると死亡する。'], // 30 runnerPiyo
+  ['点線の長さ','道路の中央線の点線がいつもより長い。'],         // 31 wideDash
+  ['背の高い街灯','街灯の高さがいつもより高い。'],               // 32 tallLamp
+  ['短い道','NEXTの扉までの距離がいつもより短い。'],             // 33 shortBlock
+  ['石ころ','道路に小さな石ころが落ちている。'],                 // 34 pebbles
+  ['二重の影','自分の足元に影がもう1つ余分にある。'],           // 35 doubleShadow
+  ['呼吸するビル','ビルの1棟が微妙に膨張・収縮を繰り返している。'], // 36 breathingBuilding
+  ['月が2つ','空に月がもう1つ浮かんでいる。'],                 // 37 extraMoon
+  ['消えた街灯','街灯のポールはあるが、光が出ていない。'],       // 38 silentLamp
 ];
 function dHints(){
   X.fillStyle='#0a0a1a';X.fillRect(0,0,W,H);
@@ -1028,30 +1268,36 @@ function dHints(){
 }
 
 // === NAME ENTRY ===
-// FIX: Store name entry button geometry for consistent hit testing
 let nameEntryOkBtn={x:0,y:0,w:0,h:0};
+let nameEntryInputBtn={x:0,y:0,w:0,h:0};
 function dNameEntry(cx,cy){
-  X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(cx-120,cy-15,240,60);
-  X.strokeStyle='#FFD700';X.lineWidth=1;X.strokeRect(cx-120,cy-15,240,60);
-  X.fillStyle='#FFD700';X.font='bold 12px sans-serif';X.textAlign='center';
-  X.fillText('ランクイン！名前を入力:',cx,cy);
-  // Name input box
-  X.fillStyle='#1a1a2e';X.fillRect(cx-80,cy+5,120,22);
-  X.strokeStyle='#FFD700';X.strokeRect(cx-80,cy+5,120,22);
+  const panW=280,panH=90;
+  X.fillStyle='rgba(0,0,0,0.85)';X.fillRect(cx-panW/2,cy-10,panW,panH);
+  X.strokeStyle='#FFD700';X.lineWidth=2;X.strokeRect(cx-panW/2,cy-10,panW,panH);
+  X.fillStyle='#FFD700';X.font='bold 14px sans-serif';X.textAlign='center';
+  X.fillText('ランクイン！名前を入力:',cx,cy+12);
+  // Name input box (larger for mobile)
+  const inpX=cx-100,inpY=cy+22,inpW=140,inpH=36;
+  nameEntryInputBtn={x:inpX,y:inpY,w:inpW,h:inpH};
+  X.fillStyle='#1a1a2e';X.fillRect(inpX,inpY,inpW,inpH);
+  X.strokeStyle='#FFD700';X.lineWidth=1;X.strokeRect(inpX,inpY,inpW,inpH);
   const cursor=Math.sin(fc*0.1)>0?'|':'';
-  X.fillStyle='#FFF';X.font='14px monospace';X.textAlign='left';
-  X.fillText((nameInput+cursor).substring(0,8),cx-75,cy+22);
-  // OK button - store geometry for hit testing
-  const okX=cx+50,okY=cy+5,okW=50,okH=22;
+  X.fillStyle='#FFF';X.font='18px monospace';X.textAlign='left';
+  X.fillText((nameInput+cursor).substring(0,8),inpX+8,inpY+26);
+  // OK button (larger for mobile, min 46px)
+  const okX=cx+50,okY=inpY,okW=80,okH=36;
   nameEntryOkBtn={x:okX,y:okY,w:okW,h:okH};
-  X.fillStyle=nameInput.length>0?'#CC2222':'#666';
+  X.fillStyle=nameInput.length>0?'#CC2222':'#555';
   X.fillRect(okX,okY,okW,okH);
-  X.fillStyle='#FFF';X.font='bold 12px sans-serif';X.textAlign='center';
-  X.fillText('決定',okX+okW/2,okY+okH/2+4);
+  X.strokeStyle=nameInput.length>0?'#FF4444':'#666';X.lineWidth=1;X.strokeRect(okX,okY,okW,okH);
+  X.fillStyle='#FFF';X.font='bold 15px sans-serif';X.textAlign='center';
+  X.fillText('決定',okX+okW/2,okY+okH/2+5);
 }
-// FIX: Consistent hit test for name entry OK button
 function hitNameOkBtn(cx,cy){
   return cx>=nameEntryOkBtn.x&&cx<=nameEntryOkBtn.x+nameEntryOkBtn.w&&cy>=nameEntryOkBtn.y&&cy<=nameEntryOkBtn.y+nameEntryOkBtn.h;
+}
+function hitNameInputArea(cx,cy){
+  return cx>=nameEntryInputBtn.x&&cx<=nameEntryInputBtn.x+nameEntryInputBtn.w&&cy>=nameEntryInputBtn.y&&cy<=nameEntryInputBtn.y+nameEntryInputBtn.h;
 }
 
 // === GAME LOGIC ===
@@ -1059,26 +1305,115 @@ const BACK_X=-750;// back gate position relative to bsX
 // Complete mode: consume life, return true if handled (not game over)
 let completeHitTimer=0;
 const COMPLETE_HIT_FADE=50;// frames of red fade before resetting
+let rewardAdOffered=false;// prevent offering reward ad multiple times per game
+
+// === COMPLETE MODE SAVE/LOAD ===
+function saveCompleteProgress(){
+  try{localStorage.setItem('14b_comp',JSON.stringify({a:clearedAnomalies,l:completeLives}))}catch(e){}
+}
+function loadCompleteProgress(){
+  try{const d=JSON.parse(localStorage.getItem('14b_comp'));if(d&&Array.isArray(d.a)&&d.a.length>0){
+    clearedAnomalies=d.a;completeLives=typeof d.l==='number'?d.l:getMaxLives();
+    if(completeLives<=0){clearCompleteProgress();return false}// died last session
+    return true;
+  }}catch(e){}return false;
+}
+function clearCompleteProgress(){try{localStorage.removeItem('14b_comp')}catch(e){}}
 function completeDie(){
   if(gameMode!=='complete')return false;
   completeLives--;
-  if(completeLives<=0)return false;// no lives left, let it die normally
+  saveCompleteProgress();// save immediately on every life loss (anti-exploit)
+  if(completeLives<=0){
+    // Last life lost: offer rewarded ad to revive (once per game)
+    if(!rewardAdOffered){
+      rewardAdOffered=true;
+      bL=false;bR=false;pMov=false;
+      const offered=showRewardedAd(
+        ()=>{// Rewarded: restore 2 lives and continue
+          completeLives=2;saveCompleteProgress();
+          gs='complete_hit';completeHitTimer=0;
+        },
+        ()=>{// Skipped/failed: die normally
+          gs='dying';deathTimer=0;
+          stopBgm();playSe(seMissSrc);
+        }
+      );
+      if(offered){gs='complete_hit';completeHitTimer=0;return true}
+    }
+    return false;// no ad available or already offered, die normally
+  }
   // Start red fade animation, then reset to block 1
   gs='complete_hit';completeHitTimer=0;bL=false;bR=false;pMov=false;
   return true;// handled, skip dying
 }
 function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;efStart=null;stopQuakeSe()}
 function sM(t,s){mTx=t;mSb=s||'';mTm=90}
+
+// === AD HOOK ===
+// Native wrapper provides: window.showInterstitialAd(onDismiss)
+//                          window.showRewardedAd(onRewarded, onSkipped)
+//                          window.adRemoved = true  (ad removal purchase flag)
+//                          window.livesUpgrade = true  (lives pack purchase flag)
+let adBusy=false;
+let adLoadingTimer=0;
+const AD_TIMEOUT=15000;// 15s timeout for hung ads
+
+function showAdThenTitle(callback){
+  if(adBusy)return;
+  if(window.adRemoved||typeof window.showInterstitialAd!=='function'){
+    callback();return;
+  }
+  adBusy=true;adLoadingTimer=fc;
+  const timer=setTimeout(()=>{adBusy=false;adLoadingTimer=0;callback()},AD_TIMEOUT);
+  window.showInterstitialAd(()=>{clearTimeout(timer);adBusy=false;adLoadingTimer=0;callback()});
+}
+
+// Rewarded ad: returns true if ad was offered, false if unavailable
+function showRewardedAd(onRewarded,onSkipped){
+  if(adBusy)return false;
+  if(window.adRemoved||typeof window.showRewardedAd!=='function'){return false}
+  adBusy=true;adLoadingTimer=fc;
+  const timer=setTimeout(()=>{adBusy=false;adLoadingTimer=0;if(onSkipped)onSkipped()},AD_TIMEOUT);
+  window.showRewardedAd(
+    ()=>{clearTimeout(timer);adBusy=false;adLoadingTimer=0;onRewarded()},
+    ()=>{clearTimeout(timer);adBusy=false;adLoadingTimer=0;if(onSkipped)onSkipped()}
+  );
+  return true;
+}
+
+function goToTitle(){gs='title';playBgm(bgmTitle)}
+
+// Draw ad loading indicator (shown during ad load) - full overlay with spinner
+function dAdLoading(){
+  if(!adBusy)return;
+  const elapsed=fc-adLoadingTimer;
+  // Full screen dim overlay
+  X.fillStyle='rgba(0,0,0,0.75)';X.fillRect(0,0,W,H);
+  // Spinner circle
+  const cx=W/2,cy=H/2-10,r=18;
+  const angle=(elapsed*0.08)%(Math.PI*2);
+  X.strokeStyle='rgba(255,215,0,0.3)';X.lineWidth=3;
+  X.beginPath();X.arc(cx,cy,r,0,Math.PI*2);X.stroke();
+  X.strokeStyle='#FFD700';X.lineWidth=3;
+  X.beginPath();X.arc(cx,cy,r,angle,angle+Math.PI*1.2);X.stroke();
+  // Loading text with dots
+  const dots='.'.repeat((Math.floor(elapsed/20)%3)+1);
+  X.fillStyle='#FFD700';X.font='bold 16px sans-serif';X.textAlign='center';
+  X.fillText('広告を読み込み中'+dots,cx,cy+40);
+  X.fillStyle='rgba(200,200,200,0.6)';X.font='12px sans-serif';
+  X.fillText('しばらくお待ちください',cx,cy+58);
+}
 function update(){
-  fc++;if(gs==='dying'){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
+  if(gs==='paused')return;
+  fc++;if(gs==='dying'){deathTimer++;if(deathTimer===1)vib([50,30,50]);if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
     if(gameMode==='challenge'){challengeScore=cB;showNameEntry=isRankIn(challengeScore);nameInput='';nameInputActive=showNameEntry}
+    if(gameMode==='complete')clearCompleteProgress();
     gs='gameover';bL=false;bR=false}return}
-  if(gs==='complete_hit'){completeHitTimer++;if(completeHitTimer>=COMPLETE_HIT_FADE){
+  if(gs==='complete_hit'){completeHitTimer++;if(completeHitTimer===1)vib([30,20,30]);if(completeHitTimer>=COMPLETE_HIT_FADE){
     gs='playing';cB=1;genA();sB();sM('1番地に戻された…',`残りライフ: ${completeLives}`)}return}
   if(gs==='gameover'){if(deathTimer<DEATH_BGM_DELAY){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}}return}
   if(gs==='challenge_clear')return;
   if(gs==='complete_clear')return;
-  if(gs==='paused')return;
   if(gs!=='playing')return;
   if(mTm>0)mTm--;
   if(debugTapTimer>0){debugTapTimer--;if(debugTapTimer===0)debugTapCount=0}
@@ -1087,16 +1422,17 @@ function update(){
     cB++;
     if(gameMode==='normal'&&cB>14){gs='clear';playBgm(bgmGoal);return}
     if(gameMode==='challenge'&&cB>CHALLENGE_MAX){gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
-    if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){gs='complete_clear';playBgm(bgmGoal);return}
+    if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){clearCompleteProgress();gs='complete_clear';playBgm(bgmGoal);return}
     genA();sB();sM(`${cB}番地`)
   }else{
     if(gameMode==='challenge'){
       // Challenge mode: 1 miss = game over
-      challengeScore=cB;gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
+      challengeScore=cB;lastDeathCause='異変の判断ミス';gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
       stopBgm();playSe(seMissSrc);return
     }
     // Normal & Complete: back to block 1 (complete keeps clearedAnomalies)
     if(gameMode==='complete'){
+      lastDeathCause='異変の判断ミス';
       if(!completeDie()){
         gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
         stopBgm();playSe(seMissSrc);return
@@ -1106,10 +1442,15 @@ function update(){
     }
   }}return}
   if(skT>0){skT--;skX=(Math.random()-0.5)*skT*0.7;skY=(Math.random()-0.5)*skT*0.4}else if(!(hasA&&AN[aT]==='earthquake')){skX=0;skY=0}
-  const sp=4;pMov=false;
+  const sp=debugMode===2?12:4;pMov=false;
   if(bR){pX+=sp;pDir=1;pMov=true}
   if(bL){pX-=sp;pDir=-1;pMov=true}
   camX+=(pX-W*0.35-camX)*0.1;
+  // Heart item pickup
+  if(heartItemActive&&Math.abs(pX-heartItemX)<30){
+    heartItemActive=false;
+    if(completeLives<getMaxLives()){completeLives++;saveCompleteProgress();playSe('heart');vib(10);sM('❤️ ライフ回復！',`ライフ: ${completeLives}/${getMaxLives()}`)}
+  }
   // === COLLISION CHECK with killer anomalies ===
   if(hasA&&tTm===0){
     const killTypes=['thug','creep','wizard','ghost'];
@@ -1122,6 +1463,7 @@ function update(){
       else if(a==='ghost')ex=bsX+BW*0.5;
       const dist=Math.abs(pX-ex);
       if(dist<40){
+        lastDeathCause=a;
         if(!completeDie()){
           gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
           stopBgm();playSe(seMissSrc);
@@ -1133,8 +1475,9 @@ function update(){
       const elapsed=fc-efStart;
       const fogDelay=120;
       if(elapsed>fogDelay){
-        const fogX=bsX+BW+200-(elapsed-fogDelay)*3.5;
+        const fogX=bsX+BW+200-(elapsed-fogDelay)*4.1;
         if(pX>fogX-20){
+          lastDeathCause='evilFog';
           if(!completeDie()){
             gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
             stopBgm();playSe(seMissSrc);
@@ -1142,10 +1485,11 @@ function update(){
         }
       }
     }
-    // runnerPiyo collision - another piyo running at you
+    // runnerPiyo collision - another piyo running at you (faster than player)
     if(a==='runnerPiyo'&&runnerActive){
-      runnerX-=4;// same speed as player
+      runnerX-=4.3;
       if(Math.abs(pX-runnerX)<30){
+        lastDeathCause='runnerPiyo';
         if(!completeDie()){
           gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
           stopBgm();playSe(seMissSrc);
@@ -1153,8 +1497,8 @@ function update(){
       }
     }
   }
-  if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){if((gameMode==='normal'||gameMode==='complete')&&!clearedAnomalies.includes(AN[aT]))clearedAnomalies.push(AN[aT]);tTp='a';tTm=30;playSe(seGoSrc);sM('異変を発見！正解！','引き返して正解だった')}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);sM('異変は無かった…！','正常な道で引き返してしまった')}}
-  if(pX>bsX+BW+30){if(hasA){tTp='r';tTm=40;skT=18;playSe(seMissSrc);sM('異変を見逃した…！','よく観察しよう')}else{tTp='a';tTm=30;playSe(seGoSrc);sM('正解！前進成功！')}}
+  if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){if((gameMode==='normal'||gameMode==='complete')&&!clearedAnomalies.includes(AN[aT])){clearedAnomalies.push(AN[aT]);if(gameMode==='complete')saveCompleteProgress()}tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM('異変を発見！正解！','引き返して正解だった')}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM('異変は無かった…！','正常な道で引き返してしまった')}}
+  if(pX>bsX+BW+30){if(hasA){tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM('異変を見逃した…！','よく観察しよう')}else{tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM('正解！前進成功！')}}
   if(pMov){pAT++;if(pAT>6){pAT=0;pFr=(pFr+1)%4}}else{pFr=0;pAT=0}
 }
 
@@ -1166,8 +1510,8 @@ function dTap(){
   X.fillStyle='#CCC';X.font='18px sans-serif';
   X.fillText('本作品は対象年齢を2歳以上と設定しております',W/2,H*0.28);
   X.fillStyle='#999';X.font='16px sans-serif';
-  X.fillText('Music by NullPo Games',W/2,H*0.45);
-  X.fillText('Created by NullPo Games',W/2,H*0.53);
+  X.fillText('Music by NullPo Works',W/2,H*0.45);
+  X.fillText('Created by NullPo Works',W/2,H*0.53);
   const tapA=0.3+Math.sin(fc*0.04)*0.7;
   X.fillStyle=`rgba(200,200,200,${Math.max(0,tapA)})`;X.font='bold 56px sans-serif';
   X.fillText('Please Tap',W/2,H*0.73);
@@ -1219,12 +1563,22 @@ function dGameOver(){
   X.fillText('グエー死んだンゴ',W*0.3,showNameEntry?H*0.13:H*0.25);
   X.shadowBlur=0;X.shadowColor='transparent';
   X.restore();
-  // Sub text
+  // Sub text - score
+  const goScore=gameMode==='challenge'?challengeScore:cB;
   X.fillStyle='#882222';X.font='16px sans-serif';X.textAlign='center';
+  X.fillText(`${goScore}番地でぴよ氏は力尽きた…`,W*0.3,showNameEntry?H*0.35:H*0.40);
+  // Score emphasis for challenge mode
   if(gameMode==='challenge'){
-    X.fillText(`${challengeScore}番地でぴよ氏は力尽きた…`,W*0.3,showNameEntry?H*0.35:H*0.40);
-  }else{
-    X.fillText(`${cB}番地でぴよ氏は力尽きた…`,W*0.3,showNameEntry?H*0.35:H*0.40);
+    X.fillStyle='#CC6633';X.font='bold 28px serif';
+    X.fillText(`記録: ${goScore} 番地`,W*0.3,showNameEntry?H*0.50:H*0.55);
+  }
+  // Death cause (ad removal purchasers only)
+  if(lastDeathCause&&window.adRemoved){
+    const causeNames={thug:'睨む男に接触',creep:'フード男に接触',wizard:'占い師に接触',ghost:'幽霊に接触',evilFog:'邪悪な霧に飲まれた',runnerPiyo:'ドッペルゲンガーに接触','異変の判断ミス':'異変の判断ミス'};
+    const cn=causeNames[lastDeathCause]||lastDeathCause;
+    const causeY=gameMode==='challenge'?(showNameEntry?H*0.58:H*0.65):(showNameEntry?H*0.50:H*0.55);
+    X.fillStyle='#664444';X.font='13px sans-serif';
+    X.fillText(`死因: ${cn}`,W*0.3,causeY);
   }
   // Name entry
   if(gameMode==='challenge'&&showNameEntry){
@@ -1240,51 +1594,108 @@ function dGameOver(){
 }
 
 function render(){
-  const xl=document.getElementById('xlink');
-  if(xl)xl.style.display=(gs==='title'||gs==='tap')?'block':'none';
   X.clearRect(0,0,W,H);
   if(gs==='tap'){dTap();return}
   if(gs==='title'){dTitle();return}if(gs==='clear'){dClear();return}
   if(gs==='ranking'){dRanking();return}
   if(gs==='hints'){dHints();return}
+  if(gs==='settings'){dSettings();return}
   if(gs==='challenge_clear'){dChallengeClear();return}
   if(gs==='complete_clear'){dCompleteClear();return}
   if(gs==='gameover'){dGameOver();return}
   if(gs==='paused'){dPause();return}
   X.save();X.translate(skX,skY);
   dSky();dTkyTower();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
+  dBreathingBuilding();
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
+  // Heart item (complete mode life recovery)
+  if(heartItemActive){
+    const hix=heartItemX-camX,hiy=H*GH-20+Math.sin(fc*0.06)*4;
+    if(hix>-20&&hix<W+20){
+      X.save();X.globalAlpha=0.8+Math.sin(fc*0.08)*0.2;
+      X.fillStyle='#FF4466';X.font='20px sans-serif';X.textAlign='center';
+      X.fillText('❤️',hix,hiy);
+      X.restore();
+    }
+  }
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
+  if(hasA&&AN[aT]==='doubleShadow'){const so=30+Math.sin(fc*0.04)*4;X.fillStyle='rgba(0,0,0,0.25)';X.beginPath();X.ellipse(sx+so,gy+3,18,5,0,0,Math.PI*2);X.fill()}
   const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
   if(tTm>0){const al=tTp==='r'?Math.sin(tTm/40*Math.PI)*0.4:(tTm/30)*0.2;X.fillStyle=tTp==='r'?`rgba(255,20,20,${al})`:`rgba(255,255,180,${al})`;X.fillRect(-10,-10,W+20,H+20)}
   // Dying red fade
   if(gs==='dying'){const al=deathTimer/DEATH_FADE;X.fillStyle=`rgba(180,0,0,${al*0.85})`;X.fillRect(-10,-10,W+20,H+20)}
   if(gs==='complete_hit'){const al=completeHitTimer/COMPLETE_HIT_FADE;X.fillStyle=`rgba(180,0,0,${al*0.7})`;X.fillRect(-10,-10,W+20,H+20)}
-  X.restore();dUI();
+  X.restore();dUI();dAdLoading();
 }
 
 function loop(){update();render();requestAnimationFrame(loop)}
 
 // === INPUT ===
-// iOS PWA: resume AudioContext on every user interaction
+// Prevent touch→mouse ghost event duplication on mobile
+let lastTouchTime=0;
+function isGhostMouse(){return Date.now()-lastTouchTime<500}
+
 function touchResume(){
   if(actx&&(actx.state==='suspended'||actx.state==='interrupted')){try{actx.resume()}catch(e){}}
   if(!seLoaded&&audioUnlocked)loadAllSE();
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)touchResume();});
+
+// === APP LIFECYCLE ===
+// Native wrapper calls these when app goes to background/foreground.
+// Also triggered by visibilitychange as fallback for web.
+let pausedByLifecycle=false;
+let gsBeforePause=null;
+window.pauseGame=function(){
+  if(curBgm){try{curBgm.pause()}catch(e){}}
+  if(actx){try{actx.suspend()}catch(e){}}
+  stopQuakeSe();
+  if(gs==='playing'){gsBeforePause=gs;gs='paused';bL=false;bR=false;retireConfirm=false;pausedByLifecycle=true}
+};
+window.resumeGame=function(){
+  touchResume();
+  if(curBgm&&curBgm.paused&&gs!=='tap'){try{curBgm.play().catch(()=>{})}catch(e){}}
+  // Don't auto-unpause; player should tap resume manually
+  pausedByLifecycle=false;
+};
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){window.pauseGame()}
+  else{window.resumeGame()}
+});
 
 function startGame(mode){
-  gameMode=mode;cB=1;clearedAnomalies=[];completeLives=COMPLETE_MAX_LIVES;genA();sB();
+  gameMode=mode;cB=1;clearedAnomalies=[];completeLives=getMaxLives();
+  // Reset all transient state
+  deathTimer=0;completeHitTimer=0;
+  tTm=0;tTp='';mTm=0;mTx='';mSb='';
+  skT=0;skX=0;skY=0;
+  bL=false;bR=false;pMov=false;pFr=0;pAT=0;pDir=1;
+  efStart=null;runnerActive=false;runnerX=0;heartItemActive=false;lastDeathCause='';
+  challengeScore=0;showNameEntry=false;nameInputActive=false;nameInput='';
+  debugMode=0;debugTapCount=0;debugTapTimer=0;debugNotify=0;
+  rewardAdOffered=false;
+  // Complete mode: restore saved progress
+  let resumed=false;
+  if(mode==='complete'){resumed=loadCompleteProgress()}
+  genA();sB();
   gs='playing';playBgm(bgmStage);
   if(mode==='challenge')sM('1番地','チャレンジ開始！');
+  else if(mode==='complete'&&resumed)sM('1番地',`続きから再開（${clearedAnomalies.length}/${AN.length}）`);
   else sM('1番地','夜道を進め…');
 }
 
 function handleTitleTap(cx,cy){
   for(const b of titleBtns){
     if(cx>=b.x&&cx<=b.x+b.w&&cy>=b.y&&cy<=b.y+b.h){
+      if(compDeleteConfirm){
+        if(b.id===101){clearCompleteProgress();compDeleteConfirm=false}
+        else if(b.id===102){compDeleteConfirm=false}
+        return true;
+      }
+      if(b.id===300){gs='settings';return true}
+      if(b.id===100){compDeleteConfirm=true;return true}
       if(b.id===0){startGame('normal')}
       else if(b.id===1){startGame('complete')}
       else if(b.id===2){startGame('challenge')}
@@ -1293,6 +1704,7 @@ function handleTitleTap(cx,cy){
       return true;
     }
   }
+  if(compDeleteConfirm)return true;// block taps outside dialog
   return false;
 }
 
@@ -1305,7 +1717,7 @@ function handleNameOK(){
 }
 
 function hS(e){
-  e.preventDefault();touchResume();
+  e.preventDefault();lastTouchTime=Date.now();touchResume();
   if(gs==='tap'){unlockAudio();gs='title';playBgm(bgmTitle);return}
   if(gs==='title'){
     const rc=C.getBoundingClientRect();
@@ -1316,27 +1728,37 @@ function hS(e){
     return;
   }
   if(gs==='ranking'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='settings'){
+    const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
+    const scx=(ts[0].clientX-rc.left)*(W/rc.width),scy=(ts[0].clientY-rc.top)*(H/rc.height);
+    handleSettingsTap(scx,scy);return;
+  }
   if(gs==='hints'){
     const rc=C.getBoundingClientRect();
     const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
     const hy=(ts[0].clientY-rc.top)*(H/rc.height);
-    if(hy>=H*0.89){gs='title';return}
     hintsTouchStartY=hy;
     hintsDragging=true;hintsTotalDrag=0;return;
   }
-  if(gs==='clear'){gs='title';playBgm(bgmTitle);return}
-  if(gs==='complete_clear'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='clear'){
+    const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
+    const tcx=(ts[0].clientX-rc.left)*(W/rc.width),tcy=(ts[0].clientY-rc.top)*(H/rc.height);
+    for(const b of clearBtns){if(tcx>=b.x&&tcx<=b.x+b.w&&tcy>=b.y&&tcy<=b.y+b.h){
+      if(b.id==='replay'){showAdThenTitle(()=>startGame('normal'));return}
+      if(b.id==='title'){showAdThenTitle(goToTitle);return}
+    }}return;
+  }
+  if(gs==='complete_clear'){showAdThenTitle(goToTitle);return}
   if(gs==='challenge_clear'){
     if(showNameEntry){
       const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
       const cx3=(ts[0].clientX-rc.left)*(W/rc.width);
       const cy3=(ts[0].clientY-rc.top)*(H/rc.height);
       if(hitNameOkBtn(cx3,cy3)){handleNameOK();return}
-      // Tap on input area - open keyboard
-      openNameInput();
+      if(hitNameInputArea(cx3,cy3)){openNameInput();return}
       return;
     }
-    gs='title';playBgm(bgmTitle);return;
+    showAdThenTitle(goToTitle);return;
   }
   if(gs==='gameover'){
     if(showNameEntry){
@@ -1344,26 +1766,27 @@ function hS(e){
       const cx2=(ts[0].clientX-rc.left)*(W/rc.width);
       const cy2=(ts[0].clientY-rc.top)*(H/rc.height);
       if(hitNameOkBtn(cx2,cy2)){handleNameOK();return}
-      openNameInput();
+      if(hitNameInputArea(cx2,cy2)){openNameInput();return}
       return;
     }
-    gs='title';playBgm(bgmTitle);return;
+    showAdThenTitle(goToTitle);return;
   }
   if(gs==='dying'||gs==='complete_hit')return;
   const rc=C.getBoundingClientRect(),ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
   const cx0=(ts[0].clientX-rc.left)*(W/rc.width);
   const cy0=(ts[0].clientY-rc.top)*(H/rc.height);
   if(gs==='paused'){handlePauseTap(cx0,cy0);return}
-  if(gs==='playing'&&cx0>=W/2-80&&cx0<=W/2+80&&cy0>=0&&cy0<=50){
+  if(gs==='playing'&&cx0>=W/2-80&&cx0<=W/2+80&&cy0>=saT&&cy0<=saT+50){
     debugTapCount++;debugTapTimer=300;
-    if(debugTapCount>=10){debugMode=!debugMode;debugTapCount=0;debugTapTimer=0;debugNotify=120}
+    if(debugTapCount>=10){debugMode=(debugMode+1)%3;debugTapCount=0;debugTapTimer=0;debugNotify=120}
     return;
   }
-  if(gs==='playing'&&hitPauseBtn(cx0,cy0)){gs='paused';bL=false;bR=false;return}
+  if(gs==='playing'&&hitPauseBtn(cx0,cy0)){gs='paused';bL=false;bR=false;retireConfirm=false;return}
   for(let t of ts){if(((t.clientX-rc.left)*(W/rc.width))<W*0.4)bL=true;else bR=true}
 }
-function uT(e){e.preventDefault();
+function uT(e){e.preventDefault();lastTouchTime=Date.now();
   if(gs==='hints'&&hintsDragging){
+    if(!e.touches||!e.touches.length)return;
     const rc=C.getBoundingClientRect();
     const ty=(e.touches[0].clientY-rc.top)*(H/rc.height);
     const dy=hintsTouchStartY-ty;
@@ -1372,22 +1795,40 @@ function uT(e){e.preventDefault();
     hintsTouchStartY=ty;return;
   }
   if(gs!=='playing')return;bL=false;bR=false;const rc=C.getBoundingClientRect();if(e.touches)for(let t of e.touches){if((t.clientX-rc.left)<W*0.4)bL=true;else bR=true}}
-function hE(e){e.preventDefault();
-  if(gs==='hints'){hintsDragging=false;return}
+function hE(e){e.preventDefault();lastTouchTime=Date.now();
+  if(gs==='hints'){
+    const wasDrag=hintsDragging&&hintsTotalDrag>10;
+    hintsDragging=false;
+    // Only process tap (back button) if user didn't scroll
+    if(!wasDrag&&e.changedTouches&&e.changedTouches.length>0){
+      const rc=C.getBoundingClientRect();
+      const hy=(e.changedTouches[0].clientY-rc.top)*(H/rc.height);
+      if(hy>=H*0.89){gs='title'}
+    }
+    return;
+  }
   if(e.touches&&e.touches.length>0)uT(e);else{bL=false;bR=false}}
 C.addEventListener('touchstart',hS,{passive:false});C.addEventListener('touchmove',uT,{passive:false});C.addEventListener('touchend',hE,{passive:false});C.addEventListener('touchcancel',hE,{passive:false});
   
 C.addEventListener('mousedown',(e)=>{
+  if(isGhostMouse())return;
   e.preventDefault();touchResume();
   if(gs==='tap'){unlockAudio();gs='title';playBgm(bgmTitle);return}
   if(gs==='title'){const rc=C.getBoundingClientRect();const cx=(e.clientX-rc.left)*(W/rc.width);const cy=(e.clientY-rc.top)*(H/rc.height);handleTitleTap(cx,cy);return}
   if(gs==='ranking'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='settings'){const rc7=C.getBoundingClientRect();const scx2=(e.clientX-rc7.left)*(W/rc7.width),scy2=(e.clientY-rc7.top)*(H/rc7.height);handleSettingsTap(scx2,scy2);return}
   if(gs==='hints'){const rc5=C.getBoundingClientRect();const my5=(e.clientY-rc5.top)*(H/rc5.height);if(my5>=H*0.89){gs='title'}return}
-  if(gs==='clear'){gs='title';playBgm(bgmTitle);return}
-  if(gs==='complete_clear'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='clear'){
+    const rc6=C.getBoundingClientRect();const mcx6=(e.clientX-rc6.left)*(W/rc6.width),mcy6=(e.clientY-rc6.top)*(H/rc6.height);
+    for(const b of clearBtns){if(mcx6>=b.x&&mcx6<=b.x+b.w&&mcy6>=b.y&&mcy6<=b.y+b.h){
+      if(b.id==='replay'){showAdThenTitle(()=>startGame('normal'));return}
+      if(b.id==='title'){showAdThenTitle(goToTitle);return}
+    }}return;
+  }
+  if(gs==='complete_clear'){showAdThenTitle(goToTitle);return}
   if(gs==='challenge_clear'){
-    if(showNameEntry){const rc4=C.getBoundingClientRect();const mx2=(e.clientX-rc4.left)*(W/rc4.width);const my2=(e.clientY-rc4.top)*(H/rc4.height);if(hitNameOkBtn(mx2,my2))handleNameOK();else openNameInput();return}
-    gs='title';playBgm(bgmTitle);return;
+    if(showNameEntry){const rc4=C.getBoundingClientRect();const mx2=(e.clientX-rc4.left)*(W/rc4.width);const my2=(e.clientY-rc4.top)*(H/rc4.height);if(hitNameOkBtn(mx2,my2))handleNameOK();else if(hitNameInputArea(mx2,my2))openNameInput();return}
+    showAdThenTitle(goToTitle);return;
   }
   if(gs==='gameover'){
     if(showNameEntry){
@@ -1395,45 +1836,53 @@ C.addEventListener('mousedown',(e)=>{
       const mx=(e.clientX-rc3.left)*(W/rc3.width);
       const my=(e.clientY-rc3.top)*(H/rc3.height);
       if(hitNameOkBtn(mx,my))handleNameOK();
-      else openNameInput();
+      else if(hitNameInputArea(mx,my))openNameInput();
       return;
     }
-    gs='title';playBgm(bgmTitle);return;
+    showAdThenTitle(goToTitle);return;
   }
   if(gs==='dying'||gs==='complete_hit')return;
   const rc2=C.getBoundingClientRect();
   const mcx=(e.clientX-rc2.left)*(W/rc2.width);
   const mcy=(e.clientY-rc2.top)*(H/rc2.height);
   if(gs==='paused'){handlePauseTap(mcx,mcy);return}
-  if(gs==='playing'&&mcx>=W/2-80&&mcx<=W/2+80&&mcy>=0&&mcy<=50){
-    debugTapCount++;debugTapTimer=90;
-    if(debugTapCount>=10){debugMode=!debugMode;debugTapCount=0;debugTapTimer=0}
+  if(gs==='playing'&&mcx>=W/2-80&&mcx<=W/2+80&&mcy>=saT&&mcy<=saT+50){
+    debugTapCount++;debugTapTimer=300;
+    if(debugTapCount>=10){debugMode=(debugMode+1)%3;debugTapCount=0;debugTapTimer=0;debugNotify=120}
     return;
   }
-  if(gs==='playing'&&hitPauseBtn(mcx,mcy)){gs='paused';bL=false;bR=false;return}
+  if(gs==='playing'&&hitPauseBtn(mcx,mcy)){gs='paused';bL=false;bR=false;retireConfirm=false;return}
   if(mcx<W*0.4)bL=true;else bR=true;
 });
 C.addEventListener('wheel',(e)=>{
   if(gs==='hints'){e.preventDefault();hintsScrollY+=e.deltaY*0.5}
 },{passive:false});
-C.addEventListener('mouseup',()=>{bL=false;bR=false});C.addEventListener('mouseleave',()=>{bL=false;bR=false});
+C.addEventListener('mouseup',()=>{if(!isGhostMouse()){bL=false;bR=false}});C.addEventListener('mouseleave',()=>{if(!isGhostMouse()){bL=false;bR=false}});
 
 // Hidden input for mobile keyboard
 const nameEl=document.createElement('input');nameEl.type='text';nameEl.maxLength=8;
-nameEl.style.cssText='position:fixed;top:0;left:50%;transform:translateX(-50%);opacity:0;font-size:16px;pointer-events:none;z-index:10000;';
+nameEl.setAttribute('autocomplete','off');nameEl.setAttribute('autocorrect','off');
+nameEl.setAttribute('autocapitalize','off');nameEl.setAttribute('spellcheck','false');
+nameEl.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);opacity:0.01;font-size:16px;width:1px;height:1px;border:none;z-index:10000;';
 document.body.appendChild(nameEl);
 nameEl.addEventListener('input',()=>{nameInput=nameEl.value.substring(0,8)});
 nameEl.addEventListener('blur',()=>{nameInputActive=false});
-function openNameInput(){nameEl.value=nameInput;nameEl.focus();nameInputActive=true}
+function openNameInput(){
+  nameEl.value=nameInput;nameInputActive=true;
+  // iOS requires focus in user gesture context; use setTimeout as fallback
+  try{nameEl.focus()}catch(e){}
+  setTimeout(()=>{try{nameEl.focus()}catch(e){}},50);
+}
 
 document.addEventListener('keydown',(e)=>{
   if(nameInputActive){
     if(e.key==='Enter')handleNameOK();
     return;
   }
+  if(gs==='dying'||gs==='complete_hit')return;
   if(e.key==='ArrowRight'||e.key==='d')bR=true;
   if(e.key==='ArrowLeft'||e.key==='a')bL=true;
-  if(gs==='playing'&&(e.key==='Escape'||e.key==='p')){gs='paused';bL=false;bR=false;return}
+  if(gs==='playing'&&(e.key==='Escape'||e.key==='p')){gs='paused';bL=false;bR=false;retireConfirm=false;return}
   if(gs==='paused'){
     if(e.key==='Escape'||e.key==='p'||e.key==='Enter'){gs='playing';return}
     if(e.key==='q'){gs='title';playBgm(bgmTitle);return}
@@ -1448,14 +1897,17 @@ document.addEventListener('keydown',(e)=>{
     else if(e.key==='5'){gs='hints';hintsScrollY=0}
   }
   else if(gs==='ranking'){gs='title';playBgm(bgmTitle)}
+  else if(gs==='settings'){gs='title'}
   else if(gs==='hints'){gs='title'}
   else if(gs==='clear'||gs==='challenge_clear'||gs==='complete_clear'||gs==='gameover'){
-    if(!showNameEntry){gs='title';playBgm(bgmTitle)}
+    if(!showNameEntry){showAdThenTitle(goToTitle)}
   }
 });
 document.addEventListener('keyup',(e)=>{if(e.key==='ArrowRight'||e.key==='d')bR=false;if(e.key==='ArrowLeft'||e.key==='a')bL=false});
-loop();
+// === PWA: Service Worker ===
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+loop();
 </script>
 </body>
 </html>
