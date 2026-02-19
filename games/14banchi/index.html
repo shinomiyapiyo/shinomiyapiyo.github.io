@@ -1334,7 +1334,7 @@ function completeDie(){
     if(!rewardAdOffered){
       rewardAdOffered=true;
       bL=false;bR=false;pMov=false;
-      const offered=showRewardedAd(
+      const offered=offerRewardedAd(
         ()=>{// Rewarded: restore 2 lives and continue
           completeLives=2;saveCompleteProgress();
           gs='complete_hit';completeHitTimer=0;
@@ -1357,7 +1357,7 @@ function sM(t,s){mTx=t;mSb=s||'';mTm=90}
 
 // === AD HOOK ===
 // Native wrapper provides: window.showInterstitialAd(onDismiss)
-//                          window.showRewardedAd(onRewarded, onSkipped)
+//                          window.nativeShowRewardedAd(onRewarded, onSkipped)
 //                          window.adRemoved = true  (ad removal purchase flag)
 //                          window.livesUpgrade = true  (lives pack purchase flag)
 let adBusy=false;
@@ -1375,12 +1375,12 @@ function showAdThenTitle(callback){
 }
 
 // Rewarded ad: returns true if ad was offered, false if unavailable
-function showRewardedAd(onRewarded,onSkipped){
+function offerRewardedAd(onRewarded,onSkipped){
   if(adBusy)return false;
-  if(window.adRemoved||typeof window.showRewardedAd!=='function'){return false}
+  if(window.adRemoved||typeof window.nativeShowRewardedAd!=='function'){return false}
   adBusy=true;adLoadingTimer=fc;
   const timer=setTimeout(()=>{adBusy=false;adLoadingTimer=0;if(onSkipped)onSkipped()},AD_TIMEOUT);
-  window.showRewardedAd(
+  window.nativeShowRewardedAd(
     ()=>{clearTimeout(timer);adBusy=false;adLoadingTimer=0;onRewarded()},
     ()=>{clearTimeout(timer);adBusy=false;adLoadingTimer=0;if(onSkipped)onSkipped()}
   );
