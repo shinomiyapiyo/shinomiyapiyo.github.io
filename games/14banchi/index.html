@@ -969,20 +969,20 @@ function dTitle(){
     X.strokeStyle=labels[i][1];X.lineWidth=2;X.strokeRect(bx,by,btnW,btnH);
     X.fillStyle=labels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
     X.fillText(labels[i][0],tx,by+btnH/2+5);
-    // Mode descriptions
+    // Mode descriptions (right side of button)
     const descs=['全14番地を脱出せよ','全'+AN.length+'種の異変を制覇せよ','1ミスで即終了 ランキングに名を刻め！','',''];
-    if(descs[i]&&btnH>=30){X.fillStyle='rgba(0,0,0,0.3)';X.font='9px sans-serif';X.fillText(descs[i],tx,by+btnH/2+17)}
-    // Show complete mode save indicator + delete button
+    if(descs[i]){X.fillStyle=labels[i][1];X.globalAlpha=0.7;X.font='bold 12px sans-serif';X.textAlign='left';X.fillText(descs[i],bx+btnW+12,by+btnH/2+4);X.globalAlpha=1.0}
+    // Show complete mode save indicator (left side) + delete button
     if(i===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&sv.a&&sv.a.length>0){
-      X.fillStyle='#55AA77';X.font='10px sans-serif';
-      X.fillText(`💾 ${sv.a.length}/${AN.length}`,tx+btnW/2-24,by+12);
+      X.fillStyle='#55AA77';X.font='10px sans-serif';X.textAlign='right';
+      X.fillText(`💾 ${sv.a.length}/${AN.length}`,bx-8,by+btnH/2+4);
       // Delete save button
-      const dbx=tx+btnW/2+10,dby=by+2,dbw=28,dbh=16;
+      const dbx=bx-42,dby=by+btnH/2-10,dbw=28,dbh=20;
       titleBtns.push({x:dbx,y:dby,w:dbw,h:dbh,id:100});
       X.fillStyle='rgba(180,50,50,0.6)';X.fillRect(dbx,dby,dbw,dbh);
       X.strokeStyle='#CC4444';X.lineWidth=1;X.strokeRect(dbx,dby,dbw,dbh);
-      X.fillStyle='#FFAAAA';X.font='bold 10px sans-serif';X.textAlign='center';
-      X.fillText('🗑',dbx+dbw/2,dby+12);
+      X.fillStyle='#FFAAAA';X.font='bold 11px sans-serif';X.textAlign='center';
+      X.fillText('🗑',dbx+dbw/2,dby+14);
     }}catch(e){}}
   }
   X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.80',W/2,H*0.97);
