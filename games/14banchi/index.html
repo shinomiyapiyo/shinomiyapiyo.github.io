@@ -991,13 +991,11 @@ function dTitle(){
       X.fillText('💾',svCx,by+btnH/2-2);
       X.font='bold 10px sans-serif';
       X.fillText(`${sv.a.length}/${AN.length}`,svCx,by+btnH/2+12);
-      // Delete save button
+      // Delete save button (no border, just ✖ text)
       const dbx=svCx-14,dby=by+btnH/2+16,dbw=28,dbh=18;
       titleBtns.push({x:dbx,y:dby,w:dbw,h:dbh,id:100});
-      X.fillStyle='rgba(180,50,50,0.6)';X.fillRect(dbx,dby,dbw,dbh);
-      X.strokeStyle='#CC4444';X.lineWidth=1;X.strokeRect(dbx,dby,dbw,dbh);
-      X.fillStyle='#FFAAAA';X.font='bold 10px sans-serif';X.textAlign='center';
-      X.fillText('🗑',dbx+dbw/2,dby+13);
+      X.fillStyle='#CC6666';X.font='bold 10px sans-serif';X.textAlign='center';
+      X.fillText('✖ 削除',svCx,dby+13);
     }}catch(e){}}
   }
   X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.80',W/2,H*0.97);
