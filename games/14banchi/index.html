@@ -970,8 +970,11 @@ function dTitle(){
     X.fillStyle=labels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
     X.fillText(labels[i][0],tx,by+btnH/2+5);
     // Mode descriptions (right side of button)
-    const descs=['全14番地を脱出せよ','全'+AN.length+'種の異変を制覇せよ','1ミスで即終了 ランキングに名を刻め！','',''];
-    if(descs[i]){X.fillStyle=labels[i][1];X.globalAlpha=0.7;X.font='bold 12px sans-serif';X.textAlign='left';X.fillText(descs[i],bx+btnW+12,by+btnH/2+4);X.globalAlpha=1.0}
+    const descs=['全14番地を脱出せよ','全'+AN.length+'種の異変を制覇せよ',['1ミスで即終了','ランキングに名を刻め！'],'',''];
+    if(descs[i]){X.fillStyle=labels[i][1];X.globalAlpha=0.7;X.font='bold 12px sans-serif';X.textAlign='left';
+      if(Array.isArray(descs[i])){descs[i].forEach((ln,li)=>{X.fillText(ln,bx+btnW+12,by+btnH/2-4+li*16)})}
+      else{X.fillText(descs[i],bx+btnW+12,by+btnH/2+4)}
+    X.globalAlpha=1.0}
     // Show complete mode save indicator (left side) + delete button
     if(i===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&sv.a&&sv.a.length>0){
       X.fillStyle='#55AA77';X.font='10px sans-serif';X.textAlign='right';
