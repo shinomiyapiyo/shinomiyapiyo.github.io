@@ -6,24 +6,9 @@
     <meta name="theme-color" content="#FFB7C5">
     <meta name="format-detection" content="telephone=no">
 
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2E28JBNJVF"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2E28JBNJVF');
-      // クリック計測
-      function trackClick(label) {
-          gtag('event', 'click_link', {
-              'event_category': 'Outbound Link',
-              'event_label': label,
-              'transport_type': 'beacon'
-          });
-      }
-    </script>
-
     <title>四ノ宮ぴよ Official | 仙台 144cmにゃんこひよこメイド</title>
     <meta name="description" content="四ノ宮ぴよ公式サイト。仙台メイドカフェ「にゃんぽんたん」所属の144cmにゃんこひよこメイド。SNS・ライブ情報・通販チェキまとめ。">
+    <meta name="keywords" content="四ノ宮ぴよ,にゃんぽんたん,仙台,メイドカフェ,アイドル,ライブ,SHOWROOM,チェキ,通販">
     <link rel="canonical" href="https://shinomiyapiyo.github.io/">
 
     <meta property="og:site_name" content="四ノ宮ぴよ Official">
@@ -32,6 +17,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://shinomiyapiyo.github.io/">
     <meta property="og:image" content="https://shinomiyapiyo.github.io/images/shinomiya-piyo-official.jpg">
+    <meta property="og:image:width" content="2048">
+    <meta property="og:image:height" content="1536">
     <meta property="og:locale" content="ja_JP">
 
     <meta name="twitter:card" content="summary_large_image">
@@ -71,6 +58,83 @@
       ],
       "description": "仙台のメイドカフェ「にゃんぽんたん」所属の144cmにゃんこひよこメイド。"
     }
+    </script>
+
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "めんこいな東北 定期公演",
+        "startDate": "2026-02-21",
+        "location": {
+          "@type": "Place",
+          "name": "仙台イービーンズ4F 杜のガーデンテラス",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "仙台市",
+            "addressRegion": "宮城県",
+            "addressCountry": "JP"
+          }
+        },
+        "performer": {
+          "@type": "Person",
+          "name": "四ノ宮ぴよ",
+          "url": "https://shinomiyapiyo.github.io/"
+        },
+        "image": "https://shinomiyapiyo.github.io/images/live-20260221-menkoina.jfif",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": "https://schema.org/EventScheduled"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "上品の郷 鍋イベント",
+        "startDate": "2026-03-01",
+        "location": {
+          "@type": "Place",
+          "name": "上品の郷",
+          "address": {
+            "@type": "PostalAddress",
+            "addressRegion": "宮城県",
+            "addressCountry": "JP"
+          }
+        },
+        "performer": {
+          "@type": "Person",
+          "name": "四ノ宮ぴよ",
+          "url": "https://shinomiyapiyo.github.io/"
+        },
+        "image": "https://shinomiyapiyo.github.io/images/live-20260301-jyobon-nabe.jfif",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": "https://schema.org/EventScheduled"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "おにゃんこぽん vol.11 〜青葉城で伊達な萌宴〜",
+        "startDate": "2026-03-22T10:00:00+09:00",
+        "endDate": "2026-03-22T18:30:00+09:00",
+        "location": {
+          "@type": "Place",
+          "name": "青葉城",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "仙台市",
+            "addressRegion": "宮城県",
+            "addressCountry": "JP"
+          }
+        },
+        "performer": {
+          "@type": "Person",
+          "name": "四ノ宮ぴよ",
+          "url": "https://shinomiyapiyo.github.io/"
+        },
+        "image": "https://shinomiyapiyo.github.io/images/live-20260322-onyankopon-flyer.jfif",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": "https://schema.org/EventScheduled"
+      }
+    ]
     </script>
 
     <style>
@@ -208,7 +272,6 @@
             z-index: 9;
         }
 
-
         .cat-hd {
             text-align: center;
             margin-bottom: 0.25rem;
@@ -278,7 +341,7 @@
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
         }
 
-                .link-card::after {
+        .link-card::after {
             content: '';
             position: absolute;
             top: 0;
@@ -606,7 +669,7 @@
             font-weight: 700;
         }
 
-                .pwa-guide {
+        .pwa-guide {
             margin-top: 0.5rem;
         }
 
@@ -862,16 +925,6 @@
             gap: .75rem;
         }
 
-        .yt-card__title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #374151;
-            padding: 0.5rem 0.25rem 0.125rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         .yt-embed {
             border-radius: 1rem;
             padding: 0.5rem;
@@ -914,17 +967,12 @@
             50% { transform: translateY(-20px); }
         }
 
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
         @keyframes pulse-slow {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
 
-                .fadein {
+        .fadein {
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.6s ease-out, transform 0.6s ease-out;
@@ -935,17 +983,8 @@
             transform: translateY(0);
         }
 
-        .icon {
-            width: 1em;
-            height: 1em;
-            display: inline-block;
-            vertical-align: middle;
-            fill: currentColor;
-        }
-
         .icon--sm { width: 0.875rem; height: 0.875rem; }
         .icon--md { width: 1.125rem; height: 1.125rem; }
-        .icon--lg { width: 1.25rem; height: 1.25rem; }
 
         .sr-only {
             position: absolute !important;
@@ -958,6 +997,21 @@
             border: 0 !important;
         }
     </style>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2E28JBNJVF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2E28JBNJVF');
+      function trackClick(label) {
+          gtag('event', 'click_link', {
+              'event_category': 'Outbound Link',
+              'event_label': label,
+              'transport_type': 'beacon'
+          });
+      }
+    </script>
 </head>
 <body>
 
@@ -980,8 +1034,8 @@
 
                 <section class="links-section">
 
-                        <div class="profile-box fadein">
-                <h2 class="sr-only">Profile</h2>
+                        <div class="profile-box fadein" role="region" aria-labelledby="sec-profile">
+                <h2 class="sr-only" id="sec-profile">Profile</h2>
                 <div class="glass-card profile-inner">
                     <p>
                         144cmひよこのぴよちゃんです🐥<br>
@@ -991,9 +1045,9 @@
                 </div>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-live">
                 <div class="cat-hd">
-                    <h3 class="section-title">NEXT LIVE</h3>
+                    <h2 class="section-title" id="sec-live">NEXT LIVE</h2>
                     <p class="stxt">ぴよに会いに来てね♡</p>
                 </div>
 
@@ -1071,9 +1125,9 @@
                 </div>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-streaming">
                 <div class="cat-hd">
-                    <h3 class="section-title">LIVE STREAMING</h3>
+                    <h2 class="section-title" id="sec-streaming">LIVE STREAMING</h2>
                     <p class="stxt">遊びに来てね♡</p>
                 </div>
 
@@ -1094,9 +1148,9 @@
                 </a>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-sns">
                 <div class="cat-hd">
-                    <h3 class="section-title">SNS</h3>
+                    <h2 class="section-title" id="sec-sns">SNS</h2>
                     <p class="stxt">フォローしてね♡</p>
                 </div>
 
@@ -1169,9 +1223,9 @@
                 </a>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-maid">
                 <div class="cat-hd">
-                    <h3 class="section-title">メイドカフェ</h3>
+                    <h2 class="section-title" id="sec-maid">メイドカフェ</h2>
                     <p class="stxt">ぴよに会える♡</p>
                 </div>
 
@@ -1192,9 +1246,9 @@
                 </a>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-games">
                 <div class="cat-hd">
-                    <h3 class="section-title">ゲーム</h3>
+                    <h2 class="section-title" id="sec-games">ゲーム</h2>
                     <p class="stxt">ぴよがゲームになったよ♡</p>
 
                                         <div class="pwa-note">
@@ -1257,9 +1311,9 @@
                 </a>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-shop">
                 <div class="cat-hd">
-                    <h3 class="section-title">通販</h3>
+                    <h2 class="section-title" id="sec-shop">通販</h2>
                     <p class="stxt">お迎えしてね♡</p>
                 </div>
 
@@ -1280,9 +1334,9 @@
                 </a>
             </div>
 
-            <div class="cat-group fadein">
+            <div class="cat-group fadein" role="region" aria-labelledby="sec-movie">
                 <div class="cat-hd">
-                    <h3 class="section-title">MOVIE</h3>
+                    <h2 class="section-title" id="sec-movie">MOVIE</h2>
                     <p class="stxt">歌ってみた & ライブ映像 🎤</p>
                 </div>
 
