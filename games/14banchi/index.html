@@ -984,17 +984,20 @@ function dTitle(){
       if(Array.isArray(descs[i])){descs[i].forEach((ln,li)=>{X.fillText(ln,bx+btnW+12,by+btnH/2-4+li*16)})}
       else{X.fillText(descs[i],bx+btnW+12,by+btnH/2+4)}
     X.globalAlpha=1.0}
-    // Show complete mode save indicator (left side) + delete button
+    // Show complete mode save indicator (left side, 2 lines) + delete button
     if(i===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&sv.a&&sv.a.length>0){
-      X.fillStyle='#55AA77';X.font='10px sans-serif';X.textAlign='right';
-      X.fillText(`💾 ${sv.a.length}/${AN.length}`,bx-8,by+btnH/2+4);
+      X.textAlign='center';const svCx=bx-22;
+      X.fillStyle='#55AA77';X.font='13px sans-serif';
+      X.fillText('💾',svCx,by+btnH/2-2);
+      X.font='bold 10px sans-serif';
+      X.fillText(`${sv.a.length}/${AN.length}`,svCx,by+btnH/2+12);
       // Delete save button
-      const dbx=bx-42,dby=by+btnH/2-10,dbw=28,dbh=20;
+      const dbx=svCx-14,dby=by+btnH/2+16,dbw=28,dbh=18;
       titleBtns.push({x:dbx,y:dby,w:dbw,h:dbh,id:100});
       X.fillStyle='rgba(180,50,50,0.6)';X.fillRect(dbx,dby,dbw,dbh);
       X.strokeStyle='#CC4444';X.lineWidth=1;X.strokeRect(dbx,dby,dbw,dbh);
-      X.fillStyle='#FFAAAA';X.font='bold 11px sans-serif';X.textAlign='center';
-      X.fillText('🗑',dbx+dbw/2,dby+14);
+      X.fillStyle='#FFAAAA';X.font='bold 10px sans-serif';X.textAlign='center';
+      X.fillText('🗑',dbx+dbw/2,dby+13);
     }}catch(e){}}
   }
   X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.80',W/2,H*0.97);
