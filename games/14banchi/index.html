@@ -1173,7 +1173,7 @@ function handleSettingsTap(cx,cy){
 // === HINTS SCREEN ===
 let hintsScrollY=0;
 let hintsTouchStartY=0;
-let hintsDragging=false;
+let hintsDragging=false;let hintsJustOpened=false;
 let hintsTotalDrag=0;
 // HINTS_DATA order must match AN array exactly
 const HINTS_DATA=[
@@ -1706,7 +1706,7 @@ function handleTitleTap(cx,cy){
       else if(b.id===1){startGame('complete')}
       else if(b.id===2){startGame('challenge')}
       else if(b.id===3){gs='ranking';playBgm(bgmRanking);loadRanking()}
-      else if(b.id===4){gs='hints';hintsScrollY=0}
+      else if(b.id===4){gs='hints';hintsScrollY=0;hintsJustOpened=true}
       return true;
     }
   }
@@ -1744,7 +1744,7 @@ function hS(e){
     const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
     const hy=(ts[0].clientY-rc.top)*(H/rc.height);
     hintsTouchStartY=hy;
-    hintsDragging=true;hintsTotalDrag=0;return;
+    hintsDragging=true;hintsTotalDrag=0;hintsJustOpened=false;return;
   }
   if(gs==='clear'){
     const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
@@ -1805,6 +1805,7 @@ function hE(e){e.preventDefault();lastTouchTime=Date.now();
   if(gs==='hints'){
     const wasDrag=hintsDragging&&hintsTotalDrag>10;
     hintsDragging=false;
+    if(hintsJustOpened){hintsJustOpened=false;return}// ignore touchend from the tap that opened hints
     // Only process tap (back button) if user didn't scroll
     if(!wasDrag&&e.changedTouches&&e.changedTouches.length>0){
       const rc=C.getBoundingClientRect();
@@ -1900,7 +1901,7 @@ document.addEventListener('keydown',(e)=>{
     else if(e.key==='2'){startGame('complete')}
     else if(e.key==='3'){startGame('challenge')}
     else if(e.key==='4'){gs='ranking';playBgm(bgmRanking);loadRanking()}
-    else if(e.key==='5'){gs='hints';hintsScrollY=0}
+    else if(e.key==='5'){gs='hints';hintsScrollY=0;hintsJustOpened=true}
   }
   else if(gs==='ranking'){gs='title';playBgm(bgmTitle)}
   else if(gs==='settings'){gs='title'}
