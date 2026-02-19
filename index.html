@@ -31,7 +31,7 @@
     <meta property="og:description" content="144cmひよこのぴよちゃんです🐥 仙台でメイドさんしたり🎀東京でライブしたりしてます🎤 SNS・通販リンクまとめ">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://shinomiyapiyo.github.io/">
-    <meta property="og:image" content="https://shinomiyapiyo.github.io/images/shinomiya-piyo-maid-sendai.jpg">
+    <meta property="og:image" content="https://shinomiyapiyo.github.io/images/shinomiya-piyo-official.jpg">
     <meta property="og:locale" content="ja_JP">
 
     <meta name="twitter:card" content="summary_large_image">
@@ -39,7 +39,7 @@
     <meta name="twitter:creator" content="@piyopiyoo_nyan">
     <meta name="twitter:title" content="四ノ宮ぴよ Official">
     <meta name="twitter:description" content="仙台メイドカフェにゃんぽんたん所属。144cmにゃんこひよこメイド。">
-    <meta name="twitter:image" content="https://shinomiyapiyo.github.io/images/shinomiya-piyo-maid-sendai.jpg">
+    <meta name="twitter:image" content="https://shinomiyapiyo.github.io/images/shinomiya-piyo-official.jpg">
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐥</text></svg>">
     <link rel="apple-touch-icon" sizes="180x180" href="./images/apple-touch-icon.png">
@@ -56,7 +56,7 @@
       "name": "四ノ宮ぴよ",
       "alternateName": "Shinomiyapiyo",
       "url": "https://shinomiyapiyo.github.io/",
-      "image": "https://shinomiyapiyo.github.io/images/shinomiya-piyo-maid-sendai.jpg",
+      "image": "https://shinomiyapiyo.github.io/images/shinomiya-piyo-official.jpg",
       "jobTitle": "Maid, Idol",
       "worksFor": {
         "@type": "Organization",
@@ -183,7 +183,6 @@
 
         .hero {
             position: relative;
-            height: 60vh;
             width: 100%;
             display: flex;
             align-items: flex-end;
@@ -192,28 +191,15 @@
         }
 
         .hero__image {
-            position: absolute;
-            bottom: 0;
-            width: auto;
-            height: 105%;
-            object-fit: cover;
-            object-position: center;
-            z-index: 10;
-            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-            filter: drop-shadow(0 25px 25px rgba(0,0,0,0.15));
-            transition: transform 0.7s ease;
-        }
-
-        .hero__image:hover {
-            transform: scale(1.05);
-        }
-
-                .hero-fallback {
-            position: absolute;
-            bottom: 0;
             width: 100%;
-            height: 100%;
+            height: auto;
+            object-fit: contain;
+            z-index: 10;
+        }
+
+        .hero-fallback {
+            position: absolute;
+            inset: 0;
             background: linear-gradient(135deg, var(--pink), var(--yellow));
             display: flex;
             align-items: center;
@@ -222,39 +208,6 @@
             z-index: 9;
         }
 
-        .hero__overlay {
-            position: absolute;
-            bottom: 1rem;
-            z-index: 20;
-            text-align: center;
-            width: 100%;
-            padding: 0 1rem;
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        .hero__card {
-            border-radius: 1rem;
-            padding: 1rem;
-            border-top: 4px solid var(--yellow);
-        }
-
-        .hero__subtitle {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--dark-pink);
-            letter-spacing: 0.1em;
-            margin-bottom: 0.25rem;
-        }
-
-        .hero__title {
-            font-size: 1.875rem;
-            font-weight: 900;
-            letter-spacing: -0.025em;
-            color: #1f2937;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        
 
         .cat-hd {
             text-align: center;
@@ -1018,19 +971,11 @@
 
                 <section class="hero">
                         <div class="hero-fallback" aria-hidden="true">🐥</div>
-            <img src="./images/shinomiya-piyo-maid-sendai.jpg"
-                 alt="四ノ宮ぴよ"
+            <h1 class="sr-only">四ノ宮ぴよ Official</h1>
+            <img src="./images/shinomiya-piyo-official.jpg"
+                 alt="四ノ宮ぴよ Official - 144cmにゃんこひよこメイド"
                  class="hero__image"
                  id="js-hero-img">
-
-            <div class="hero__overlay">
-                <div class="glass-card hero__card">
-                    <p class="hero__subtitle">144cmにゃんこひよこメイド</p>
-                    <h1 class="hero__title">
-                        四ノ宮 ぴよ<span style="font-size:1.25rem;margin-left:.25rem">🐥</span>
-                    </h1>
-                </div>
-            </div>
         </section>
 
                 <section class="links-section">
