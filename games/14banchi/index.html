@@ -809,7 +809,7 @@ function dAnom(){
 }
 
 // === UI ===
-// Pause button hit area (right of moon at W*0.8)
+// Pause button hit area (left of block counter)
 const pauseBtn={x:0,y:0,w:0,h:0};
 function dUI(){
   const uiTop=4+saT;
@@ -817,13 +817,13 @@ function dUI(){
   X.strokeStyle='#FFD700';X.lineWidth=1.5;X.strokeRect(W/2-58,uiTop,116,26);
   X.fillStyle='#FFD700';X.font='bold 14px monospace';X.textAlign='center';
   X.fillText(gameMode==='normal'?`${cB} / 14 番地`:`${cB} 番地`,W/2,uiTop+18);
-  // Pause button (right of moon)
-  const px=W-58-saR,py=6+saT,pw=50,ph=44;
+  // Pause button (left of block counter, away from moon area)
+  const px=W/2-58-66,py=6+saT,pw=44,ph=30;
   pauseBtn.x=px;pauseBtn.y=py;pauseBtn.w=pw;pauseBtn.h=ph;
   X.fillStyle='rgba(0,0,0,0.55)';X.fillRect(px,py,pw,ph);
   X.strokeStyle='rgba(255,255,255,0.4)';X.lineWidth=1;X.strokeRect(px,py,pw,ph);
   X.fillStyle='rgba(255,255,255,0.7)';
-  X.fillRect(px+14,py+8,6,22);X.fillRect(px+28,py+8,6,22);
+  X.fillRect(px+13,py+6,5,18);X.fillRect(px+25,py+6,5,18);
   if(mTm>0){const al=Math.min(1,mTm/20),mw=230,mh=mSb?46:32;X.fillStyle=`rgba(0,0,0,${al*0.8})`;X.fillRect(W/2-mw/2,H*0.12,mw,mh);X.strokeStyle=`rgba(255,215,0,${al*0.5})`;X.lineWidth=1;X.strokeRect(W/2-mw/2,H*0.12,mw,mh);X.fillStyle=`rgba(255,255,255,${al})`;X.font='bold 14px sans-serif';X.textAlign='center';X.fillText(mTx,W/2,H*0.12+20);if(mSb){X.fillStyle=`rgba(200,200,200,${al*0.8})`;X.font='11px sans-serif';X.fillText(mSb,W/2,H*0.12+36)}}
   // Block 1 tutorial hints
   if(cB===1&&tTm===0){
