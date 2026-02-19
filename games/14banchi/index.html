@@ -464,15 +464,23 @@ function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;f
 
 function dBreathingBuilding(){
   if(!hasA||AN[aT]!=='breathingBuilding')return;
-  const gy=H*GH,bbx=bsX+BW*0.42-camX;
-  if(bbx<-80||bbx>W+80)return;
+  // Match front building layer (ly=1, sp=0.3, col=#101018, wc=#24220C)
+  const gy=H*GH,sp=0.3,col='#101018',wc='#24220C';
+  const sd=cB*7+1*31;// same seed logic as dBld(ly=1)
+  // Pick building index 4 from the parallax row to replace
+  const bldIdx=4;
+  const ox=-((camX*sp)%160+160)%160;
+  const bbx0=ox+bldIdx*80+((sd+bldIdx*73)%20);
+  if(bbx0<-100||bbx0>W+100)return;
   const breath=Math.sin(fc*0.035)*3;
-  const bbw=50+breath,bbh=H*0.28+breath*2,bby=gy-bbh;
-  X.fillStyle='#0E0E18';X.fillRect(bbx-bbw/2,bby,bbw,bbh+2);
-  X.beginPath();X.moveTo(bbx-bbw/2,bby);X.lineTo(bbx,bby-10);X.lineTo(bbx+bbw/2,bby);X.fill();
+  const baseBw=40+((sd+bldIdx*47)%30);
+  const baseBh=H*0.17+((sd+bldIdx*59)%40);
+  const bbw=baseBw+breath,bbh=baseBh+breath*2,bby=gy-bbh;
+  X.fillStyle=col;X.fillRect(bbx0,bby,bbw,bbh+2);
+  if((sd+bldIdx)%3===0){X.beginPath();X.moveTo(bbx0,bby);X.lineTo(bbx0+bbw/2,bby-12);X.lineTo(bbx0+bbw,bby);X.fill()}
   for(let wy=0;wy<Math.floor(bbh/22);wy++)for(let wx=0;wx<Math.floor(bbw/15);wx++){
-    X.fillStyle=(wy+wx)%3>1?'#22200E':'#080808';
-    X.fillRect(bbx-bbw/2+6+wx*14,bby+8+wy*20,5,7);
+    X.fillStyle=((sd+bldIdx+wx+wy)%5)>2?wc:'#080808';
+    X.fillRect(bbx0+6+wx*14,bby+8+wy*20,5,7);
   }
 }
 
