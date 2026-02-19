@@ -949,25 +949,29 @@ function dTitle(){
   dHt(W*0.04,H*0.1,1.4,t+4);dHt(W*0.96,H*0.9,1.3,t+2.8);
   for(let i=0;i<12;i++){const sx=((fc*0.5+i*137)%(W*0.25))+(i%2?0:W*0.75),sy=((fc*0.3+i*97)%H);X.fillStyle=`rgba(255,215,0,${0.25+Math.sin(fc*0.05+i)*0.25})`;X.beginPath();X.arc(sx,sy,1.5,0,Math.PI*2);X.fill()}
   const tx=W*0.25;
-  X.fillStyle='#1a1a2e';X.font='bold 20px sans-serif';X.textAlign='center';X.fillText('ぴよ氏の怪異街歩き',tx,H*0.12);
-  X.fillStyle='#CC2222';X.font='bold 44px sans-serif';X.fillText('「14番地」',tx,H*0.28);
-  X.fillStyle='#887755';X.font='13px sans-serif';X.fillText('― 夜道に潜む異変を見抜け ―',tx,H*0.38);
-  // Direct tap buttons
+  X.fillStyle='#1a1a2e';X.font='bold 20px sans-serif';X.textAlign='center';X.fillText('ぴよ氏の怪異街歩き',tx,H*0.10);
+  X.fillStyle='#CC2222';X.font='bold 44px sans-serif';X.fillText('「14番地」',tx,H*0.25);
+  X.fillStyle='#887755';X.font='13px sans-serif';X.fillText('― 夜道に潜む異変を見抜け ―',tx,H*0.35);
+  // Character image (right side)
+  if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
+  // Direct tap buttons — fit 5 buttons between 40%~95% of H
   titleBtns.length=0;
-  const btnW=200,btnH=46,btnGap=48;
+  const btnZoneTop=H*0.40,btnZoneBot=H*0.95;
+  const btnW=200,btnH=Math.min(46,(btnZoneBot-btnZoneTop)/5*0.75);
+  const btnGap=(btnZoneBot-btnZoneTop-btnH)/4;// evenly space 5 buttons
   const labels=[['▶ ノーマルモード','#CC2222'],['▶ コンプリートモード','#22AA66'],['▶ チャレンジモード','#CC8822'],['🏆 ランキング','#DAA520'],['📖 ヒント（異変一覧）','#66AACC']];
   for(let i=0;i<5;i++){
-    const bx=tx-btnW/2,by=H*0.42+i*btnGap-btnH/2;
+    const bx=tx-btnW/2,by=btnZoneTop+i*btnGap;
     titleBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i});
     const hover=Math.sin(fc*0.06+i)>0.8;
     X.fillStyle=hover?'rgba(0,0,0,0.05)':'rgba(0,0,0,0.02)';
     X.fillRect(bx,by,btnW,btnH);
     X.strokeStyle=labels[i][1];X.lineWidth=2;X.strokeRect(bx,by,btnW,btnH);
     X.fillStyle=labels[i][1];X.font='bold 15px sans-serif';X.textAlign='center';
-    X.fillText(labels[i][0],tx,by+btnH/2+2);
+    X.fillText(labels[i][0],tx,by+btnH/2+5);
     // Mode descriptions
     const descs=['全14番地を脱出せよ','全'+AN.length+'種の異変を制覇せよ','1ミスで即終了 ランキングに名を刻め！','',''];
-    if(descs[i]){X.fillStyle='rgba(0,0,0,0.3)';X.font='9px sans-serif';X.fillText(descs[i],tx,by+btnH/2+15)}
+    if(descs[i]&&btnH>=30){X.fillStyle='rgba(0,0,0,0.3)';X.font='9px sans-serif';X.fillText(descs[i],tx,by+btnH/2+17)}
     // Show complete mode save indicator + delete button
     if(i===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&sv.a&&sv.a.length>0){
       X.fillStyle='#55AA77';X.font='10px sans-serif';
@@ -981,15 +985,14 @@ function dTitle(){
       X.fillText('🗑',dbx+dbw/2,dby+12);
     }}catch(e){}}
   }
-  if(imgOk){const ih=H*0.9,iw=ih*(titleImg.width/titleImg.height),ix=W*0.68-iw/2,iy=H*0.5-ih/2;X.shadowColor='rgba(0,0,0,0.12)';X.shadowBlur=18;X.shadowOffsetX=4;X.shadowOffsetY=4;X.drawImage(titleImg,ix,iy,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.79',W/2,H*0.97);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.80',W/2,H*0.97);
   // Settings gear button (top-right)
-  const gbx=W-52,gby=8,gbw=44,gbh=32;
+  const gbw=56,gbh=48,gbx=W-gbw-10,gby=8;
   titleBtns.push({x:gbx,y:gby,w:gbw,h:gbh,id:300});
   X.fillStyle='rgba(0,0,0,0.06)';X.fillRect(gbx,gby,gbw,gbh);
   X.strokeStyle='#AA9977';X.lineWidth=1.5;X.strokeRect(gbx,gby,gbw,gbh);
-  X.fillStyle='#AA9977';X.font='bold 18px sans-serif';X.textAlign='center';
-  X.fillText('⚙',gbx+gbw/2,gby+gbh/2+6);
+  X.fillStyle='#AA9977';X.font='bold 26px sans-serif';X.textAlign='center';
+  X.fillText('⚙',gbx+gbw/2,gby+gbh/2+9);
   // Complete save delete confirmation dialog
   if(compDeleteConfirm){
     X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(0,0,W,H);
@@ -1143,7 +1146,7 @@ function dSettings(){
   X.fillStyle='#AA9977';X.font='11px sans-serif';
   X.fillText('Music by NullPo Works',cx,cy2+40);
   X.fillStyle='#BBAA88';X.font='10px sans-serif';
-  X.fillText('Ver.0.79',cx,cy2+58);
+  X.fillText('Ver.0.80',cx,cy2+58);
   // Back button
   const bbx=cx-80,bby=H*0.90,bbw=160,bbh=32;
   settingsBtns.push({x:bbx,y:bby,w:bbw,h:bbh,id:'back'});
