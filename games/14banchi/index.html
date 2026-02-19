@@ -202,10 +202,11 @@ async function loadAllSE(){
   const ac=ensureACtx();if(!ac)return;
   seLoadAttempts++;
   try{
-    const [goArr,missArr,quakeArr]=await Promise.all([fetchAudioSafe('go.mp3'),fetchAudioSafe('miss.mp3'),fetchAudioSafe('quake.mp3')]);
+    const [goArr,missArr,quakeArr,heartArr]=await Promise.all([fetchAudioSafe('go.mp3'),fetchAudioSafe('miss.mp3'),fetchAudioSafe('quake.mp3'),fetchAudioSafe('heart.mp3')]);
     seBufs['go']=await ac.decodeAudioData(goArr);
     seBufs['miss']=await ac.decodeAudioData(missArr);
     seBufs['quake']=await ac.decodeAudioData(quakeArr);
+    seBufs['heart']=await ac.decodeAudioData(heartArr);
     // Synthesize foghorn SE (eerie low horn)
     const fRate=ac.sampleRate;
     const fLen=2.0,fFrames=fLen*fRate;
