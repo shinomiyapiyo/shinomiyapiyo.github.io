@@ -60,36 +60,40 @@ SPR['walk_2']=loadImg('player_walk2.png');
 SPR['thug']=loadImg('thug.png');
 SPR['creep']=loadImg('creep.png');
 SPR['wizard']=loadImg('wizard.png');
+SPR['alien']=loadImg('alien.png');
 
 // Pre-generate red-tinted sprites for runnerPiyo (avoid runtime creation & memory leak)
 const RED_SPR={};
 function initRedSprites(){
   const keys=['walk_0','stand','walk_2'];
-  let pending=keys.length;
   keys.forEach(k=>{
+    if(RED_SPR[k])return;
     const img=SPR[k];
     function tryGen(){
-      if(!img.complete||!img.naturalWidth||!img.naturalHeight){pending--;return;}
-      const oc=document.createElement('canvas');
-      oc.width=img.naturalWidth;oc.height=img.naturalHeight;
-      const ox=oc.getContext('2d');
-      ox.drawImage(img,0,0);
-      const id=ox.getImageData(0,0,oc.width,oc.height);
-      const d=id.data;
-      for(let p=0;p<d.length;p+=4){
-        if(d[p+3]<10)continue;
-        d[p]=Math.min(255,d[p]+60);
-        d[p+1]=Math.max(0,d[p+1]-70);
-        d[p+2]=Math.min(255,d[p+2]+10);
-      }
-      ox.putImageData(id,0,0);
-      RED_SPR[k]=oc;
+      if(!img.complete||!img.naturalWidth||!img.naturalHeight)return;
+      try{
+        const oc=document.createElement('canvas');
+        oc.width=img.naturalWidth;oc.height=img.naturalHeight;
+        const ox=oc.getContext('2d');
+        ox.drawImage(img,0,0);
+        const id=ox.getImageData(0,0,oc.width,oc.height);
+        const d=id.data;
+        for(let p=0;p<d.length;p+=4){
+          if(d[p+3]<10)continue;
+          d[p]=Math.min(255,d[p]+60);
+          d[p+1]=Math.max(0,d[p+1]-70);
+          d[p+2]=Math.min(255,d[p+2]+10);
+        }
+        ox.putImageData(id,0,0);
+        RED_SPR[k]=oc;
+      }catch(e){}
     }
     if(img.complete&&img.naturalWidth)tryGen();
     else img.addEventListener('load',tryGen,{once:true});
   });
 }
 initRedSprites();
+window.addEventListener('load',()=>{if(Object.keys(RED_SPR).length<3)initRedSprites()});
 
 const WALK_R=['walk_0','stand','walk_2','stand'];
 const WALK_L=['walk_0','stand','walk_2','stand'];
@@ -99,8 +103,10 @@ function loadBgm(src,loop){const a=new Audio(src);a.loop=loop;a.preload='auto';a
 const bgmTitle=loadBgm('14th Block Title.mp3',true);
 const bgmStage=loadBgm('14th Block Stage.mp3',true);
 const bgmGoal=loadBgm('14th Block Goal.mp3',false);
-const bgmDeath=loadBgm('14th Block Death.mp3',false);
+const bgmDeath=loadBgm('14th Block Death.mp3',false);bgmDeath.volume=0.8;
 const bgmRanking=loadBgm('14th Block Ranking.mp3',true);
+const bgmChallenge=loadBgm('14th Block Challenge.mp3',true);bgmChallenge.volume=0.8;
+const bgmChallenge2=loadBgm('14th Block Challenge2.mp3',true);bgmChallenge2.volume=0.8;
 let curBgm=null;
 let audioUnlocked=false;
 let audioMuted=false;// BGM+SE mute toggle (persisted)
@@ -108,7 +114,7 @@ try{audioMuted=localStorage.getItem('14b_mute')==='1'}catch(e){}
 let deathTimer=0;const DEATH_FADE=90;const DEATH_BGM_DELAY=90;
 
 // === GAME MODE ===
-let gameMode='normal'; // 'normal' or 'challenge'
+let gameMode='normal'; // 'normal', 'complete', or 'challenge'
 let titleSel=0; // 0=normal, 1=challenge, 2=ranking
 let rankData=[];
 let rankLoaded=false;
@@ -145,6 +151,7 @@ async function loadRanking(){
   }
   rankLoaded=true;
 }
+let lastRankPos=0;
 async function saveRanking(name,score){
   const hall=score>=CHALLENGE_MAX;
   const entry={name,score,hall,date:Date.now()};
@@ -157,6 +164,9 @@ async function saveRanking(name,score){
     localStorage.setItem('14b_rank',JSON.stringify(ls.slice(0,10)));
   }catch(e){}
   await loadRanking();
+  // Calculate rank position
+  const pos=rankData.findIndex(r=>r.score<=score);
+  lastRankPos=pos>=0?pos+1:rankData.length;
 }
 function isRankIn(score){
   if(rankData.length<10)return true;
@@ -229,7 +239,7 @@ async function loadAllSE(){
 function unlockAudio(){
   if(audioUnlocked)return;
   audioUnlocked=true;
-  [bgmTitle,bgmStage,bgmGoal,bgmDeath,bgmRanking].forEach(a=>{a.load();});
+  [bgmTitle,bgmStage,bgmGoal,bgmDeath,bgmRanking,bgmChallenge,bgmChallenge2].forEach(a=>{a.load();});
   const ac=ensureACtx();
   if(ac){
     const sil=ac.createBuffer(1,1,22050);
@@ -306,6 +316,7 @@ function toggleMute(){
 
 let gs='tap',cB=1,camX=0,pX=100,pDir=1,pMov=false,pFr=0,pAT=0,fc=0;
 let hasA=false,aT=0,tTm=0,tTp='',mTm=0,mTx='',mSb='';
+let btTimer=0,btAction=null,btLabel='';const BT_HALF=12;
 let bsX=0;let BW=2100;const BW_NORMAL=2100;const BW_SHORT=1260;const GH=0.76;
 let bL=false,bR=false,skT=0,skX=0,skY=0;
 let runnerX=0,runnerActive=false;// runnerPiyo state
@@ -347,7 +358,7 @@ function drawPG(cx,cy,scale){
 function dCk(cx,cy,t,s){X.save();X.translate(cx,cy+Math.sin(t)*3);X.scale(s,s);X.fillStyle='#FFEE55';X.beginPath();X.ellipse(0,0,10,9,0,0,Math.PI*2);X.fill();X.beginPath();X.arc(0,-7,7,0,Math.PI*2);X.fill();X.fillStyle='#1a1a1a';X.beginPath();X.arc(-2,-8,1.8,0,Math.PI*2);X.fill();X.fillStyle='#FF8C00';X.beginPath();X.moveTo(5,-7);X.lineTo(9,-6);X.lineTo(5,-5);X.closePath();X.fill();X.fillStyle='#FFD700';X.beginPath();X.ellipse(-7,-1,5,3.5,-0.4,0,Math.PI*2);X.fill();X.restore()}
 function dHt(cx,cy,s,t){X.save();X.translate(cx,cy+Math.sin(t)*4);X.scale(s,s);X.fillStyle='#FFD700';X.beginPath();X.moveTo(0,4);X.bezierCurveTo(-8,-2,-8,-8,0,-4);X.bezierCurveTo(8,-8,8,-2,0,4);X.fill();X.restore()}
 
-// === 20 ANOMALY TYPES ===
+// === 40 ANOMALY TYPES ===
 const AN=[
   'flickerLamp',   // 0: 街灯が明滅する
   'redSky',        // 1: 空が赤い
@@ -368,7 +379,9 @@ const AN=[
   'shadowHands',   // 16: 地面から影の手
   'reverseGrav',   // 17: 雨が下から上へ
   'tooManyLamps',  // 18: 街灯が異常に多い
-  'heartbeat','creep','wizard',
+  'heartbeat',       // 19: 心臓の鼓動が聞こえる
+  'creep',           // 20: フード男
+  'wizard',          // 21: 号泣する占い師
   'earthquake',    // 地震が起きる
   'tokyoTower',    // 遠くに東京タワーが見える
   'wrongMoon',     // 月の模様が微妙に違う
@@ -386,6 +399,7 @@ const AN=[
   'breathingBuilding', // ビルが呼吸している
   'extraMoon',     // 月が2つある
   'silentLamp',    // 街灯が消えている
+  'alien',         // 宇宙人が立っている
 ];
 function genA(){
   BW=BW_NORMAL;runnerActive=false;
@@ -423,11 +437,14 @@ function genA(){
 
 // === SCENERY ===
 function dSky(){
-  let c1='#0A0A20',c2='#141430';
-  if(hasA&&AN[aT]==='redSky'){c1=`rgb(${30+Math.sin(fc*0.04)*15|0},4,8)`;c2='#1A0508'}
+  const cd=gameMode==='challenge'?Math.min(1,(cB-1)/200):0;
+  const dm=1-cd*0.3;
+  let c1,c2;
+  if(hasA&&AN[aT]==='redSky'){const rv=30+Math.sin(fc*0.04)*15|0;c1=`rgb(${rv*dm|0},${4*dm|0},${8*dm|0})`;c2=`rgb(${26*dm|0},${5*dm|0},${8*dm|0})`}
+  else{c1=`rgb(${10*dm|0},${10*dm|0},${32*dm|0})`;c2=`rgb(${20*dm|0},${20*dm|0},${48*dm|0})`}
   const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
   if(!(hasA&&AN[aT]==='missingStars')){
-    X.fillStyle='#FFF';for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;X.globalAlpha=0.35+Math.sin(fc*0.02+s.b*10)*0.3;X.fillRect(sx,s.y*H,s.s,s.s)}X.globalAlpha=1
+    X.fillStyle='#FFF';for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;X.globalAlpha=(0.35+Math.sin(fc*0.02+s.b*10)*0.3)*dm;X.fillRect(sx,s.y*H,s.s,s.s)}X.globalAlpha=1
   }
   if(hasA&&AN[aT]==='giantMoon'){
     const mx=W*0.8,my=H*0.12,mr=48+Math.sin(fc*0.015)*5;
@@ -488,7 +505,7 @@ function dBreathingBuilding(){
 function dGnd(){
   const gy=H*GH;let c1='#1A1A24',c2='#121218';
   if(hasA&&AN[aT]==='weirdGround'){c1='#181010';c2='#120808'}
-  if(hasA&&AN[aT]==='blueGround'){c1='#080C1E';c2='#060818'}
+  if(hasA&&AN[aT]==='blueGround'){c1='#0A1030';c2='#081028'}
   const g=X.createLinearGradient(0,gy,0,H);g.addColorStop(0,c1);g.addColorStop(0.1,'#16161E');g.addColorStop(1,c2);
   X.fillStyle=g;X.fillRect(0,gy,W,H-gy);
   const dashSp=80;const dashLen=(hasA&&AN[aT]==='wideDash')?55:30;
@@ -498,7 +515,7 @@ function dGnd(){
   // pebbles anomaly - small stones on road
   if(hasA&&AN[aT]==='pebbles'){
     const sd2=cB*333;
-    X.fillStyle='rgba(75,68,58,0.7)';
+    X.fillStyle='rgba(50,45,38,0.7)';
     for(let i=0;i<12;i++){
       const px2=((sd2+i*271)%BW)+bsX-camX;
       if(px2<-10||px2>W+10)continue;
@@ -530,17 +547,40 @@ function dLmp(){
   const ox=-((camX*0.95)%sp+sp)%sp;
   const fl=hasA&&AN[aT]==='flickerLamp';
   const lampH=isTall?115:90;
-  // Light color: normal=warm yellow, whiteLamp=cool white, orangeLamp=deeper orange
-  let lCol='rgba(255,200,100,0.5)',bCol='#FFD880';
-  if(hasA&&AN[aT]==='whiteLamp'){lCol='rgba(220,225,255,0.4)';bCol='#DDE0FF'}
-  if(hasA&&AN[aT]==='orangeLamp'){lCol='rgba(255,160,40,0.4)';bCol='#FFA028'}
-  const lg=X.createRadialGradient(0,0,0,0,0,40);lg.addColorStop(0,lCol);lg.addColorStop(1,'transparent');
+  // Challenge mode: lamps dim as blocks progress
+  const cd=gameMode==='challenge'?Math.min(1,(cB-1)/200):0;
+  const ldm=1-cd*0.3;
+  const lgR=40*(0.5+0.5*ldm);
+  let lCol=`rgba(255,200,100,${(0.5*ldm).toFixed(2)})`,bCol='#FFD880';
+  if(hasA&&AN[aT]==='whiteLamp'){lCol=`rgba(220,225,255,${(0.4*ldm).toFixed(2)})`;bCol='#DDE0FF'}
+  if(hasA&&AN[aT]==='orangeLamp'){lCol=`rgba(255,160,40,${(0.4*ldm).toFixed(2)})`;bCol='#FFA028'}
+  const lg=X.createRadialGradient(0,0,0,0,0,lgR);lg.addColorStop(0,lCol);lg.addColorStop(1,'transparent');
   for(let i=-1;i<(W/sp)+2;i++){
     const lx=ox+i*sp+(isTooMany?40:150);
     X.fillStyle='#2A2A30';X.fillRect(lx,gy-lampH,3,lampH+2);X.fillRect(lx-5,gy-lampH,13,3);
     const isSilent=hasA&&AN[aT]==='silentLamp';
     const on=isSilent?false:fl?(Math.random()>0.4^(fc%6<3)):true;
-    if(on){X.save();X.translate(lx+1,gy-lampH+2);X.fillStyle=lg;X.beginPath();X.arc(0,0,40,0,Math.PI*2);X.fill();X.restore();X.fillStyle=bCol;X.fillRect(lx-2,gy-lampH,7,3)}
+    if(on){X.save();X.translate(lx+1,gy-lampH+2);X.fillStyle=lg;X.beginPath();X.arc(0,0,lgR,0,Math.PI*2);X.fill();X.restore();X.fillStyle=bCol;X.fillRect(lx-2,gy-lampH,7,3)}
+  }
+}
+
+// Challenge mode fog overlay
+function dChallengeFog(){
+  if(gameMode!=='challenge'||cB<80)return;
+  const t=Math.min(1,(cB-80)/200);
+  X.fillStyle=`rgba(20,20,35,${(t*0.2).toFixed(3)})`;
+  X.fillRect(0,0,W,H);
+  if(cB>=150){
+    const wt=Math.min(1,(cB-150)/150);
+    for(let i=0;i<4;i++){
+      const ox2=((fc*(0.3+i*0.1)+i*250)%(W+300))-150;
+      const oy=H*(0.4+i*0.12)+Math.sin(fc*0.008+i)*20;
+      const rr=120+i*25;
+      const g=X.createRadialGradient(ox2,oy,0,ox2,oy,rr);
+      g.addColorStop(0,`rgba(130,135,150,${(wt*0.12).toFixed(3)})`);
+      g.addColorStop(1,'transparent');
+      X.fillStyle=g;X.beginPath();X.arc(ox2,oy,rr,0,Math.PI*2);X.fill();
+    }
   }
 }
 
@@ -723,6 +763,9 @@ function dAnom(){
 
   // wizard - crying wizard at desk
   if(a==='wizard'){const wi=SPR['wizard'];if(wi&&wi.complete){const wx=bsX+BW*0.45-camX;const wh=H*0.30;const ww=wh*(wi.naturalWidth/wi.naturalHeight);const bob=Math.sin(fc*0.05)*1.5;X.drawImage(wi,wx-ww/2,gy-wh+bob+9,ww,wh)}}
+
+  // alien - standing alien
+  if(a==='alien'){const ai=SPR['alien'];if(ai&&ai.complete){const ax=bsX+BW*0.48-camX;const ah=H*0.30;const aw=ah*(ai.naturalWidth/ai.naturalHeight);const hover=Math.sin(fc*0.04)*2;X.drawImage(ai,ax-aw/2,gy-ah+hover+9,aw,ah)}}
 
   // foggy
   if(a==='foggy'){for(let i=0;i<8;i++){const fx=((fc*0.3+i*200+sd)%(W+200))-100;const fy=H*0.3+((sd+i*77)%(H*0.35));const fw=120+((sd+i*53)%80);const al=0.06+Math.sin(fc*0.01+i)*0.03;X.fillStyle=`rgba(180,180,200,${al})`;X.beginPath();X.ellipse(fx,fy,fw,25+i*3,0,0,Math.PI*2);X.fill()}}
@@ -998,7 +1041,7 @@ function dTitle(){
       X.fillText('✖ 削除',svCx,dby+13);
     }}catch(e){}}
   }
-  X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.80',W/2,H*0.97);
+  X.fillStyle='#AA9977';X.font='10px sans-serif';X.textAlign='center';X.fillText('Ver.0.85',W/2,H*0.97);
   // Settings gear button (top-right)
   const gbw=56,gbh=48,gbx=W-gbw-10,gby=8;
   titleBtns.push({x:gbx,y:gby,w:gbw,h:gbh,id:300});
@@ -1072,7 +1115,9 @@ function dChallengeClear(){
   X.fillStyle='#CCA866';X.font='14px sans-serif';X.fillText('伝説のぴよ氏として名を刻め！',W/2,H*0.50);
   if(clearImgOk){const ih=H*0.5,iw=ih*(clearImg.width/clearImg.height);X.drawImage(clearImg,W*0.75-iw/2,H*0.55,iw,ih)}
   if(showNameEntry){dNameEntry(W*0.33,H*0.20)}
-  else{const a=0.3+Math.sin(fc*0.05)*0.7;X.fillStyle=`rgba(255,215,0,${Math.max(0,a)})`;X.font='14px sans-serif';X.fillText('タップしてタイトルへ',W/2,H*0.93)}
+  else{
+    if(lastRankPos>0){X.fillStyle='#FFD700';X.font='bold 18px sans-serif';X.textAlign='center';X.fillText(`🏆 現在 ${lastRankPos}位`,W/2,H*0.60)}
+    const a=0.3+Math.sin(fc*0.05)*0.7;X.fillStyle=`rgba(255,215,0,${Math.max(0,a)})`;X.font='14px sans-serif';X.fillText('タップしてタイトルへ',W/2,H*0.93)}
 }
 
 // === RANKING SCREEN ===
@@ -1159,7 +1204,7 @@ function dSettings(){
   X.fillStyle='#AA9977';X.font='11px sans-serif';
   X.fillText('Music by NullPo Works',cx,cy2+40);
   X.fillStyle='#BBAA88';X.font='10px sans-serif';
-  X.fillText('Ver.0.80',cx,cy2+58);
+  X.fillText('Ver.0.85',cx,cy2+58);
   // Back button
   const bbx=cx-80,bby=H*0.90,bbw=160,bbh=32;
   settingsBtns.push({x:bbx,y:bby,w:bbw,h:bbh,id:'back'});
@@ -1226,6 +1271,7 @@ const HINTS_DATA=[
   ['呼吸するビル','ビルの1棟が微妙に膨張・収縮を繰り返している。'], // 36 breathingBuilding
   ['月が2つ','空に月がもう1つ浮かんでいる。'],                 // 37 extraMoon
   ['消えた街灯','街灯のポールはあるが、光が出ていない。'],       // 38 silentLamp
+  ['宇宙人','道に宇宙人が立っている。近づくと死亡する。'],       // 39 alien
 ];
 function dHints(){
   X.fillStyle='#0a0a1a';X.fillRect(0,0,W,H);
@@ -1286,8 +1332,9 @@ function dHints(){
 // === NAME ENTRY ===
 let nameEntryOkBtn={x:0,y:0,w:0,h:0};
 let nameEntryInputBtn={x:0,y:0,w:0,h:0};
+let nameEntrySkipBtn={x:0,y:0,w:0,h:0};
 function dNameEntry(cx,cy){
-  const panW=280,panH=90;
+  const panW=280,panH=120;
   X.fillStyle='rgba(0,0,0,0.85)';X.fillRect(cx-panW/2,cy-10,panW,panH);
   X.strokeStyle='#FFD700';X.lineWidth=2;X.strokeRect(cx-panW/2,cy-10,panW,panH);
   X.fillStyle='#FFD700';X.font='bold 14px sans-serif';X.textAlign='center';
@@ -1308,12 +1355,27 @@ function dNameEntry(cx,cy){
   X.strokeStyle=nameInput.length>0?'#FF4444':'#666';X.lineWidth=1;X.strokeRect(okX,okY,okW,okH);
   X.fillStyle='#FFF';X.font='bold 15px sans-serif';X.textAlign='center';
   X.fillText('決定',okX+okW/2,okY+okH/2+5);
+  // Skip button
+  const skX=cx-panW/2+10,skY=cy+66,skW=panW-20,skH=30;
+  nameEntrySkipBtn={x:skX,y:skY,w:skW,h:skH};
+  X.fillStyle='rgba(100,100,100,0.5)';X.fillRect(skX,skY,skW,skH);
+  X.strokeStyle='#888';X.lineWidth=1;X.strokeRect(skX,skY,skW,skH);
+  X.fillStyle='#AAA';X.font='13px sans-serif';X.textAlign='center';
+  X.fillText('スキップ（名無しで記録）',cx,skY+skH/2+4);
 }
 function hitNameOkBtn(cx,cy){
   return cx>=nameEntryOkBtn.x&&cx<=nameEntryOkBtn.x+nameEntryOkBtn.w&&cy>=nameEntryOkBtn.y&&cy<=nameEntryOkBtn.y+nameEntryOkBtn.h;
 }
 function hitNameInputArea(cx,cy){
   return cx>=nameEntryInputBtn.x&&cx<=nameEntryInputBtn.x+nameEntryInputBtn.w&&cy>=nameEntryInputBtn.y&&cy<=nameEntryInputBtn.y+nameEntryInputBtn.h;
+}
+function hitNameSkipBtn(cx,cy){
+  return cx>=nameEntrySkipBtn.x&&cx<=nameEntrySkipBtn.x+nameEntrySkipBtn.w&&cy>=nameEntrySkipBtn.y&&cy<=nameEntrySkipBtn.y+nameEntrySkipBtn.h;
+}
+function handleNameSkip(){
+  const sc=gs==='challenge_clear'?CHALLENGE_MAX:challengeScore;
+  saveRanking('名無しのぴよ氏',sc);
+  showNameEntry=false;nameInputActive=false;nameInput='';
 }
 
 // === GAME LOGIC ===
@@ -1362,7 +1424,7 @@ function completeDie(){
   gs='complete_hit';completeHitTimer=0;bL=false;bR=false;pMov=false;
   return true;// handled, skip dying
 }
-function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;efStart=null;stopQuakeSe()}
+function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;pDir=1;efStart=null;stopQuakeSe()}
 function sM(t,s){mTx=t;mSb=s||'';mTm=90}
 
 // === AD HOOK ===
@@ -1421,12 +1483,12 @@ function dAdLoading(){
 }
 function update(){
   if(gs==='paused')return;
-  fc++;if(gs==='dying'){deathTimer++;if(deathTimer===1)vib([50,30,50]);if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
+  fc++;if(gs==='dying'){deathTimer++;if(deathTimer===1){vib([50,30,50]);stopQuakeSe()}if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}if(deathTimer>=DEATH_FADE){
     if(gameMode==='challenge'){challengeScore=cB;showNameEntry=isRankIn(challengeScore);nameInput='';nameInputActive=showNameEntry}
     if(gameMode==='complete')clearCompleteProgress();
     gs='gameover';bL=false;bR=false}return}
   if(gs==='complete_hit'){completeHitTimer++;if(completeHitTimer===1)vib([30,20,30]);if(completeHitTimer>=COMPLETE_HIT_FADE){
-    gs='playing';cB=1;genA();sB();sM('1番地に戻された…',`残りライフ: ${completeLives}`)}return}
+    gs='playing';btTimer=BT_HALF*2;btLabel='1番地';btAction=()=>{cB=1;genA();sB();bL=false;bR=false;sM('1番地に戻された…',`残りライフ: ${completeLives}`)}}return}
   if(gs==='gameover'){if(deathTimer<DEATH_BGM_DELAY){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}}return}
   if(gs==='challenge_clear')return;
   if(gs==='complete_clear')return;
@@ -1434,12 +1496,18 @@ function update(){
   if(mTm>0)mTm--;
   if(debugTapTimer>0){debugTapTimer--;if(debugTapTimer===0)debugTapCount=0}
   if(debugNotify>0)debugNotify--;
+  // Block transition blackout timer
+  if(btTimer>0){btTimer--;if(btTimer===BT_HALF&&btAction){const fn=btAction;btAction=null;fn();if(gs!=='playing'){btTimer=0}}return}
   if(tTm>0){tTm--;if(tTm===0){if(tTp==='a'){
-    cB++;
-    if(gameMode==='normal'&&cB>14){gs='clear';playBgm(bgmGoal);return}
-    if(gameMode==='challenge'&&cB>CHALLENGE_MAX){gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
-    if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){clearCompleteProgress();gs='complete_clear';playBgm(bgmGoal);return}
-    genA();sB();sM(`${cB}番地`)
+    // Queue block advance with blackout transition
+    const nb=cB+1;
+    if(gameMode==='normal'&&nb>14){cB++;gs='clear';playBgm(bgmGoal);return}
+    if(gameMode==='challenge'&&nb>CHALLENGE_MAX){cB++;gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
+    btLabel=`${nb}番地`;btAction=()=>{cB++;
+      if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){clearCompleteProgress();gs='complete_clear';playBgm(bgmGoal);return}
+      if(gameMode==='challenge'&&cB===50)playBgm(bgmChallenge);
+      if(gameMode==='challenge'&&cB===100)playBgm(bgmChallenge2);
+      genA();sB();sM(`${cB}番地`)};btTimer=BT_HALF*2
   }else{
     if(gameMode==='challenge'){
       // Challenge mode: 1 miss = game over
@@ -1454,7 +1522,7 @@ function update(){
         stopBgm();playSe(seMissSrc);return
       }else{playSe(seMissSrc)}
     }else{
-      cB=1;genA();sB();sM('1番地に戻された…','異変の判断を間違えた')
+      btLabel='1番地';btAction=()=>{cB=1;genA();sB();bL=false;bR=false;sM('1番地に戻された…','異変の判断を間違えた')};btTimer=BT_HALF*2
     }
   }}return}
   if(skT>0){skT--;skX=(Math.random()-0.5)*skT*0.7;skY=(Math.random()-0.5)*skT*0.4}else if(!(hasA&&AN[aT]==='earthquake')){skX=0;skY=0}
@@ -1469,7 +1537,7 @@ function update(){
   }
   // === COLLISION CHECK with killer anomalies ===
   if(hasA&&tTm===0){
-    const killTypes=['thug','creep','wizard','ghost'];
+    const killTypes=['thug','creep','wizard','ghost','alien'];
     const a=AN[aT];
     if(killTypes.includes(a)){
       let ex=0;
@@ -1477,6 +1545,7 @@ function update(){
       else if(a==='creep')ex=bsX+BW*0.55;
       else if(a==='wizard')ex=bsX+BW*0.45;
       else if(a==='ghost')ex=bsX+BW*0.5;
+      else if(a==='alien')ex=bsX+BW*0.48;
       const dist=Math.abs(pX-ex);
       if(dist<40){
         lastDeathCause=a;
@@ -1590,7 +1659,7 @@ function dGameOver(){
   }
   // Death cause (ad removal purchasers only)
   if(lastDeathCause&&window.adRemoved){
-    const causeNames={thug:'睨む男に接触',creep:'フード男に接触',wizard:'占い師に接触',ghost:'幽霊に接触',evilFog:'邪悪な霧に飲まれた',runnerPiyo:'ドッペルゲンガーに接触','異変の判断ミス':'異変の判断ミス'};
+    const causeNames={thug:'睨む男に接触',creep:'フード男に接触',wizard:'占い師に接触',ghost:'幽霊に接触',alien:'宇宙人に接触',evilFog:'邪悪な霧に飲まれた',runnerPiyo:'ドッペルゲンガーに接触','異変の判断ミス':'異変の判断ミス'};
     const cn=causeNames[lastDeathCause]||lastDeathCause;
     const causeY=gameMode==='challenge'?(showNameEntry?H*0.58:H*0.65):(showNameEntry?H*0.50:H*0.55);
     X.fillStyle='#664444';X.font='13px sans-serif';
@@ -1599,6 +1668,11 @@ function dGameOver(){
   // Name entry
   if(gameMode==='challenge'&&showNameEntry){
     dNameEntry(W*0.3,H*0.18);
+  }
+  // Rank position after name entry
+  if(!showNameEntry&&gameMode==='challenge'&&lastRankPos>0){
+    X.fillStyle='#CC8844';X.font='bold 18px sans-serif';X.textAlign='center';
+    X.fillText(`🏆 現在 ${lastRankPos}位`,W*0.3,showNameEntry?H*0.68:H*0.75);
   }
   // Tap to continue
   if(!showNameEntry){
@@ -1639,11 +1713,16 @@ function render(){
   if(hasA&&AN[aT]==='doubleShadow'){const so=30+Math.sin(fc*0.04)*4;X.fillStyle='rgba(0,0,0,0.25)';X.beginPath();X.ellipse(sx+so,gy+3,18,5,0,0,Math.PI*2);X.fill()}
   const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
+  dChallengeFog();
   if(tTm>0){const al=tTp==='r'?Math.sin(tTm/40*Math.PI)*0.4:(tTm/30)*0.2;X.fillStyle=tTp==='r'?`rgba(255,20,20,${al})`:`rgba(255,255,180,${al})`;X.fillRect(-10,-10,W+20,H+20)}
   // Dying red fade
   if(gs==='dying'){const al=deathTimer/DEATH_FADE;X.fillStyle=`rgba(180,0,0,${al*0.85})`;X.fillRect(-10,-10,W+20,H+20)}
   if(gs==='complete_hit'){const al=completeHitTimer/COMPLETE_HIT_FADE;X.fillStyle=`rgba(180,0,0,${al*0.7})`;X.fillRect(-10,-10,W+20,H+20)}
   X.restore();dUI();dAdLoading();
+  // Block transition blackout (covers entire screen including UI)
+  if(btTimer>0){const half=BT_HALF,al=btTimer>half?(half*2-btTimer)/half:btTimer/half;
+    X.fillStyle=`rgba(0,0,0,${al})`;X.fillRect(0,0,W,H);
+    if(al>0.6){const ta=Math.min(1,(al-0.6)/0.4);X.fillStyle=`rgba(200,180,120,${ta})`;X.font='bold 22px serif';X.textAlign='center';X.fillText(btLabel,W/2,H/2)}}
 }
 
 function loop(){update();render();requestAnimationFrame(loop)}
@@ -1685,11 +1764,11 @@ function startGame(mode){
   gameMode=mode;cB=1;clearedAnomalies=[];completeLives=getMaxLives();
   // Reset all transient state
   deathTimer=0;completeHitTimer=0;
-  tTm=0;tTp='';mTm=0;mTx='';mSb='';
+  tTm=0;tTp='';mTm=0;mTx='';mSb='';btTimer=0;btAction=null;
   skT=0;skX=0;skY=0;
   bL=false;bR=false;pMov=false;pFr=0;pAT=0;pDir=1;
   efStart=null;runnerActive=false;runnerX=0;heartItemActive=false;lastDeathCause='';
-  challengeScore=0;showNameEntry=false;nameInputActive=false;nameInput='';
+  challengeScore=0;showNameEntry=false;nameInputActive=false;nameInput='';lastRankPos=0;
   debugMode=0;debugTapCount=0;debugTapTimer=0;debugNotify=0;
   rewardAdOffered=false;
   // Complete mode: restore saved progress
@@ -1771,6 +1850,7 @@ function hS(e){
       const cx3=(ts[0].clientX-rc.left)*(W/rc.width);
       const cy3=(ts[0].clientY-rc.top)*(H/rc.height);
       if(hitNameOkBtn(cx3,cy3)){handleNameOK();return}
+      if(hitNameSkipBtn(cx3,cy3)){handleNameSkip();return}
       if(hitNameInputArea(cx3,cy3)){openNameInput();return}
       return;
     }
@@ -1782,6 +1862,7 @@ function hS(e){
       const cx2=(ts[0].clientX-rc.left)*(W/rc.width);
       const cy2=(ts[0].clientY-rc.top)*(H/rc.height);
       if(hitNameOkBtn(cx2,cy2)){handleNameOK();return}
+      if(hitNameSkipBtn(cx2,cy2)){handleNameSkip();return}
       if(hitNameInputArea(cx2,cy2)){openNameInput();return}
       return;
     }
@@ -1844,7 +1925,7 @@ C.addEventListener('mousedown',(e)=>{
   }
   if(gs==='complete_clear'){showAdThenTitle(goToTitle);return}
   if(gs==='challenge_clear'){
-    if(showNameEntry){const rc4=C.getBoundingClientRect();const mx2=(e.clientX-rc4.left)*(W/rc4.width);const my2=(e.clientY-rc4.top)*(H/rc4.height);if(hitNameOkBtn(mx2,my2))handleNameOK();else if(hitNameInputArea(mx2,my2))openNameInput();return}
+    if(showNameEntry){const rc4=C.getBoundingClientRect();const mx2=(e.clientX-rc4.left)*(W/rc4.width);const my2=(e.clientY-rc4.top)*(H/rc4.height);if(hitNameOkBtn(mx2,my2))handleNameOK();else if(hitNameSkipBtn(mx2,my2))handleNameSkip();else if(hitNameInputArea(mx2,my2))openNameInput();return}
     showAdThenTitle(goToTitle);return;
   }
   if(gs==='gameover'){
@@ -1853,6 +1934,7 @@ C.addEventListener('mousedown',(e)=>{
       const mx=(e.clientX-rc3.left)*(W/rc3.width);
       const my=(e.clientY-rc3.top)*(H/rc3.height);
       if(hitNameOkBtn(mx,my))handleNameOK();
+      else if(hitNameSkipBtn(mx,my))handleNameSkip();
       else if(hitNameInputArea(mx,my))openNameInput();
       return;
     }

@@ -1,4 +1,4 @@
-const CACHE_NAME = '14banchi-v080';
+const CACHE_NAME = '14banchi-v085';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   './thug.png',
   './creep.png',
   './wizard.png',
+  './alien.png',
   './icon-192.png',
   './icon-512.png',
   './14th Block Title.mp3',
@@ -18,6 +19,8 @@ const ASSETS = [
   './14th Block Goal.mp3',
   './14th Block Death.mp3',
   './14th Block Ranking.mp3',
+  './14th Block Challenge.mp3',
+  './14th Block Challenge2.mp3',
   './go.mp3',
   './miss.mp3',
   './quake.mp3',
