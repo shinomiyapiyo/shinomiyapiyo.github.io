@@ -111,7 +111,7 @@
         /* --- ポーズボタン --- */
         #pauseButton {
             position: absolute;
-            top: 10px; right: 10px;
+            top: 10px; right: calc(10px + env(safe-area-inset-right, 0px));
             background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(20,0,30,0.4));
             color: #fff;
             border: 1px solid rgba(255,105,180,0.3);
@@ -3984,23 +3984,27 @@ function resizeCanvas() {
     var aw = window.innerWidth;
     var ah = window.innerHeight;
 
-    // 画面アスペクト比に合わせてGAME_WIDTHを動的に調整
+    // 画面アスペクト比に合わせてGAME_WIDTHを動的に調整（プレイ領域拡大）
     var screenRatio = aw / ah;
     var newWidth = Math.round(GAME_HEIGHT * screenRatio);
-    newWidth = Math.max(1000, Math.min(newWidth, 1400)); // 1000〜1400の範囲
+    newWidth = Math.max(1000, Math.min(newWidth, 1400));
     if (newWidth !== GAME_WIDTH) {
         GAME_WIDTH = newWidth;
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
-        bgCache = null; // 背景キャッシュ再生成
+        bgCache = null;
     }
 
-    // 画面いっぱいに表示
-    canvas.style.width    = aw + 'px';
-    canvas.style.height   = ah + 'px';
+    // アスペクト比を維持してスケーリング
+    var ratio = GAME_WIDTH / GAME_HEIGHT;
+    var scale = aw / ah > ratio ? ah / GAME_HEIGHT : aw / GAME_WIDTH;
+    var sw = GAME_WIDTH * scale, sh = GAME_HEIGHT * scale;
+
+    canvas.style.width    = sw + 'px';
+    canvas.style.height   = sh + 'px';
     canvas.style.position = 'absolute';
-    canvas.style.left     = '0px';
-    canvas.style.top      = '0px';
+    canvas.style.left     = ((aw - sw) / 2) + 'px';
+    canvas.style.top      = ((ah - sh) / 2) + 'px';
 
     var gc = document.getElementById('gameContainer');
     gc.style.width  = aw + 'px';
