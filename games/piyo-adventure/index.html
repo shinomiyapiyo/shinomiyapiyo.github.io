@@ -1601,7 +1601,7 @@ var biomeState = {
 })();
 
 function getBiomeIndex(distance) {
-    return Math.floor((distance % 2000) / 500);
+    return Math.floor((distance % 2400) / 600);
 }
 
 function lerpColor(hex1, hex2, t) {
@@ -4195,7 +4195,11 @@ function setRandomTitleImage() {
 
 // ─── グローバルイベント ───
 
-window.addEventListener('resize', function() { resizeCanvas(); checkOrientation(); });
+var resizeTimer = null;
+window.addEventListener('resize', function() {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() { resizeCanvas(); checkOrientation(); }, 100);
+});
 window.addEventListener('orientationchange', function() {
     setTimeout(function() { resizeCanvas(); checkOrientation(); }, 100);
 });
