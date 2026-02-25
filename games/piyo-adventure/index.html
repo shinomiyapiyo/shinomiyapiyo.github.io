@@ -1301,7 +1301,7 @@ try {
 }
 
 // ─── 定数 ───
-const GAME_WIDTH          = 1000;
+var   GAME_WIDTH          = 1000;
 const GAME_HEIGHT         = 550;
 const GRAVITY             = 0.7;
 const JUMP_FORCE          = -16;
@@ -3981,22 +3981,30 @@ function gameLoop(timestamp) {
 function resizeCanvas() {
     if (window.innerWidth <= window.innerHeight) return;
 
-    var pad = 20;
-    var aw = window.innerWidth - pad * 2;
-    var ah = window.innerHeight - pad * 2;
-    var ratio = GAME_WIDTH / GAME_HEIGHT;
-    var scale = (aw / ah > ratio ? ah / GAME_HEIGHT : aw / GAME_WIDTH) * 0.9;
-    var sw = GAME_WIDTH * scale, sh = GAME_HEIGHT * scale;
+    var aw = window.innerWidth;
+    var ah = window.innerHeight;
 
-    canvas.style.width    = sw + 'px';
-    canvas.style.height   = sh + 'px';
+    // 画面アスペクト比に合わせてGAME_WIDTHを動的に調整
+    var screenRatio = aw / ah;
+    var newWidth = Math.round(GAME_HEIGHT * screenRatio);
+    newWidth = Math.max(1000, Math.min(newWidth, 1400)); // 1000〜1400の範囲
+    if (newWidth !== GAME_WIDTH) {
+        GAME_WIDTH = newWidth;
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        bgCache = null; // 背景キャッシュ再生成
+    }
+
+    // 画面いっぱいに表示
+    canvas.style.width    = aw + 'px';
+    canvas.style.height   = ah + 'px';
     canvas.style.position = 'absolute';
-    canvas.style.left     = ((window.innerWidth - sw) / 2) + 'px';
-    canvas.style.top      = ((window.innerHeight - sh) / 2) + 'px';
+    canvas.style.left     = '0px';
+    canvas.style.top      = '0px';
 
     var gc = document.getElementById('gameContainer');
-    gc.style.width  = window.innerWidth + 'px';
-    gc.style.height = window.innerHeight + 'px';
+    gc.style.width  = aw + 'px';
+    gc.style.height = ah + 'px';
 
     if (window.innerHeight < window.screen.height) window.scrollTo(0, 1);
 }
