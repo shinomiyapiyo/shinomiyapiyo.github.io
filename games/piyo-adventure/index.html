@@ -569,7 +569,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.141</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.143</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -871,7 +871,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.141
+ * ぴよ氏の冒険 v1.143
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1362,7 +1362,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.141';
+const CURRENT_VERSION     = '1.143';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3143,6 +3143,7 @@ function updateBoss() {
                 });
             }
             gameState.score += BOSS_DEFEAT_SCORE;
+            gameState.enemyKills++; // ボス撃破を撃破数に加算
             if (soundManager) soundManager.playBossFanfare();
             floatEffects.push({
                 type: 'boss_defeated_text',
@@ -3356,7 +3357,7 @@ function updateBossCollision(b) {
         player.velY = JUMP_FORCE * 0.5; // 低めバウンス（連続踏み防止）
         if (soundManager) soundManager.playKill();
         spawnExplosionEffect(player.x + player.width / 2, b.y);
-        registerKill(500, b.x + b.width / 2, b.y);
+        gameState.score += 500; // ボス踏みは撃破数に含めない
         // 被弾フレーム表示 + 怒り発動 + 踏みつけ無敵
         b.spriteFrame = BOSS_FRAME_DAMAGED;
         b.spriteResetTimer = 30;
@@ -3381,8 +3382,8 @@ function spawnBossItem() {
     var aL = bossState.arenaLeft;
     var aR = bossState.arenaRight;
     var r = Math.random();
-    // ボス戦アイテム: ハート/レモン缶(ジャンプ強化)/エネルギー弾のみ
-    var t = r < 0.40 ? 'heart' : r < 0.75 ? 'lemon_can' : 'energy';
+    // ボス戦アイテム: レモン缶70%/エネルギー弾15%/ハート15%
+    var t = r < 0.70 ? 'lemon_can' : r < 0.85 ? 'energy' : 'heart';
     powerUps.push({
         x: aL + 60 + Math.random() * (aR - aL - 120),
         y: 160 + Math.random() * 100,
