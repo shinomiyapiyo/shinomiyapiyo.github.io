@@ -568,7 +568,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.121</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.122</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -841,7 +841,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.121
+ * ぴよ氏の冒険 v1.122
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1311,7 +1311,7 @@ const SPEED_UP_RATE       = 0.20;  // 20%ずつ
 const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
-const CURRENT_VERSION     = '1.121';
+const CURRENT_VERSION     = '1.122';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2597,12 +2597,13 @@ function updateEnemies() {
             continue;
         }
 
-        stomped = player.velY > 0 && player.y + player.height <= e.y + e.height * 0.7;
+        // 空中敵は下方向からも来るため、位置関係のみで踏みつけ判定
+        stomped = player.y + player.height <= e.y + e.height * 0.7;
 
         if (stomped) {
             spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
             flyingEnemies.splice(i, 1);
-            player.velY = JUMP_FORCE / 2;
+            if (player.velY >= 0) player.velY = JUMP_FORCE / 2;
             registerKill(300, e.x + e.width / 2, e.y);
             if (soundManager) soundManager.playKill();
         } else if (bodyHitF) {
