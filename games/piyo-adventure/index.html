@@ -569,7 +569,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.139</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.141</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -871,7 +871,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.139
+ * ぴよ氏の冒険 v1.141
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1352,7 +1352,7 @@ const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
 // ─── ボスバトル定数 ───
-const BOSS_TRIGGER_DISTANCE = 4800;   // 4800mごとにボス出現
+const BOSS_TRIGGER_DISTANCE = 2400;   // 2400mごとにボス出現
 const BOSS_MAX_HP           = 10;
 const BOSS_WIDTH            = 128;
 const BOSS_HEIGHT           = 128;
@@ -1362,7 +1362,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.139';
+const CURRENT_VERSION     = '1.141';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3381,8 +3381,8 @@ function spawnBossItem() {
     var aL = bossState.arenaLeft;
     var aR = bossState.arenaRight;
     var r = Math.random();
-    // ボス戦アイテム: ハート/シールド/エネルギーのみ（マグネット・レモン缶は除外）
-    var t = r < 0.40 ? 'heart' : r < 0.75 ? 'shield' : 'energy';
+    // ボス戦アイテム: ハート/レモン缶(ジャンプ強化)/エネルギー弾のみ
+    var t = r < 0.40 ? 'heart' : r < 0.75 ? 'lemon_can' : 'energy';
     powerUps.push({
         x: aL + 60 + Math.random() * (aR - aL - 120),
         y: 160 + Math.random() * 100,
