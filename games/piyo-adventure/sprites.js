@@ -49,7 +49,19 @@ var IMAGE_SPRITES = {
     powerup_shield:  { files: ['images/item_shield.png'] },
     powerup_heart:   { files: ['images/item_heart.png'] },
     powerup_energy:  { files: ['images/item_energy.png'] },
-    bullet_energy:   { files: ['images/bullet_energy.png'] }
+    bullet_energy:   { files: ['images/bullet_energy.png'] },
+
+    // ボス (128x128, PixelLab生成 闇の巨大ニワトリ - 7ポーズ)
+    // 0:idle, 1:walk, 2:rush, 3:jump, 4:summon, 5:damaged, 6:flame
+    boss_rooster:    { files: [
+        'images/boss_idle.png',
+        'images/boss_walk.png',
+        'images/boss_rush.png',
+        'images/boss_jump.png',
+        'images/boss_summon.png',
+        'images/boss_damaged.png',
+        'images/boss_flame.png'
+    ] }
 };
 
 // ─── 地形/背景用パレット定義 (SFC 16色) ───
@@ -68,7 +80,7 @@ var PALETTES = {
         'transparent','#ff2255','#cc0033','#3366ff','#0044cc',
         '#dddddd','#aaaaaa','#777777','#ffffff','#ff8899',
         '#88aaff','#dd55ff','#ffcc22','#ff4477','#5588ff','#555555'
-    ]
+    ],
 };
 
 // ─── 地形/背景 プロシージャル生成 ───

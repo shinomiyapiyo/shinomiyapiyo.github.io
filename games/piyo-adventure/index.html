@@ -568,7 +568,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.130</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.136</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -621,7 +621,7 @@
                 position: relative; overflow: hidden;">
                 <div style="position: absolute; top: -1px; left: 15%; right: 15%; height: 2px;
                     background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);"></div>
-                <div class="game-title" data-i18n="pause_title" style="margin-bottom: 18px;">⏸️ ポーズ中</div>
+                <div id="pauseTitle" class="game-title" data-i18n="pause_title" style="margin-bottom: 18px;">⏸️ ポーズ中</div>
                 <button id="resumeButton" class="game-button" data-i18n="pause_resume" onclick="pauseGame()" style="min-width: 40vw; max-width: 260px;">▶️ 再開</button>
                 <button id="retireButton" class="game-button" data-i18n="pause_retire" onclick="confirmRetire()" style="min-width: 40vw; max-width: 260px; background: linear-gradient(180deg, #666, #444); border-color: rgba(255,255,255,0.2);">🏳️ リタイア</button>
                 <div class="instruction-text" data-i18n="pause_hint" style="margin-top: 12px; opacity: 0.7;">画面をタップで再開</div>
@@ -870,7 +870,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.130
+ * ぴよ氏の冒険 v1.136
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1080,6 +1080,9 @@ ja: {
     gameover_score: '獲得金額: ',
     gameover_kills: '敵撃破数: ',
     gameover_level: '到達レベル: ',
+    boss_warning: '⚠️ WARNING ⚠️',
+    boss_defeated: 'BOSS DEFEATED!',
+    boss_round: 'ROUND ',
     gameover_retry: '🔄 もう一度',
     gameover_totitle: '🏠 タイトルへ',
     // リタイア
@@ -1172,6 +1175,9 @@ en: {
     gameover_score: 'Score: ',
     gameover_kills: 'Enemies: ',
     gameover_level: 'Level: ',
+    boss_warning: '⚠️ WARNING ⚠️',
+    boss_defeated: 'BOSS DEFEATED!',
+    boss_round: 'ROUND ',
     gameover_retry: '🔄 Retry',
     gameover_totitle: '🏠 Title',
     retire_confirm: 'Return to title?',
@@ -1344,7 +1350,18 @@ const SPEED_UP_RATE       = 0.20;  // 20%ずつ
 const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
-const CURRENT_VERSION     = '1.130';
+// ─── ボスバトル定数 ───
+const BOSS_TRIGGER_DISTANCE = 4800;   // 4800mごとにボス出現
+const BOSS_MAX_HP           = 10;
+const BOSS_WIDTH            = 128;
+const BOSS_HEIGHT           = 128;
+const BOSS_DEFEAT_SCORE     = 5000;
+const BOSS_WARNING_DURATION = 120;    // 2s @ 60fps
+const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
+const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
+const BOSS_COINS_ON_DEFEAT  = 25;
+
+const CURRENT_VERSION     = '1.136';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1364,6 +1381,10 @@ class SoundManager {
         this.stageBGM    = this._createBGM('stage.mp3',    0.5);
         this.gameoverBGM = this._createBGM('gameover.mp3', 0.7);
         this.rankingBGM  = this._createBGM('ranking.mp3',  0.6);
+        this.bossBGM     = this._createBGM('boss.mp3',     0.6);
+        this.winBGM      = new Audio('win.mp3');
+        this.winBGM.loop = false;
+        this.winBGM.volume = 0.7;
         this.currentBGM  = null;
     }
 
@@ -1509,6 +1530,47 @@ class SoundManager {
         m.osc.stop(t+dur+0.2); h.osc.stop(t+dur+0.2); b.osc.stop(t+dur+0.2); s.osc.stop(t+0.9);
     }
 
+    // ─── ボス警告SE ───
+    playBossWarning() {
+        if (!this.ctx || !gameSettings.soundEnabled) return;
+        try {
+            var ao = this.ctx, t = ao.currentTime;
+            for (var rep = 0; rep < 3; rep++) {
+                var st = t + rep * 0.35;
+                var o1 = ao.createOscillator(), g1 = ao.createGain();
+                o1.type = 'sawtooth'; o1.frequency.value = 110;
+                o1.connect(g1); g1.connect(ao.destination);
+                g1.gain.setValueAtTime(0.2, st);
+                g1.gain.exponentialRampToValueAtTime(0.01, st + 0.25);
+                o1.start(st); o1.stop(st + 0.25);
+                var o2 = ao.createOscillator(), g2 = ao.createGain();
+                o2.type = 'square'; o2.frequency.value = 146;
+                o2.connect(g2); g2.connect(ao.destination);
+                g2.gain.setValueAtTime(0.12, st + 0.05);
+                g2.gain.exponentialRampToValueAtTime(0.01, st + 0.3);
+                o2.start(st + 0.05); o2.stop(st + 0.3);
+            }
+        } catch (_) {}
+    }
+
+    // ─── ボス撃破ファンファーレ (win.mp3) ───
+    playBossFanfare() {
+        if (!gameSettings.soundEnabled) return;
+        this.stopAllBGM();
+        this.winBGM.currentTime = 0;
+        this.winBGM.play().then(function(){}).catch(function(){});
+        this.currentBGM = this.winBGM;
+    }
+
+    // ─── ボスBGM再生 ───
+    playBossBGM() {
+        if (!gameSettings.soundEnabled) return;
+        this.stopAllBGM();
+        this.bossBGM.currentTime = 0;
+        this.bossBGM.play().then(function(){}).catch(function(){});
+        this.currentBGM = this.bossBGM;
+    }
+
     playBGM(type) {
         this.stopAllBGM();
         if (!gameSettings.soundEnabled) return;
@@ -1520,7 +1582,7 @@ class SoundManager {
     }
 
     stopAllBGM() {
-        var bgms = [this.titleBGM, this.stageBGM, this.gameoverBGM, this.rankingBGM];
+        var bgms = [this.titleBGM, this.stageBGM, this.gameoverBGM, this.rankingBGM, this.bossBGM, this.winBGM];
         for (var i = 0; i < bgms.length; i++) {
             if (bgms[i]) { bgms[i].pause(); bgms[i].currentTime = 0; }
         }
@@ -1561,6 +1623,40 @@ var player = {
 var coins = [], enemies = [], platforms = [];
 var terrain = [], flyingEnemies = [], powerUps = [];
 var floatEffects = [], bullets = [];
+
+// ─── ボスバトル状態 ───
+var gameRound = 1;
+var bossState = {
+    active: false, phase: 0, boss: null,
+    warningTimer: 0, arenaLeft: 0, arenaRight: 0,
+    defeatedTimer: 0, roundTextTimer: 0,
+    bossTriggered: false, savedGameSpeed: 0,
+    eggs: [], summonTimer: 0
+};
+
+// ─── デバッグモード ───
+var debugMode = false;
+var debugTapCount = 0;
+var debugTapTimer = 0;
+
+function handleDebugTap() {
+    var now = Date.now();
+    if (now - debugTapTimer > 3000) debugTapCount = 0; // 3秒リセット
+    debugTapCount++;
+    debugTapTimer = now;
+    if (debugTapCount >= 10) {
+        debugTapCount = 0;
+        debugMode = !debugMode;
+        if (debugMode) {
+            gameState.lives = 99;
+        }
+        // ポーズタイトルに状態表示
+        var titleEl = document.getElementById('pauseTitle');
+        if (titleEl) {
+            titleEl.textContent = debugMode ? '🛠️ DEBUG MODE ON' : t('pause_title');
+        }
+    }
+}
 
 // ─── バイオームシステム ───
 
@@ -1818,6 +1914,14 @@ function resetGame() {
     gameState.comboTimer = 0;
     floatEffects = [];
     damageFlashTimer = 0;
+
+    // ボスバトルリセット
+    gameRound = 1;
+    bossState = { active: false, phase: 0, boss: null,
+        warningTimer: 0, arenaLeft: 0, arenaRight: 0,
+        defeatedTimer: 0, roundTextTimer: 0,
+        bossTriggered: false, savedGameSpeed: 0,
+        eggs: [], summonTimer: 0 };
 
     // バイオームリセット
     biomeState.current = 0;
@@ -2308,6 +2412,7 @@ function spawnEnemy() {
         case 'mama_chick':   w = 50; h = 46; s = 0.5 + Math.random();     break;
         default:             w = 42; h = 38; s = 1 + Math.random();       break;
     }
+    s *= (1 + (gameRound - 1) * 0.3); // ラウンド倍率
     return {
         x: gameState.camera.x + GAME_WIDTH + Math.random() * 200,
         y: GROUND_Y - h, width: w, height: h, velX: -s, type: t,
@@ -2320,7 +2425,7 @@ function spawnFlyingEnemy() {
         x: gameState.camera.x + GAME_WIDTH + Math.random() * 300,
         y: 82 + Math.random() * 164,
         width: 44, height: 40,
-        velX: -(2 + Math.random() * 2),
+        velX: -(2 + Math.random() * 2) * (1 + (gameRound - 1) * 0.3),
         velY: Math.sin(Math.random() * Math.PI * 2) * 0.5,
         type: 'flying_chick',
         animFrame: Math.floor(Math.random() * 100),
@@ -2350,6 +2455,9 @@ function manageObjects() {
     coins         = coins.filter(function(c) { return c.x > lb && c.x < rb; });
     powerUps      = powerUps.filter(function(p) { return p.x > lb && p.x < rb; });
     bullets       = bullets.filter(function(b) { return b.x > lb && b.x < rb; });
+
+    // ボス戦中は通常スポーン停止
+    if (bossState.active && bossState.phase >= 2) return;
 
     gameState.enemySpawnTimer++;
     gameState.platformSpawnTimer++;
@@ -2399,6 +2507,7 @@ function isOnPlatform() {
 // ─── スピードアップ ───
 
 function updateGameSpeed() {
+    if (bossState.active) return; // ボス戦中はスピード固定
     var lvl = Math.floor(gameState.distance / SPEED_UP_INTERVAL) + 1;
     if (lvl > gameState.speedLevel) {
         gameState.speedLevel = lvl;
@@ -2503,6 +2612,13 @@ function updatePlayer() {
     if (player.x < gameState.camera.x + 25) player.x = gameState.camera.x + 25;
     if (player.x + player.width > gameState.camera.x + GAME_WIDTH - 25)
         player.x = gameState.camera.x + GAME_WIDTH - 25 - player.width;
+
+    // ボスアリーナ壁制限
+    if (bossState.active && bossState.phase >= 3) {
+        if (player.x < bossState.arenaLeft) player.x = bossState.arenaLeft;
+        if (player.x + player.width > bossState.arenaRight)
+            player.x = bossState.arenaRight - player.width;
+    }
 
     player.onGround = false;
     player.groundType = 'normal';
@@ -2676,7 +2792,7 @@ var damageFlashTimer = 0; // 赤フラッシュ演出タイマー
 
 function takeDamage() {
     if (gameState.isInvincible) return;
-    gameState.lives--;
+    if (!debugMode) gameState.lives--;
     if (soundManager) soundManager.playDamage();
     gameState.isInvincible = true;
     gameState.invincibleTimer = INVINCIBLE_FRAMES;
@@ -2685,19 +2801,19 @@ function takeDamage() {
     spawnDamageEffect(player.x + player.width / 2, player.y);
     // 敵被弾: その場で点滅+無敵（位置リセットしない）
     player.velY = -6; // 軽くノックバック（上方向）
-    if (gameState.lives <= 0) gameOver();
+    if (!debugMode && gameState.lives <= 0) gameOver();
 }
 
 function fallDeath() {
     if (gameState.isInvincible) return;
-    gameState.lives--;
+    if (!debugMode) gameState.lives--;
     if (soundManager) soundManager.playDamage();
     gameState.isInvincible = true;
     gameState.invincibleTimer = INVINCIBLE_FRAMES;
     damageFlashTimer = 20;
     spawnDamageEffect(player.x + player.width / 2, player.y);
     resetPlayerPosition(); // 上から降ってくる
-    if (gameState.lives <= 0) gameOver();
+    if (!debugMode && gameState.lives <= 0) gameOver();
 }
 
 function updatePlatforms() {
@@ -2859,7 +2975,19 @@ function updateBullets() {
                 break;
             }
         }
-        if (hit) { bullets.splice(i, 1); }
+        if (hit) { bullets.splice(i, 1); continue; }
+
+        // ボスとの衝突
+        if (bossState.boss && bossState.phase === 3 && aabb(b, bossState.boss)) {
+            bossState.boss.hp -= 0.5;
+            spawnExplosionEffect(b.x, b.y);
+            bullets.splice(i, 1);
+            if (soundManager) soundManager.playKill();
+            if (bossState.boss.hp <= 0) {
+                bossState.phase = 4;
+                bossState.defeatedTimer = 0;
+            }
+        }
     }
 }
 
@@ -2879,6 +3007,456 @@ function resetPlayerPosition() {
     player.y = -50; player.velX = 0; player.velY = 0;
     gameState.isRespawning = true;
     gameState.camera.x = Math.max(100, gameState.camera.x - 200);
+}
+
+// ─── ボスバトルシステム ───
+
+function checkBossTrigger() {
+    if (bossState.active || bossState.bossTriggered) return;
+    if (gameState.distance >= BOSS_TRIGGER_DISTANCE * gameRound) {
+        bossState.bossTriggered = true;
+        bossState.active = true;
+        bossState.phase = 1; // WARNING
+        bossState.warningTimer = BOSS_WARNING_DURATION;
+        if (soundManager) soundManager.playBossWarning();
+    }
+}
+
+function setupBossArena() {
+    bossState.savedGameSpeed = gameState.gameSpeed;
+    gameState.gameSpeed = 0;
+    // 既存エンティティクリア
+    enemies = []; flyingEnemies = []; coins = []; powerUps = [];
+    bossState.eggs = [];
+    // アリーナ壁
+    bossState.arenaLeft = gameState.camera.x + 30;
+    bossState.arenaRight = gameState.camera.x + GAME_WIDTH - 30;
+    var aL = bossState.arenaLeft;
+    var aR = bossState.arenaRight;
+    // ─── 固定ボスステージ地形 ───
+    // 画面内の既存地形を除去
+    terrain = terrain.filter(function(t) {
+        return t.x + t.width < aL - 100 || t.x > aR + 100;
+    });
+    // 既存プラットフォームも除去
+    platforms = platforms.filter(function(p) {
+        return p.x + p.width < aL - 100 || p.x > aR + 100;
+    });
+    // フラットな地面を敷き詰め（穴なし、ギミックなし）
+    for (var tx = aL - 100; tx < aR + 100; tx += 100) {
+        terrain.push({ x: tx, y: GROUND_Y, width: 100, height: 130, type: 'ground' });
+    }
+    // 戦術用の固定プラットフォーム（踏みつけ用の足場）
+    var arenaW = aR - aL;
+    platforms.push({
+        x: aL + 30, y: GROUND_Y - 110, width: 130, height: 30,
+        type: 'floating_ground', special: 'normal', isBossArena: true
+    });
+    platforms.push({
+        x: aR - 160, y: GROUND_Y - 120, width: 130, height: 30,
+        type: 'floating_ground', special: 'normal', isBossArena: true
+    });
+    platforms.push({
+        x: aL + arenaW / 2 - 55, y: GROUND_Y - 190, width: 110, height: 30,
+        type: 'cloud', special: 'normal', isBossArena: true
+    });
+    // ボスオブジェクト生成
+    bossState.boss = {
+        x: gameState.camera.x + GAME_WIDTH + 50,
+        y: GROUND_Y - BOSS_HEIGHT,
+        width: BOSS_WIDTH, height: BOSS_HEIGHT,
+        hp: BOSS_MAX_HP,
+        velX: 0, velY: 0,
+        facing: 'left',
+        animFrame: 0,
+        patrolDir: -1,
+        attackTimer: 180,
+        angerTimer: 0,
+        isAngry: false,
+        isRushing: false,
+        rushTargetX: 0,
+        isJumping: false,
+        isFlaming: false,
+        flameTimer: 0,
+        spriteFrame: 0,
+        spriteResetTimer: 0,
+        stompCooldown: 0
+    };
+    bossState.phase = 2; // entering
+    bossState.summonTimer = BOSS_SUMMON_INTERVAL;
+    bossState.itemSpawnTimer = 300; // ボス戦アイテム初回出現まで5秒
+    bgCache = null; // ボス戦背景に切り替え
+    if (soundManager) soundManager.playBossBGM();
+}
+
+function updateBoss() {
+    if (!bossState.active) return;
+    var b = bossState.boss;
+
+    switch (bossState.phase) {
+    case 1: // WARNING
+        bossState.warningTimer--;
+        if (bossState.warningTimer <= 0) setupBossArena();
+        return;
+
+    case 2: // 登場（右から歩いて入場）
+        var targetX = gameState.camera.x + GAME_WIDTH * 0.62;
+        b.x -= 2;
+        b.animFrame++;
+        b.spriteFrame = (Math.floor(b.animFrame / 10) % 2 === 0) ? BOSS_FRAME_IDLE : BOSS_FRAME_WALK;
+        if (b.x <= targetX) { b.x = targetX; bossState.phase = 3; }
+        return;
+
+    case 3: // 戦闘
+        updateBossAI(b);
+        updateBossCollision(b);
+        updateEggs();
+        updateBossItems();
+        b.animFrame++;
+        // スプライトリセットタイマー
+        if (b.spriteResetTimer > 0) {
+            b.spriteResetTimer--;
+            if (b.spriteResetTimer <= 0) b.spriteFrame = BOSS_FRAME_IDLE;
+        }
+        return;
+
+    case 4: // 撃破演出
+        bossState.defeatedTimer++;
+        // 時間差爆発 (15フレームごと × 5回)
+        if (bossState.defeatedTimer % 15 === 0 && bossState.defeatedTimer <= 75) {
+            var ex = b.x + Math.random() * b.width;
+            var ey = b.y + Math.random() * b.height;
+            spawnExplosionEffect(ex, ey);
+            if (soundManager) soundManager.playKill();
+        }
+        // コイン散布 + スコア + ファンファーレ
+        if (bossState.defeatedTimer === 90) {
+            for (var ci = 0; ci < BOSS_COINS_ON_DEFEAT; ci++) {
+                coins.push({
+                    x: b.x + b.width / 2 + (Math.random() - 0.5) * 250,
+                    y: b.y + (Math.random() - 0.5) * 120,
+                    width: 32, height: 32,
+                    collected: false, animFrame: Math.random() * 20
+                });
+            }
+            gameState.score += BOSS_DEFEAT_SCORE;
+            if (soundManager) soundManager.playBossFanfare();
+            floatEffects.push({
+                type: 'boss_defeated_text',
+                worldX: b.x + b.width / 2, worldY: b.y,
+                timer: 0, duration: 180, offsetY: 0
+            });
+            floatEffects.push({
+                type: 'score_text',
+                worldX: b.x + b.width / 2, worldY: b.y - 40,
+                timer: 0, duration: 90, offsetY: 0,
+                score: BOSS_DEFEAT_SCORE
+            });
+        }
+        // 5秒後に移行
+        if (bossState.defeatedTimer >= 300) {
+            bossState.phase = 5;
+            bossState.roundTextTimer = 180;
+        }
+        return;
+
+    case 5: // ラウンド移行
+        bossState.roundTextTimer--;
+        if (bossState.roundTextTimer <= 0) {
+            gameRound++;
+            bossState.active = false;
+            bossState.phase = 0;
+            bossState.boss = null;
+            bossState.bossTriggered = false;
+            bossState.eggs = [];
+            // ボスステージ用プラットフォーム除去
+            platforms = platforms.filter(function(p) { return !p.isBossArena; });
+            // 通常地形生成の再開ポイントを設定
+            gameState.lastTerrainX = bossState.arenaRight + 100;
+            // スクロール再開（ラウンド倍率適用）
+            var roundMult = 1 + (gameRound - 1) * 0.2;
+            gameState.gameSpeed = Math.min(bossState.savedGameSpeed * roundMult, BASE_SCROLL_SPEED * 5.0);
+            // 通常BGM・背景復帰
+            bgCache = null;
+            if (soundManager) soundManager.playBGM('stage');
+        }
+        return;
+    }
+}
+
+// ボススプライトフレーム定数
+var BOSS_FRAME_IDLE    = 0;
+var BOSS_FRAME_WALK    = 1;
+var BOSS_FRAME_RUSH    = 2;
+var BOSS_FRAME_JUMP    = 3;
+var BOSS_FRAME_SUMMON  = 4;
+var BOSS_FRAME_DAMAGED = 5;
+var BOSS_FRAME_FLAME   = 6;
+
+function updateBossAI(b) {
+    // フェーズ判定
+    var hpRatio = b.hp / BOSS_MAX_HP;
+    var phase = hpRatio > 0.7 ? 1 : hpRatio > 0.3 ? 2 : 3;
+
+    // 怒りモードカウントダウン
+    if (b.isAngry) {
+        b.angerTimer--;
+        if (b.angerTimer <= 0) b.isAngry = false;
+    }
+    var speedMult = b.isAngry ? 2.0 : 1.0;
+
+    // ── 突進中 ──
+    if (b.isRushing) {
+        var rushDir = b.rushTargetX > b.x + b.width / 2 ? 1 : -1;
+        b.x += rushDir * 5 * speedMult;
+        b.facing = rushDir < 0 ? 'left' : 'right';
+        b.spriteFrame = BOSS_FRAME_RUSH;
+        if (Math.abs(b.x + b.width / 2 - b.rushTargetX) < 15 ||
+            b.x <= bossState.arenaLeft || b.x + b.width >= bossState.arenaRight) {
+            b.isRushing = false;
+            b.spriteFrame = BOSS_FRAME_IDLE;
+            b.attackTimer = phase === 3 ? 60 : 120;
+            if (b.x <= bossState.arenaLeft) b.x = bossState.arenaLeft;
+            if (b.x + b.width >= bossState.arenaRight) b.x = bossState.arenaRight - b.width;
+        }
+        return;
+    }
+
+    // ── ジャンプ中 ──
+    if (b.isJumping) {
+        b.spriteFrame = BOSS_FRAME_JUMP;
+        b.velY += GRAVITY;
+        b.y += b.velY;
+        if (b.y >= GROUND_Y - b.height) {
+            b.y = GROUND_Y - b.height;
+            b.velY = 0;
+            b.isJumping = false;
+            b.spriteFrame = BOSS_FRAME_IDLE;
+            b.attackTimer = 90;
+            floatEffects.push({
+                type: 'boss_shockwave',
+                worldX: b.x + b.width / 2, worldY: GROUND_Y,
+                timer: 0, duration: 20
+            });
+        }
+        return;
+    }
+
+    // ── 闇の炎ブレス中 ──
+    if (b.isFlaming) {
+        b.spriteFrame = BOSS_FRAME_FLAME;
+        b.flameTimer--;
+        // 10フレームごとに炎弾を発射（合計6発）
+        if (b.flameTimer % 10 === 0 && b.flameTimer > 0) {
+            var fdir = b.facing === 'left' ? -1 : 1;
+            var fx = b.facing === 'left' ? b.x - 10 : b.x + b.width + 10;
+            var fy = b.y + b.height * 0.35;
+            bossState.eggs.push({
+                x: fx, y: fy, width: 24, height: 24,
+                velX: fdir * (5 + Math.random() * 2),
+                velY: -1.5 + Math.random() * 3,
+                timer: 0, isFlame: true
+            });
+        }
+        if (b.flameTimer <= 0) {
+            b.isFlaming = false;
+            b.spriteFrame = BOSS_FRAME_IDLE;
+            b.attackTimer = phase === 3 ? 80 : 120;
+        }
+        return;
+    }
+
+    // ── パトロール移動 ──
+    var patrolSpeed = (phase === 1 ? 1.0 : phase === 2 ? 1.5 : 2.0) * speedMult;
+    b.x += b.patrolDir * patrolSpeed;
+    b.facing = b.x + b.width / 2 > player.x + player.width / 2 ? 'left' : 'right';
+    // 歩行アニメ: idle/walk を交互
+    b.spriteFrame = (Math.floor(b.animFrame / 12) % 2 === 0) ? BOSS_FRAME_IDLE : BOSS_FRAME_WALK;
+    // 壁で反転
+    if (b.x <= bossState.arenaLeft) { b.x = bossState.arenaLeft; b.patrolDir = 1; }
+    if (b.x + b.width >= bossState.arenaRight) { b.x = bossState.arenaRight - b.width; b.patrolDir = -1; }
+
+    // ── 召喚タイマー ──
+    bossState.summonTimer--;
+    if (bossState.summonTimer <= 0) {
+        spawnBossChick(b);
+        b.spriteFrame = BOSS_FRAME_SUMMON;
+        b.spriteResetTimer = 30;
+        bossState.summonTimer = phase === 1 ? BOSS_SUMMON_INTERVAL : phase === 2 ? 240 : 180;
+    }
+
+    // ── 攻撃タイマー ──
+    b.attackTimer--;
+    if (b.attackTimer > 0) return;
+
+    // ── 攻撃選択 ──
+    var r = Math.random();
+    if (phase === 1) {
+        // Phase1: パトロール＋召喚のみ
+        b.attackTimer = 180;
+    } else if (phase === 2) {
+        if (r < 0.3) {
+            // 突進
+            b.isRushing = true;
+            b.rushTargetX = player.x + player.width / 2;
+            b.spriteFrame = BOSS_FRAME_RUSH;
+        } else if (r < 0.55) {
+            // 卵3発
+            spawnEggProjectiles(b, 3);
+            b.spriteFrame = BOSS_FRAME_SUMMON;
+            b.spriteResetTimer = 20;
+            b.attackTimer = 120;
+        } else if (r < 0.8) {
+            // 闇の炎ブレス
+            b.isFlaming = true;
+            b.flameTimer = 60; // 1秒間
+            b.spriteFrame = BOSS_FRAME_FLAME;
+        } else {
+            b.attackTimer = 90;
+        }
+    } else { // phase 3
+        if (r < 0.2) {
+            b.isRushing = true;
+            b.rushTargetX = player.x + player.width / 2;
+            b.spriteFrame = BOSS_FRAME_RUSH;
+        } else if (r < 0.4) {
+            spawnEggProjectiles(b, 4);
+            b.spriteFrame = BOSS_FRAME_SUMMON;
+            b.spriteResetTimer = 20;
+            b.attackTimer = 90;
+        } else if (r < 0.6) {
+            // ジャンプ攻撃
+            b.isJumping = true;
+            b.velY = -14;
+            b.spriteFrame = BOSS_FRAME_JUMP;
+        } else if (r < 0.85) {
+            // 闇の炎ブレス（Phase3は長い）
+            b.isFlaming = true;
+            b.flameTimer = 90; // 1.5秒間
+            b.spriteFrame = BOSS_FRAME_FLAME;
+        } else {
+            b.attackTimer = 60;
+        }
+    }
+}
+
+function updateBossCollision(b) {
+    if (!b || b.hp <= 0) return;
+    // stompCooldownカウントダウン
+    if (b.stompCooldown > 0) b.stompCooldown--;
+    var stompHit = aabbShrink(player, b, 10, 15);
+    var bodyHit = aabbShrink(player, b, 20, 15);
+
+    if (b.stompCooldown <= 0 && stompHit && player.velY > 0 && player.y + player.height <= b.y + b.height * 0.3) {
+        // 踏みつけ成功！
+        b.hp -= 1;
+        player.velY = JUMP_FORCE * 0.5; // 低めバウンス（連続踏み防止）
+        if (soundManager) soundManager.playKill();
+        spawnExplosionEffect(player.x + player.width / 2, b.y);
+        registerKill(500, b.x + b.width / 2, b.y);
+        // 被弾フレーム表示 + 怒り発動 + 踏みつけ無敵
+        b.spriteFrame = BOSS_FRAME_DAMAGED;
+        b.spriteResetTimer = 30;
+        b.isAngry = true;
+        b.angerTimer = BOSS_ANGER_DURATION;
+        b.stompCooldown = 90; // 1.5秒間踏み無敵
+        b.isRushing = false;
+        b.isJumping = false;
+        b.isFlaming = false;
+        if (b.hp <= 0) {
+            bossState.phase = 4;
+            bossState.defeatedTimer = 0;
+        }
+    } else if (bodyHit && !gameState.isInvincible && b.stompCooldown <= 0) {
+        // ボスが踏みつけ無敵中は体当たりダメージなし
+        takeDamage();
+    }
+}
+
+function spawnBossItem() {
+    // ボスアリーナ内のランダム位置にアイテムを出現させる
+    var aL = bossState.arenaLeft;
+    var aR = bossState.arenaRight;
+    var r = Math.random();
+    // ボス戦アイテム: ハート多め、シールド多め（戦闘支援）
+    var t = r < 0.30 ? 'heart' : r < 0.55 ? 'shield' : r < 0.72 ? 'energy' : r < 0.88 ? 'lemon_can' : 'magnet';
+    powerUps.push({
+        x: aL + 60 + Math.random() * (aR - aL - 120),
+        y: 160 + Math.random() * 100,
+        width: 36, height: 36, type: t,
+        collected: false, animFrame: 0,
+        floatOffset: Math.random() * Math.PI * 2,
+        lifetime: 600, // 10秒（60fps × 10）
+        maxLifetime: 600
+    });
+}
+
+function updateBossItems() {
+    // ボス戦中のアイテムスポーン管理
+    if (!bossState.active || bossState.phase !== 3) return;
+    bossState.itemSpawnTimer--;
+    if (bossState.itemSpawnTimer <= 0) {
+        spawnBossItem();
+        bossState.itemSpawnTimer = 360 + Math.floor(Math.random() * 240); // 6〜10秒間隔
+    }
+    // アイテム寿命管理
+    for (var i = powerUps.length - 1; i >= 0; i--) {
+        var pu = powerUps[i];
+        if (pu.collected || pu.lifetime === undefined) continue;
+        pu.lifetime--;
+        if (pu.lifetime <= 0) {
+            powerUps.splice(i, 1);
+        }
+    }
+}
+
+function spawnBossChick(boss) {
+    var dir = boss.facing === 'left' ? -1 : 1;
+    enemies.push({
+        x: boss.x + (dir < 0 ? -20 : boss.width + 20),
+        y: GROUND_Y - 38,
+        width: 42, height: 38,
+        velX: dir * 1.5,
+        type: 'chick',
+        animFrame: Math.floor(Math.random() * 100)
+    });
+}
+
+function spawnEggProjectiles(boss, count) {
+    var bx = boss.x + boss.width / 2;
+    var by = boss.y + boss.height * 0.4;
+    var dir = boss.facing === 'left' ? -1 : 1;
+    for (var i = 0; i < count; i++) {
+        var spread = count > 1 ? -0.3 + (i / (count - 1)) * 0.6 : 0;
+        bossState.eggs.push({
+            x: bx, y: by,
+            width: 16, height: 20,
+            velX: dir * 4 * Math.cos(spread),
+            velY: -3 + 4 * Math.sin(spread),
+            timer: 0
+        });
+    }
+}
+
+function updateEggs() {
+    for (var i = bossState.eggs.length - 1; i >= 0; i--) {
+        var egg = bossState.eggs[i];
+        egg.x += egg.velX;
+        egg.velY += 0.15; // 微重力
+        egg.y += egg.velY;
+        egg.timer++;
+        // 画面外除去
+        if (egg.y > GAME_HEIGHT + 50 || egg.timer > 300 ||
+            egg.x < gameState.camera.x - 50 || egg.x > gameState.camera.x + GAME_WIDTH + 50) {
+            bossState.eggs.splice(i, 1);
+            continue;
+        }
+        // プレイヤー衝突
+        if (!gameState.isInvincible && aabb(player, egg)) {
+            bossState.eggs.splice(i, 1);
+            takeDamage();
+        }
+    }
 }
 
 function gameOver() {
@@ -3555,6 +4133,53 @@ function drawFloatEffects() {
             ctx.fill();
             ctx.restore();
         }
+
+        // ボス撃破テキスト（ワールド座標系）
+        if (ef.type === 'boss_defeated_text') {
+            ef.offsetY += 0.5;
+            var bdAlpha = progress < 0.8 ? 1 : (1 - progress) / 0.2;
+            var bdScale = 1 + Math.sin(ef.timer * 0.1) * 0.05;
+            ctx.save();
+            ctx.globalAlpha = bdAlpha;
+            ctx.translate(wx, ef.worldY - ef.offsetY);
+            ctx.scale(bdScale, bdScale);
+            ctx.font = "bold 36px 'M PLUS Rounded 1c', sans-serif";
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffd700';
+            ctx.shadowColor = 'rgba(255,215,0,0.8)'; ctx.shadowBlur = 10;
+            ctx.fillText(t('boss_defeated'), 0, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        // ボスジャンプ着地衝撃波
+        if (ef.type === 'boss_shockwave') {
+            var swRadius = progress * 120;
+            var swAlpha = (1 - progress) * 0.5;
+            ctx.save();
+            ctx.globalAlpha = swAlpha;
+            ctx.strokeStyle = '#ffaa00';
+            ctx.lineWidth = 3 * (1 - progress);
+            ctx.beginPath();
+            ctx.ellipse(wx, ef.worldY, swRadius, swRadius * 0.3, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // スコアテキスト（汎用、ボス撃破時も使用）
+        if (ef.type === 'score_text') {
+            ef.offsetY += 0.8;
+            var stAlpha = progress < 0.7 ? 1 : (1 - progress) / 0.3;
+            ctx.save();
+            ctx.globalAlpha = stAlpha;
+            ctx.font = "bold 22px 'DotGothic16', monospace";
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffee00';
+            ctx.shadowColor = 'rgba(255,200,0,0.6)'; ctx.shadowBlur = 8;
+            ctx.fillText('+' + ef.score, wx, ef.worldY - ef.offsetY);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
     }
 }
 
@@ -3809,7 +4434,8 @@ function drawEnemy(e) {
         default:             spriteName = 'chick_walk'; break;
     }
 
-    spriteManager.draw(ctx, spriteName, frameIdx, e.x, cy, e.width, e.height, false);
+    var flipH = (e.velX > 0); // 右移動中なら反転して右向きに
+    spriteManager.draw(ctx, spriteName, frameIdx, e.x, cy, e.width, e.height, flipH);
     e.animFrame++;
 }
 
@@ -3825,6 +4451,11 @@ function drawFlyingEnemy(e) {
 
 function drawPowerUp(pu) {
     if (pu.collected) return;
+    // 消滅直前の点滅（残り2秒=120f: 速い点滅）
+    if (pu.lifetime !== undefined && pu.lifetime <= 120) {
+        var blinkRate = pu.lifetime <= 60 ? 4 : 8; // 最後1秒はさらに速く
+        if (Math.floor(pu.lifetime / blinkRate) % 2 === 0) return; // 点滅で非表示フレーム
+    }
     var fy = pu.y + Math.sin(gameState.time * 0.1 + pu.floatOffset) * 3;
     var spriteName;
 
@@ -3837,7 +4468,14 @@ function drawPowerUp(pu) {
         default: return;
     }
 
+    // 消えかけ半透明（残り3秒以下で徐々に薄く）
+    if (pu.lifetime !== undefined && pu.lifetime <= 180) {
+        ctx.globalAlpha = Math.max(0.3, pu.lifetime / 180);
+    }
     spriteManager.draw(ctx, spriteName, 0, pu.x, fy, pu.width, pu.height, false);
+    if (pu.lifetime !== undefined && pu.lifetime <= 180) {
+        ctx.globalAlpha = 1;
+    }
     pu.animFrame++;
 }
 
@@ -3850,8 +4488,95 @@ function drawBullet(b) {
     ctx.restore();
 }
 
+function drawBoss(b) {
+    ctx.save();
+    var flipH = b.facing === 'right';
+    var bounce = Math.sin(b.animFrame * 0.08) * 3;
+    var drawY = b.y + bounce;
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(b.x + b.width / 2, GROUND_Y + 2, b.width * 0.4, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 踏み無敵時の点滅 + 怒り時の赤点滅
+    if (b.stompCooldown > 0 && Math.floor(b.animFrame / 3) % 2 === 0) {
+        ctx.globalAlpha = 0.35;
+    } else if (b.isAngry && Math.floor(b.animFrame / 4) % 2 === 0) {
+        ctx.globalAlpha = 0.7;
+    }
+    // ボス本体スプライト
+    spriteManager.draw(ctx, 'boss_rooster', b.spriteFrame, b.x, drawY, b.width, b.height, flipH);
+    // 怒り赤オーバーレイ（楕円放射グラデーション）
+    if (b.isAngry) {
+        var acx = b.x + b.width / 2;
+        var acy = drawY + b.height * 0.45;
+        var arx = b.width * 0.55;
+        var ary = b.height * 0.48;
+        ctx.globalAlpha = 0.25 + Math.sin(b.animFrame * 0.3) * 0.15;
+        var agrd = ctx.createRadialGradient(acx, acy, arx * 0.1, acx, acy, arx);
+        agrd.addColorStop(0, 'rgba(255,50,0,0.7)');
+        agrd.addColorStop(0.6, 'rgba(255,0,0,0.3)');
+        agrd.addColorStop(1, 'rgba(255,0,0,0)');
+        ctx.fillStyle = agrd;
+        ctx.beginPath();
+        ctx.ellipse(acx, acy, arx, ary, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+function drawEggProjectiles() {
+    for (var i = 0; i < bossState.eggs.length; i++) {
+        var egg = bossState.eggs[i];
+        ctx.save();
+        if (egg.isFlame) {
+            // 闇の炎弾
+            var fx = egg.x + egg.width / 2;
+            var fy = egg.y + egg.height / 2;
+            var flicker = Math.sin(egg.timer * 0.5) * 2;
+            // 外側の闇オーラ
+            var grd = ctx.createRadialGradient(fx, fy, 2, fx, fy, 14 + flicker);
+            grd.addColorStop(0, 'rgba(180,60,255,0.9)');
+            grd.addColorStop(0.5, 'rgba(80,0,160,0.6)');
+            grd.addColorStop(1, 'rgba(30,0,50,0)');
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(fx, fy, 14 + flicker, 0, Math.PI * 2);
+            ctx.fill();
+            // 内側の炎コア
+            ctx.fillStyle = '#cc44ff';
+            ctx.beginPath();
+            ctx.arc(fx, fy, 5 + flicker * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            // 白い中心
+            ctx.fillStyle = 'rgba(255,200,255,0.8)';
+            ctx.beginPath();
+            ctx.arc(fx, fy, 2, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // 通常の卵弾
+            ctx.fillStyle = '#ffe8c0';
+            ctx.strokeStyle = '#c0a060';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(egg.x + egg.width / 2, egg.y + egg.height / 2,
+                        egg.width / 2, egg.height / 2, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.beginPath();
+            ctx.ellipse(egg.x + egg.width * 0.35, egg.y + egg.height * 0.3,
+                        3, 4, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
 // 背景グラデーションのキャッシュ
 var bgCache = null;
+// ボス戦専用背景の空色（暗紫〜暗赤のグラデーション）
+var BOSS_SKY = ['#0a0018', '#120028', '#1a0030', '#200020', '#180010'];
+
 function getBgCache() {
     if (bgCache) return bgCache;
     bgCache = document.createElement('canvas');
@@ -3860,9 +4585,12 @@ function getBgCache() {
     var bc = bgCache.getContext('2d');
     var grad = bc.createLinearGradient(0, 0, 0, GAME_HEIGHT);
 
-    // バイオーム対応: 遷移中は前後のグラデーションを補間
     var sky;
-    if (biomeState.transition > 0 && biomeState.transition < 1) {
+    if (bossState.active && bossState.phase >= 2) {
+        // ボス戦専用背景
+        sky = BOSS_SKY;
+    } else if (biomeState.transition > 0 && biomeState.transition < 1) {
+        // バイオーム対応: 遷移中は前後のグラデーションを補間
         var prevSky = BIOME_CONFIGS[biomeState.previous].sky;
         var nextSky = BIOME_CONFIGS[biomeState.current].sky;
         sky = [];
@@ -3994,6 +4722,10 @@ function render() {
         if (bullets[j].x > camL && bullets[j].x < camR) drawBullet(bullets[j]);
     }
 
+    // ボス描画 (ワールド座標系)
+    if (bossState.boss && bossState.phase >= 2 && bossState.phase <= 4) drawBoss(bossState.boss);
+    if (bossState.eggs.length > 0) drawEggProjectiles();
+
     if (gameState.gameStarted) drawPlayer(player.x, player.y);
 
     // フロートエフェクト描画 (カメラtranslate適用済み)
@@ -4001,10 +4733,24 @@ function render() {
 
     ctx.restore();
 
-    // 夜バイオーム: 暗いオーバーレイ
-    var nightOverlay = BIOME_CONFIGS[3].overlay;
-    var isNightInvolved = biomeState.current === 3 || biomeState.previous === 3;
-    if (isNightInvolved && nightOverlay) {
+    // ボス戦 or 夜バイオーム: 暗いオーバーレイ
+    if (bossState.active && bossState.phase >= 2) {
+        // ボス戦専用オーバーレイ（暗紫）
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = 'rgba(10,0,30,1)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.globalAlpha = 1;
+        // ランダム稲妻フラッシュ（低確率で一瞬明るくなる）
+        if (Math.random() < 0.006) {
+            ctx.globalAlpha = 0.08 + Math.random() * 0.07;
+            ctx.fillStyle = '#8040c0';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            ctx.globalAlpha = 1;
+        }
+    } else {
+      var nightOverlay = BIOME_CONFIGS[3].overlay;
+      var isNightInvolved = biomeState.current === 3 || biomeState.previous === 3;
+      if (isNightInvolved && nightOverlay) {
         var overlayAlpha;
         if (biomeState.transition > 0 && biomeState.transition < 1) {
             overlayAlpha = biomeState.current === 3 ? biomeState.transition : (1 - biomeState.transition);
@@ -4017,6 +4763,7 @@ function render() {
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             ctx.globalAlpha = 1;
         }
+      }
     }
 
     // ─── ダメージ赤フラッシュ ───
@@ -4091,6 +4838,28 @@ function render() {
         drawProgressBar(ix + 12, iy + 33, 196, 8, iRatio, '#ffc800', '#ffee66');
     }
 
+    // ボスHPバー
+    if (bossState.active && bossState.boss && bossState.phase >= 3 && bossState.phase <= 4) {
+        var bossB = bossState.boss;
+        var bhpRatio = Math.max(0, bossB.hp / BOSS_MAX_HP);
+        var bHpW = 300, bHpH = 32;
+        var bHpX = GAME_WIDTH / 2 - bHpW / 2;
+        var bHpY = GAME_HEIGHT - 48;
+        drawHudPanel(bHpX, bHpY, bHpW, bHpH,
+            'rgba(60,10,10,0.9)', 'rgba(40,5,5,0.95)', '#ff4444', 'rgba(255,50,50,0.3)');
+        ctx.font = "bold 11px 'M PLUS Rounded 1c', sans-serif";
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffcccc';
+        ctx.fillText('🐔 BOSS', bHpX + 40, bHpY + 10);
+        // HPテキスト
+        ctx.fillStyle = '#ff8888';
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.ceil(bossB.hp) + '/' + BOSS_MAX_HP, bHpX + bHpW - 12, bHpY + 10);
+        ctx.textAlign = 'left';
+        // HPバー
+        drawProgressBar(bHpX + 16, bHpY + 19, bHpW - 32, 8, bhpRatio, '#ff2222', '#ff6666');
+    }
+
     // コンボHUD
     if (gameState.comboCount >= 2) {
         var comboY = gameState.isInvincible ? 72 : 14;
@@ -4106,6 +4875,31 @@ function render() {
         ctx.shadowColor = 'rgba(255,200,0,0.6)'; ctx.shadowBlur = 8;
         ctx.fillText(gameState.comboCount + ' COMBO', GAME_WIDTH / 2, comboY + 22);
         ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
+    // ─── デバッグモード表示 ───
+    if (debugMode) {
+        var dbX = 8, dbY = GAME_HEIGHT - 28;
+        ctx.save();
+        ctx.globalAlpha = 0.7 + 0.3 * Math.sin(gameState.time * 0.15);
+        ctx.fillStyle = 'rgba(255,50,50,0.75)';
+        ctx.beginPath(); ctx.roundRect(dbX, dbY, 110, 22, 4); ctx.fill();
+        ctx.font = "bold 12px 'DotGothic16', monospace";
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('🛠️ DEBUG MODE', dbX + 6, dbY + 11);
+        // ボス戦即開始ボタン（ボス戦中でない時のみ）左上メニュー下
+        if (!bossState.active) {
+            var bbX = 8, bbY = 46;
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = 'rgba(100,0,180,0.8)';
+            ctx.beginPath(); ctx.roundRect(bbX, bbY, 110, 22, 4); ctx.fill();
+            ctx.font = "bold 11px 'DotGothic16', monospace";
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillText('⚔️ BOSS FIGHT', bbX + 6, bbY + 11);
+        }
         ctx.restore();
     }
 
@@ -4140,6 +4934,56 @@ function render() {
         ctx.shadowColor = 'rgba(150,150,255,0.6)'; ctx.shadowBlur = 10;
         ctx.fillText(t('hud_pause'), GAME_WIDTH / 2, ppy + ph / 2);
         ctx.shadowBlur = 0;
+    }
+
+    // ─── ボス WARNING オーバーレイ ───
+    if (bossState.active && bossState.phase === 1) {
+        var wAlpha = 0.3 + Math.sin(bossState.warningTimer * 0.2) * 0.2;
+        ctx.fillStyle = 'rgba(255,0,0,' + wAlpha + ')';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        var textScale = 1 + Math.sin(bossState.warningTimer * 0.15) * 0.1;
+        ctx.save();
+        ctx.translate(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        ctx.scale(textScale, textScale);
+        ctx.font = "bold 48px 'M PLUS Rounded 1c', sans-serif";
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
+        ctx.strokeText(t('boss_warning'), 0, 0);
+        ctx.fillText(t('boss_warning'), 0, 0);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
+    // ─── ボス撃破テキスト ───
+    if (bossState.active && bossState.phase === 4 && bossState.defeatedTimer >= 90) {
+        var dAlpha = Math.min(1, (bossState.defeatedTimer - 90) / 30);
+        ctx.save();
+        ctx.globalAlpha = dAlpha;
+        ctx.font = "bold 42px 'M PLUS Rounded 1c', sans-serif";
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowColor = 'rgba(255,215,0,0.8)'; ctx.shadowBlur = 15;
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.strokeText(t('boss_defeated'), GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20);
+        ctx.fillText(t('boss_defeated'), GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
+    // ─── ラウンドテキスト ───
+    if (bossState.active && bossState.phase === 5) {
+        var rAlpha = Math.min(1, bossState.roundTextTimer / 60);
+        ctx.save();
+        ctx.globalAlpha = rAlpha;
+        ctx.font = "bold 50px 'M PLUS Rounded 1c', sans-serif";
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(100,100,255,0.8)'; ctx.shadowBlur = 15;
+        ctx.fillText(t('boss_round') + (gameRound + 1), GAME_WIDTH / 2, GAME_HEIGHT / 2);
+        ctx.shadowBlur = 0;
+        ctx.restore();
     }
 
     gameState.time++;
@@ -4178,6 +5022,8 @@ function gameLoop(timestamp) {
     while (accumulator >= FIXED_DT) {
         if (gameState.gameStarted && !gameState.gamePaused) {
             updateGameSpeed();
+            checkBossTrigger();
+            updateBoss();
             updateBiome();
             updatePlayer();
             updatePlatforms();
@@ -4471,6 +5317,61 @@ function setRandomTitleImage() {
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
         if (e.target === document.getElementById('pauseScreen')) pauseGame();
     });
+
+    // ─ デバッグモード: ポーズタイトルを3秒以内に10回タップ ─
+    var pauseTitleEl = document.getElementById('pauseTitle');
+    pauseTitleEl.addEventListener('touchend', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        handleDebugTap();
+    });
+    pauseTitleEl.addEventListener('click', function(e) {
+        e.stopPropagation();
+        handleDebugTap();
+    });
+
+    // ─ デバッグ: ボス戦即開始ボタン ─
+    function canvasCoords(clientX, clientY) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left) * (GAME_WIDTH / rect.width),
+            y: (clientY - rect.top)  * (GAME_HEIGHT / rect.height)
+        };
+    }
+    function debugBossButtonHit(px, py) {
+        var bbY = 46;
+        return debugMode && !bossState.active && gameState.gameStarted && !gameState.gamePaused &&
+               px >= 8 && px <= 118 && py >= bbY && py <= bbY + 22;
+    }
+    function triggerDebugBoss() {
+        if (bossState.active || bossState.bossTriggered) return;
+        bossState.bossTriggered = true;
+        bossState.active = true;
+        bossState.phase = 1;
+        bossState.warningTimer = BOSS_WARNING_DURATION;
+        if (soundManager) soundManager.playBossWarning();
+    }
+    // タッチエリア（z-index:5）がcanvasを覆うため、各タッチエリアにも判定を追加
+    var touchAreas = [
+        document.getElementById('leftArea'),
+        document.getElementById('rightArea'),
+        document.getElementById('jumpArea')
+    ];
+    function handleDebugBossTouch(e) {
+        if (!debugMode || !gameState.gameStarted || gameState.gamePaused) return;
+        var touches = e.changedTouches || [e];
+        for (var ti = 0; ti < touches.length; ti++) {
+            var tt = touches[ti];
+            var cc = canvasCoords(tt.clientX, tt.clientY);
+            if (debugBossButtonHit(cc.x, cc.y)) {
+                triggerDebugBoss();
+                return;
+            }
+        }
+    }
+    for (var tai = 0; tai < touchAreas.length; tai++) {
+        touchAreas[tai].addEventListener('touchend', handleDebugBossTouch);
+        touchAreas[tai].addEventListener('click', handleDebugBossTouch);
+    }
 
     window.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { e.preventDefault(); pauseGame(); return; }

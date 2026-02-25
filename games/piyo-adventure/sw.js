@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.17';
+var CACHE_NAME = 'piyo-adventure-v1.19';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -8,6 +8,8 @@ var STATIC_ASSETS = [
     './stage.mp3',
     './ranking.mp3',
     './gameover.mp3',
+    './boss.mp3',
+    './win.mp3',
     './images/icon-192.png',
     './images/icon-512.png',
     './images/logo.png',
@@ -47,6 +49,13 @@ var STATIC_ASSETS = [
     './images/item_heart.png',
     './images/item_energy.png',
     './images/bullet_energy.png',
+    './images/boss_idle.png',
+    './images/boss_walk.png',
+    './images/boss_rush.png',
+    './images/boss_jump.png',
+    './images/boss_summon.png',
+    './images/boss_damaged.png',
+    './images/boss_flame.png',
     './images/title_01.jpg',
     './images/title_02.jpg',
     './images/title_03.jpg',
