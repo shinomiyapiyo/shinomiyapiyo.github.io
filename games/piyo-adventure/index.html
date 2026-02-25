@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=contain">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="screen-orientation" content="landscape">
     <meta name="x5-orientation" content="landscape">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -259,7 +259,7 @@
         /* --- タッチ操作エリア（透明・入力のみ） --- */
         .touch-area {
             position: absolute;
-            top: 0; bottom: 0;
+            top: 0; bottom: env(safe-area-inset-bottom, 0px);
             background: transparent;
             border: none;
             z-index: 5;
@@ -271,7 +271,7 @@
         /* --- フッターコントロールバー --- */
         #controlBar {
             position: absolute;
-            bottom: 0; left: 0; right: 0;
+            bottom: env(safe-area-inset-bottom, 0px); left: 0; right: 0;
             height: 44px;
             display: none;
             z-index: 6;
