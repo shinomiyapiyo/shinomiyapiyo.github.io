@@ -513,10 +513,11 @@
         <div id="ui" style="display: none;">
             <div>📏 <span id="distance">0</span>m</div>
             <div>💴 <span id="score">0</span></div>
-            <div>💖 <span id="lives">3</span></div>
+            <div>💖 <span id="lives">5</span></div>
             <div>👹 <span id="enemyKills">0</span><span data-i18n="hud_kills_suffix">体撃破</span></div>
             <div>⚡ <span data-i18n="hud_level_prefix">レベル</span><span id="speedLevel">1</span> (<span id="speedPercent">100</span>%)</div>
             <div>📈 <span data-i18n="hud_next_prefix">次まで</span><span id="nextSpeedUp">300</span>m</div>
+            <div id="debugBossBtn" style="display:none; margin-top:4px; background:rgba(100,0,180,0.85); color:#ffcc00; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(180,100,255,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">⚔️ BOSS FIGHT</div>
         </div>
 
         <!-- スプラッシュ画面 -->
@@ -568,7 +569,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.136</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.137</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -870,7 +871,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.136
+ * ぴよ氏の冒険 v1.137
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1361,7 +1362,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.136';
+const CURRENT_VERSION     = '1.137';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1596,7 +1597,7 @@ var currentRankingType = 'score';
 
 // ─── ゲーム状態 ───
 var gameState = {
-    score: 0, lives: 3,
+    score: 0, lives: 5,
     camera: { x: 0, y: 0 },
     input: { left: false, right: false, jump: false, jumpPressed: false, down: false },
     recentlyDropped: false, dropFromY: 0, time: 0,
@@ -1649,6 +1650,8 @@ function handleDebugTap() {
         debugMode = !debugMode;
         if (debugMode) {
             gameState.lives = 99;
+        } else {
+            gameState.lives = 5;
         }
         // ポーズタイトルに状態表示
         var titleEl = document.getElementById('pauseTitle');
@@ -1884,7 +1887,7 @@ function showStartScreen() {
 
 function resetGame() {
     gameState.score = 0;
-    gameState.lives = 3;
+    gameState.lives = 5;
     gameState.gameStarted = false;
     gameState.gamePaused = false;
     gameState.enemySpawnTimer = 0;
@@ -2891,7 +2894,7 @@ function updatePowerUps() {
         if (soundManager) soundManager.playItem();
 
         if (pu.type === 'heart') {
-            if (gameState.lives < 9) gameState.lives++;
+            if (gameState.lives < 10) gameState.lives++;
             else gameState.score += 1000;
             spawnLifeUpEffect(pu.x + pu.width / 2, pu.y);
         } else if (pu.type === 'lemon_can') {
@@ -4879,6 +4882,11 @@ function render() {
     }
 
     // ─── デバッグモード表示 ───
+    // ボス戦即開始ボタン表示切り替え（DOM版）
+    var bossBtn = document.getElementById('debugBossBtn');
+    if (bossBtn) {
+        bossBtn.style.display = (debugMode && !bossState.active && gameState.gameStarted && !gameState.gamePaused) ? 'block' : 'none';
+    }
     if (debugMode) {
         var dbX = 8, dbY = GAME_HEIGHT - 28;
         ctx.save();
@@ -4889,17 +4897,6 @@ function render() {
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#fff';
         ctx.fillText('🛠️ DEBUG MODE', dbX + 6, dbY + 11);
-        // ボス戦即開始ボタン（ボス戦中でない時のみ）左上メニュー下
-        if (!bossState.active) {
-            var bbX = 8, bbY = 46;
-            ctx.globalAlpha = 0.85;
-            ctx.fillStyle = 'rgba(100,0,180,0.8)';
-            ctx.beginPath(); ctx.roundRect(bbX, bbY, 110, 22, 4); ctx.fill();
-            ctx.font = "bold 11px 'DotGothic16', monospace";
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffcc00';
-            ctx.fillText('⚔️ BOSS FIGHT', bbX + 6, bbY + 11);
-        }
         ctx.restore();
     }
 
@@ -5337,11 +5334,6 @@ function setRandomTitleImage() {
             y: (clientY - rect.top)  * (GAME_HEIGHT / rect.height)
         };
     }
-    function debugBossButtonHit(px, py) {
-        var bbY = 46;
-        return debugMode && !bossState.active && gameState.gameStarted && !gameState.gamePaused &&
-               px >= 8 && px <= 118 && py >= bbY && py <= bbY + 22;
-    }
     function triggerDebugBoss() {
         if (bossState.active || bossState.bossTriggered) return;
         bossState.bossTriggered = true;
@@ -5350,27 +5342,17 @@ function setRandomTitleImage() {
         bossState.warningTimer = BOSS_WARNING_DURATION;
         if (soundManager) soundManager.playBossWarning();
     }
-    // タッチエリア（z-index:5）がcanvasを覆うため、各タッチエリアにも判定を追加
-    var touchAreas = [
-        document.getElementById('leftArea'),
-        document.getElementById('rightArea'),
-        document.getElementById('jumpArea')
-    ];
-    function handleDebugBossTouch(e) {
-        if (!debugMode || !gameState.gameStarted || gameState.gamePaused) return;
-        var touches = e.changedTouches || [e];
-        for (var ti = 0; ti < touches.length; ti++) {
-            var tt = touches[ti];
-            var cc = canvasCoords(tt.clientX, tt.clientY);
-            if (debugBossButtonHit(cc.x, cc.y)) {
-                triggerDebugBoss();
-                return;
-            }
-        }
-    }
-    for (var tai = 0; tai < touchAreas.length; tai++) {
-        touchAreas[tai].addEventListener('touchend', handleDebugBossTouch);
-        touchAreas[tai].addEventListener('click', handleDebugBossTouch);
+    // BOSS FIGHTボタン（DOM版）クリック/タッチハンドラ
+    var debugBossBtnEl = document.getElementById('debugBossBtn');
+    if (debugBossBtnEl) {
+        debugBossBtnEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (debugMode && gameState.gameStarted && !gameState.gamePaused) triggerDebugBoss();
+        });
+        debugBossBtnEl.addEventListener('touchend', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            if (debugMode && gameState.gameStarted && !gameState.gamePaused) triggerDebugBoss();
+        });
     }
 
     window.addEventListener('keydown', function(e) {
