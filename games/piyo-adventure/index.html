@@ -4130,6 +4130,19 @@ function setRandomTitleImage() {
         if (zone) zone.classList.add('active');
     }
 
+    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = 画面幅15%）
+    function updateMoveFromTouch(touch) {
+        if (moveSwiped) return;
+        var boundary = window.innerWidth * 0.15;
+        if (touch.clientX < boundary) {
+            gameState.input.left = true; gameState.input.right = false;
+            highlightControl(ctrlLeft);
+        } else {
+            gameState.input.right = true; gameState.input.left = false;
+            highlightControl(ctrlRight);
+        }
+    }
+
     // ─ 下スワイプ（足場貫通）共通処理 ─
     function handleSwipeDown(e) {
         if (moveSwiped) return;
@@ -4148,45 +4161,33 @@ function setRandomTitleImage() {
         }
     }
 
-    // ─ 左エリア: 左移動のみ ─
-    leftArea.addEventListener('touchstart', function(e) {
+    // ─ 移動タッチ共通ハンドラ（leftArea / rightArea 共用） ─
+    function onMoveStart(e) {
         if (!gameState.gameStarted || gameState.gamePaused) return;
         e.preventDefault();
-        gameState.input.left = true; gameState.input.right = false;
-        highlightControl(ctrlLeft);
         var touch = e.touches[0];
         moveStartY = touch.clientY; moveStartTime = Date.now(); moveSwiped = false;
-    });
-    leftArea.addEventListener('touchmove', function(e) {
+        updateMoveFromTouch(touch);
+    }
+    function onMoveMove(e) {
         if (!gameState.gameStarted || gameState.gamePaused) return;
         e.preventDefault();
         handleSwipeDown(e);
-    });
-    leftArea.addEventListener('touchend', function(e) {
+        if (!moveSwiped) updateMoveFromTouch(e.touches[0]);
+    }
+    function onMoveEnd(e) {
         e.preventDefault();
         highlightControl(null);
-        gameState.input.left = false;
-    });
+        gameState.input.left = false; gameState.input.right = false;
+    }
 
-    // ─ 右エリア: 右移動のみ ─
-    rightArea.addEventListener('touchstart', function(e) {
-        if (!gameState.gameStarted || gameState.gamePaused) return;
-        e.preventDefault();
-        gameState.input.right = true; gameState.input.left = false;
-        highlightControl(ctrlRight);
-        var touch = e.touches[0];
-        moveStartY = touch.clientY; moveStartTime = Date.now(); moveSwiped = false;
-    });
-    rightArea.addEventListener('touchmove', function(e) {
-        if (!gameState.gameStarted || gameState.gamePaused) return;
-        e.preventDefault();
-        handleSwipeDown(e);
-    });
-    rightArea.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        highlightControl(null);
-        gameState.input.right = false;
-    });
+    // ─ 左・右エリア: 指スライドで左右切替 ─
+    leftArea.addEventListener('touchstart', onMoveStart);
+    leftArea.addEventListener('touchmove',  onMoveMove);
+    leftArea.addEventListener('touchend',   onMoveEnd);
+    rightArea.addEventListener('touchstart', onMoveStart);
+    rightArea.addEventListener('touchmove',  onMoveMove);
+    rightArea.addEventListener('touchend',   onMoveEnd);
 
     // ─ ジャンプエリア（右側） ─
     jumpArea.addEventListener('touchstart', function(e) {
