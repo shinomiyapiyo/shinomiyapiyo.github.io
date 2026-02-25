@@ -129,6 +129,33 @@ var PALETTES = {
         return g;
     }
 
+    function buildQuicksandTop() {
+        // 流砂: 砂漠バイオーム用 (黄土色ベース、波模様)
+        var g = G(32, 32);
+        R(g, 0, 10, 32, 22, 8); R(g, 0, 12, 32, 20, 9);
+        R(g, 0, 6, 32, 6, 8); R(g, 0, 4, 32, 3, 14);
+        for (var i = 0; i < 32; i += 3) {
+            var wy = 5 + Math.floor(Math.sin(i * 0.8) * 2);
+            R(g, i, wy, 2, 2, 15); P(g, i, wy + 2, 14);
+        }
+        for (var j = 0; j < 32; j += 5) { P(g, j, 14, 15); P(g, j + 2, 20, 14); P(g, j + 3, 17, 15); }
+        P(g, 8, 24, 15); P(g, 20, 22, 14); P(g, 14, 26, 15);
+        return g;
+    }
+
+    function buildIceTop() {
+        // 氷床: 雪バイオーム用 (水色ベース、光沢)
+        var g = G(32, 32);
+        R(g, 0, 10, 32, 22, 1); R(g, 0, 12, 32, 20, 1);
+        R(g, 0, 6, 32, 6, 2); R(g, 0, 4, 32, 3, 1);
+        // 表面の光沢ライン
+        for (var i = 0; i < 32; i += 6) { R(g, i, 5, 4, 1, 2); R(g, i + 2, 7, 3, 1, 2); }
+        // 氷のひび割れ
+        for (var k = 4; k < 28; k += 8) { P(g, k, 9, 13); P(g, k + 1, 10, 13); P(g, k + 3, 11, 13); }
+        for (var j = 0; j < 32; j += 7) { P(g, j, 16, 2); P(g, j + 3, 20, 2); }
+        return g;
+    }
+
     function buildCloudPlatform() {
         var g = G(32, 32);
         E(g, 16, 16, 14, 10, 1);
@@ -231,6 +258,8 @@ var PALETTES = {
         terrain_grass_top:    { w: 32, h: 32, palette: 'terrain', frames: [buildGrassTop()] },
         terrain_dirt:         { w: 32, h: 32, palette: 'terrain', frames: [buildDirt()] },
         terrain_elevated_top: { w: 32, h: 32, palette: 'terrain', frames: [buildElevatedTop()] },
+        terrain_quicksand:   { w: 32, h: 32, palette: 'terrain', frames: [buildQuicksandTop()] },
+        terrain_ice:         { w: 32, h: 32, palette: 'cloud',   frames: [buildIceTop()] },
 
         // アイテム (プロシージャル)
         powerup_magnet: { w: 32, h: 32, palette: 'magnet', frames: [buildMagnet()] },
@@ -249,6 +278,8 @@ var PALETTES = {
         buildGrassTop: buildGrassTop,
         buildDirt: buildDirt,
         buildElevatedTop: buildElevatedTop,
+        buildQuicksandTop: buildQuicksandTop,
+        buildIceTop: buildIceTop,
         buildGroundPlatform: buildGroundPlatform,
         buildBgMountain: buildBgMountain,
         buildBgTrees: buildBgTrees

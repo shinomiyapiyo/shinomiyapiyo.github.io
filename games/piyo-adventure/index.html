@@ -24,6 +24,12 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        :root {
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
         html, body {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
@@ -81,7 +87,7 @@
         /* --- HUD --- */
         #ui {
             position: absolute;
-            top: 10px; left: 10px;
+            top: 10px; left: calc(10px + env(safe-area-inset-left, 0px));
             color: #fff;
             font-size: 3.2vw;
             font-weight: 700;
@@ -102,11 +108,12 @@
         /* --- ポーズボタン --- */
         #pauseButton {
             position: absolute;
-            top: 10px; right: calc(10px + env(safe-area-inset-right, 0px));
+            top: 6px; right: calc(6px + env(safe-area-inset-right, 0px));
             background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(20,0,30,0.4));
             color: #fff;
             border: 1px solid rgba(255,105,180,0.3);
-            padding: 8px 10px;
+            padding: 10px 14px;
+            min-width: 44px; min-height: 44px;
             font-size: 4vw;
             border-radius: 10px;
             cursor: pointer;
@@ -114,13 +121,13 @@
             font-weight: bold;
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            transition: all 0.15s ease;
+            transition: background 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
         }
         #pauseButton:active {
             background: rgba(255,105,180,0.3);
-            transform: scale(0.92);
         }
-        @media (min-width: 600px) { #pauseButton { font-size: 18px; padding: 10px 12px; } }
+        @media (min-width: 600px) { #pauseButton { font-size: 18px; padding: 12px 16px; } }
 
         /* --- オーバーレイ共通 --- */
         .overlay {
@@ -250,14 +257,16 @@
         /* --- タッチ操作エリア（透明・入力のみ） --- */
         .touch-area {
             position: absolute;
-            top: 0; bottom: env(safe-area-inset-bottom, 0px);
+            top: 0; bottom: 0;
             background: transparent;
             border: none;
             z-index: 5;
             opacity: 0;
         }
-        #leftArea { left: 0; width: 67%; }
-        #rightArea { right: 0; width: 33%; }
+        #leftArea  { left: 0; width: 15%; }
+        #rightArea { left: 15%; width: 18%; }
+        #jumpArea  { right: 0; width: 30%; }
+        /* 中央33-70%はデッドゾーン（ホームインジケータ誤操作防止） */
 
         /* --- フッターコントロールバー --- */
         #controlBar {
@@ -295,17 +304,23 @@
         @media (min-width: 600px) { .control-icon { font-size: 15px; } }
 
         .control-left {
-            width: 22%;
+            width: 15%;
+            padding-left: env(safe-area-inset-left, 0px);
             background: rgba(100,180,255,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
         .control-right {
-            width: 45%;
+            width: 18%;
             background: rgba(255,140,60,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
+        .control-dead {
+            width: 37%;
+            background: transparent;
+            pointer-events: none;
+        }
         .control-jump {
-            width: 33%;
+            width: 30%;
             background: rgba(100,220,100,0.35);
         }
 
@@ -770,27 +785,29 @@
             </div>
         </div>
 
-        <!-- タッチ操作エリア（透明・フルスクリーン） -->
+        <!-- タッチ操作エリア（左/右/ジャンプ、中央はデッドゾーン） -->
         <div id="leftArea" class="touch-area"></div>
         <div id="rightArea" class="touch-area"></div>
+        <div id="jumpArea" class="touch-area"></div>
 
         <!-- フッターコントロールバー -->
         <div id="controlBar">
             <div class="control-zone control-left" id="ctrlLeft">
                 <span class="control-icon">◀</span>
-                <span class="control-label">Left</span>
+                <span class="control-label">L</span>
             </div>
             <div class="control-zone control-right" id="ctrlRight">
                 <span class="control-icon">▶</span>
-                <span class="control-label">Right</span>
+                <span class="control-label">R</span>
             </div>
+            <div class="control-zone control-dead"></div>
             <div class="control-zone control-jump" id="ctrlJump">
                 <span class="control-icon">▲</span>
                 <span class="control-label">Jump</span>
             </div>
         </div>
 
-        <button id="pauseButton" onclick="pauseGame()">⏸️</button>
+        <button id="pauseButton">⏸️</button>
     </div>
 
     <!-- ゲーム内モーダル -->
@@ -1606,6 +1623,7 @@ function rebuildTerrainSprites(palette) {
         terrain_grass_top:    { w: 32, h: 32, fn: TERRAIN_BUILDERS.buildGrassTop },
         terrain_dirt:         { w: 32, h: 32, fn: TERRAIN_BUILDERS.buildDirt },
         terrain_elevated_top: { w: 32, h: 32, fn: TERRAIN_BUILDERS.buildElevatedTop },
+        terrain_quicksand:    { w: 32, h: 32, fn: TERRAIN_BUILDERS.buildQuicksandTop },
         platform_ground:      { w: 32, h: 32, fn: TERRAIN_BUILDERS.buildGroundPlatform },
         bg_mountain:          { w: 64, h: 40, fn: TERRAIN_BUILDERS.buildBgMountain },
         bg_trees:             { w: 32, h: 48, fn: TERRAIN_BUILDERS.buildBgTrees }
@@ -2146,7 +2164,7 @@ function initTerrain() {
 function generateTerrain() {
     var nextX = gameState.lastTerrainX + 100;
     var roll = Math.random();
-    var biome = biomeState.current; // 0=草原, 1=砂漠, 2=雪原, 3=夜
+    var biome = getBiomeIndex(Math.floor(nextX / 10)); // 地形位置のバイオーム（プレイヤー位置ではなく）
 
     if (roll < 0.7) {
         // 通常地面 — バイオームに応じてギミック地面を混ぜる
@@ -2471,11 +2489,18 @@ function updatePlayer() {
         }
         if (gameState.recentlyDropped) continue;
 
-        if ((player.velY > 0 && player.y < p.y) ||
-            (p.special === 'moving' && player.velY >= 0 && player.y + player.height > p.y && player.y < p.y)) {
-            // バネ足場: プレイヤー中心がバネ上にある時のみ発動、端なら通常着地
+        // 着地判定: 前フレームで足がプラットフォーム上端以上にあったか
+        var prevFeetY = player.y + player.height - player.velY;
+        var landingFromAbove = player.velY > 0 && prevFeetY <= p.y + 4;
+        var movingPlatLand = p.special === 'moving' && player.velY >= 0 &&
+            player.y + player.height > p.y && player.y < p.y;
+
+        if (landingFromAbove || movingPlatLand) {
+            // バネ足場: 上から着地 + プレイヤー中心がバネ中央付近にある時のみ発動
             var playerCenterX = player.x + player.width / 2;
-            if (p.special === 'spring' && playerCenterX > p.x && playerCenterX < p.x + p.width) {
+            var springMargin = p.width * 0.25;
+            if (p.special === 'spring' && landingFromAbove &&
+                playerCenterX > p.x + springMargin && playerCenterX < p.x + p.width - springMargin) {
                 var springForce = JUMP_FORCE * 1.4;
                 if (gameState.puLemon > 0) springForce *= 1.3;
                 player.velY = springForce;
@@ -3996,8 +4021,17 @@ function resizeCanvas() {
     var ah = window.innerHeight;
     if (aw <= ah) return;
 
-    // 画面アスペクト比に合わせてGAME_WIDTHを動的に調整（プレイ領域拡大）
-    var screenRatio = aw / ah;
+    // セーフエリア取得（ノッチ・ホームインジケータを避ける）
+    var rs = getComputedStyle(document.documentElement);
+    var safeL = parseInt(rs.getPropertyValue('--sal')) || 0;
+    var safeR = parseInt(rs.getPropertyValue('--sar')) || 0;
+    var safeT = parseInt(rs.getPropertyValue('--sat')) || 0;
+    var safeB = parseInt(rs.getPropertyValue('--sab')) || 0;
+    var safeW = aw - safeL - safeR;
+    var safeH = ah - safeT - safeB;
+
+    // セーフエリア内のアスペクト比でGAME_WIDTHを調整
+    var screenRatio = safeW / safeH;
     var newWidth = Math.round(GAME_HEIGHT * screenRatio);
     newWidth = Math.max(1000, Math.min(newWidth, 1400));
     if (newWidth !== GAME_WIDTH) {
@@ -4007,16 +4041,16 @@ function resizeCanvas() {
         bgCache = null;
     }
 
-    // アスペクト比を維持してビューポート中央にスケーリング
+    // アスペクト比を維持してセーフエリア中央にスケーリング
     var ratio = GAME_WIDTH / GAME_HEIGHT;
-    var scale = (aw / ah > ratio) ? ah / GAME_HEIGHT : aw / GAME_WIDTH;
+    var scale = (safeW / safeH > ratio) ? safeH / GAME_HEIGHT : safeW / GAME_WIDTH;
     var sw = GAME_WIDTH * scale;
     var sh = GAME_HEIGHT * scale;
 
     canvas.style.width  = sw + 'px';
     canvas.style.height = sh + 'px';
-    canvas.style.left   = Math.round((aw - sw) / 2) + 'px';
-    canvas.style.top    = Math.round((ah - sh) / 2) + 'px';
+    canvas.style.left   = Math.round(safeL + (safeW - sw) / 2) + 'px';
+    canvas.style.top    = Math.round(safeT + (safeH - sh) / 2) + 'px';
 }
 
 function requestFullscreen() {
@@ -4084,10 +4118,11 @@ function setRandomTitleImage() {
 (function setupInput() {
     var leftArea  = document.getElementById('leftArea');
     var rightArea = document.getElementById('rightArea');
+    var jumpArea  = document.getElementById('jumpArea');
     var ctrlLeft  = document.getElementById('ctrlLeft');
     var ctrlRight = document.getElementById('ctrlRight');
     var ctrlJump  = document.getElementById('ctrlJump');
-    var leftStartY = 0, leftStartTime = 0, leftSwiped = false;
+    var moveStartY = 0, moveStartTime = 0, moveSwiped = false;
 
     function highlightControl(zone) {
         if (ctrlLeft)  ctrlLeft.classList.remove('active');
@@ -4095,71 +4130,92 @@ function setRandomTitleImage() {
         if (zone) zone.classList.add('active');
     }
 
-    leftArea.addEventListener('touchstart', function(e) {
-        if (!gameState.gameStarted || gameState.gamePaused) return;
-        e.preventDefault();
+    // ─ 下スワイプ（足場貫通）共通処理 ─
+    function handleSwipeDown(e) {
+        if (moveSwiped) return;
         var touch = e.touches[0];
-        var rect = leftArea.getBoundingClientRect();
-        var tx = touch.clientX - rect.left;
-
-        if (tx < rect.width * 0.3284) {
-            gameState.input.left = true; gameState.input.right = false;
-            highlightControl(ctrlLeft);
-        } else {
-            gameState.input.right = true; gameState.input.left = false;
-            highlightControl(ctrlRight);
-        }
-        leftStartY = touch.clientY; leftStartTime = Date.now(); leftSwiped = false;
-    });
-
-    leftArea.addEventListener('touchmove', function(e) {
-        if (!gameState.gameStarted || gameState.gamePaused) return;
-        e.preventDefault();
-        var touch = e.touches[0];
-        var rect = leftArea.getBoundingClientRect();
-
-        var dy = touch.clientY - leftStartY;
-        var dt = Date.now() - leftStartTime;
-        if (dy > 15 && dt < 500 && !leftSwiped) {
+        var dy = touch.clientY - moveStartY;
+        var dt = Date.now() - moveStartTime;
+        if (dy > 15 && dt < 500) {
             if (isOnPlatform()) {
-                leftSwiped = true;
+                moveSwiped = true;
                 gameState.input.down = true;
                 gameState.downSwipeActive = true;
                 gameState.downSwipeTimer = DOWN_SWIPE_FRAMES;
                 gameState.input.left = false; gameState.input.right = false;
                 highlightControl(null);
             }
-            return;
         }
+    }
 
-        if (!leftSwiped) {
-            var tx = touch.clientX - rect.left;
-            if (tx < rect.width * 0.3284) {
-                gameState.input.left = true; gameState.input.right = false;
-                highlightControl(ctrlLeft);
-            } else {
-                gameState.input.right = true; gameState.input.left = false;
-                highlightControl(ctrlRight);
-            }
-        }
+    // ─ 左エリア: 左移動のみ ─
+    leftArea.addEventListener('touchstart', function(e) {
+        if (!gameState.gameStarted || gameState.gamePaused) return;
+        e.preventDefault();
+        gameState.input.left = true; gameState.input.right = false;
+        highlightControl(ctrlLeft);
+        var touch = e.touches[0];
+        moveStartY = touch.clientY; moveStartTime = Date.now(); moveSwiped = false;
     });
-
+    leftArea.addEventListener('touchmove', function(e) {
+        if (!gameState.gameStarted || gameState.gamePaused) return;
+        e.preventDefault();
+        handleSwipeDown(e);
+    });
     leftArea.addEventListener('touchend', function(e) {
         e.preventDefault();
         highlightControl(null);
-        gameState.input.left = false; gameState.input.right = false;
+        gameState.input.left = false;
     });
 
+    // ─ 右エリア: 右移動のみ ─
     rightArea.addEventListener('touchstart', function(e) {
+        if (!gameState.gameStarted || gameState.gamePaused) return;
+        e.preventDefault();
+        gameState.input.right = true; gameState.input.left = false;
+        highlightControl(ctrlRight);
+        var touch = e.touches[0];
+        moveStartY = touch.clientY; moveStartTime = Date.now(); moveSwiped = false;
+    });
+    rightArea.addEventListener('touchmove', function(e) {
+        if (!gameState.gameStarted || gameState.gamePaused) return;
+        e.preventDefault();
+        handleSwipeDown(e);
+    });
+    rightArea.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        highlightControl(null);
+        gameState.input.right = false;
+    });
+
+    // ─ ジャンプエリア（右側） ─
+    jumpArea.addEventListener('touchstart', function(e) {
         if (!gameState.gameStarted || gameState.gamePaused) return;
         e.preventDefault();
         if (ctrlJump) ctrlJump.classList.add('active');
         gameState.input.jump = true;
     });
-    rightArea.addEventListener('touchend', function(e) {
+    jumpArea.addEventListener('touchend', function(e) {
         e.preventDefault();
         if (ctrlJump) ctrlJump.classList.remove('active');
         gameState.input.jump = false;
+    });
+
+    // ─ ポーズボタン: touchend で即反応（iOS click 遅延回避） ─
+    var pauseBtn = document.getElementById('pauseButton');
+    var pauseTouchFired = false;
+    pauseBtn.addEventListener('touchstart', function(e) {
+        e.stopPropagation();
+    }, { passive: true });
+    pauseBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        pauseTouchFired = true;
+        pauseGame();
+    });
+    pauseBtn.addEventListener('click', function(e) {
+        if (pauseTouchFired) { pauseTouchFired = false; return; }
+        pauseGame();
     });
 
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
