@@ -568,7 +568,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.126</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.129</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -738,6 +738,36 @@
             <button class="game-button" onclick="hideSettings()" data-i18n="btn_back" style="margin-top: 1vh; flex-shrink: 0; z-index: 31; font-size: 3vw; padding: 8px 20px;">🔙 戻る</button>
         </div>
 
+        <!-- ゲームオーバー画面 -->
+        <div id="gameOverScreen" class="hidden" style="
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 25;">
+            <div style="text-align: center; max-width: 90vw;">
+                <div style="color: #ff4466; font-size: 5vw; font-weight: 800;
+                    font-family: 'M PLUS Rounded 1c', sans-serif;
+                    text-shadow: 0 0 20px rgba(255,68,102,0.5), 0 2px 6px rgba(0,0,0,0.6);
+                    margin-bottom: 8px;" data-i18n="gameover_title">💀 GAME OVER</div>
+                <div id="gameOverStats" style="color: rgba(255,255,255,0.85); font-size: 2.5vw;
+                    font-family: 'M PLUS Rounded 1c', sans-serif;
+                    background: rgba(255,255,255,0.06); padding: 8px 16px; border-radius: 10px;
+                    border: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px;
+                    line-height: 1.6;"></div>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="game-button" id="retryBtn" data-i18n="gameover_retry" style="min-width: auto; padding: 8px 20px; font-size: 3vw; min-height: 44px;
+                        -webkit-tap-highlight-color: transparent;">🔄 もう一度</button>
+                    <button class="game-button" id="toTitleBtn" data-i18n="gameover_totitle" style="min-width: auto; padding: 8px 20px; font-size: 3vw; min-height: 44px;
+                        background: linear-gradient(180deg, #888 0%, #555 50%, #444 100%);
+                        border-bottom-color: rgba(0,0,0,0.4);
+                        -webkit-tap-highlight-color: transparent;">🏠 タイトルへ</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 名前入力画面 -->
         <div id="nameInputScreen" class="hidden" style="
             position: absolute; top: 0; left: 0;
@@ -840,7 +870,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.126
+ * ぴよ氏の冒険 v1.129
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1050,6 +1080,8 @@ ja: {
     gameover_score: '獲得金額: ',
     gameover_kills: '敵撃破数: ',
     gameover_level: '到達レベル: ',
+    gameover_retry: '🔄 もう一度',
+    gameover_totitle: '🏠 タイトルへ',
     // リタイア
     retire_confirm: 'タイトル画面に戻りますか？',
     // Canvas HUD
@@ -1140,6 +1172,8 @@ en: {
     gameover_score: 'Score: ',
     gameover_kills: 'Enemies: ',
     gameover_level: 'Level: ',
+    gameover_retry: '🔄 Retry',
+    gameover_totitle: '🏠 Title',
     retire_confirm: 'Return to title?',
     hud_jump: '🍋 Jump Boost',
     hud_shield: '🛡️ Shield',
@@ -1310,7 +1344,7 @@ const SPEED_UP_RATE       = 0.20;  // 20%ずつ
 const MAX_SPEED_PERCENT   = 500;
 const DOWN_SWIPE_FRAMES   = 30;    // 0.5s
 
-const CURRENT_VERSION     = '1.126';
+const CURRENT_VERSION     = '1.129';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1747,6 +1781,7 @@ function showStartScreen() {
     document.getElementById('pauseScreen').classList.add('hidden');
     hideRankingDirect();
     hideNameInputDirect();
+    hideGameOverScreen();
 
     if (soundManager) { try { soundManager.playBGM('title'); } catch (_) {} }
 }
@@ -1782,6 +1817,7 @@ function resetGame() {
     gameState.comboCount = 0;
     gameState.comboTimer = 0;
     floatEffects = [];
+    damageFlashTimer = 0;
 
     // バイオームリセット
     biomeState.current = 0;
@@ -1985,25 +2021,49 @@ function setLanguage(lang) {
 
 // ─── スコア送信 ───
 
-function fetchRank(scoreVal) {
-    if (!database) return Promise.resolve(null);
-    return database.ref('scores').orderByChild('score').once('value').then(function(snapshot) {
-        var data = snapshot.val();
-        if (!data) return 1;
-        var all = Object.values(data).map(function(e) { return e.score || 0; });
-        all.sort(function(a, b) { return b - a; });
-        for (var i = 0; i < all.length; i++) {
-            if (scoreVal >= all[i]) return i + 1;
-        }
-        return all.length + 1;
-    }).catch(function() { return null; });
+function fetchAllRanks(scoreData) {
+    if (!database) return Promise.resolve({});
+    var categories = [
+        { key: 'score',      label: '💴 金額',   unit: '円' },
+        { key: 'distance',   label: '📏 距離',   unit: 'm' },
+        { key: 'enemyKills', label: '👹 撃破',   unit: '体' },
+        { key: 'speedLevel', label: '⚡ レベル', unit: '' }
+    ];
+    var queries = categories.map(function(cat) {
+        return database.ref('scores').orderByChild(cat.key).once('value').then(function(snapshot) {
+            var data = snapshot.val();
+            if (!data) return { key: cat.key, label: cat.label, unit: cat.unit, rank: 1 };
+            var all = Object.values(data).map(function(e) { return e[cat.key] || 0; });
+            all.sort(function(a, b) { return b - a; });
+            var val = scoreData[cat.key] || 0;
+            var rank = all.length + 1;
+            for (var i = 0; i < all.length; i++) {
+                if (val >= all[i]) { rank = i + 1; break; }
+            }
+            return { key: cat.key, label: cat.label, unit: cat.unit, rank: rank, value: val };
+        });
+    });
+    return Promise.all(queries).then(function(results) {
+        return results;
+    }).catch(function() { return []; });
 }
 
-function buildRankMessage(name, rank) {
+function buildRankMessage(name, ranks) {
     var msg = name + t('submit_otsukare');
-    if (rank !== null) {
-        var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🏅';
-        msg += '\n\n' + medal + ' ' + t('submit_rank_label') + rank + t('submit_rank_suffix');
+    if (!ranks || ranks.length === 0) return msg;
+    // 20位以内にランクインした部門を表示
+    var ranked = ranks.filter(function(r) { return r.rank <= 20; });
+    if (ranked.length > 0) {
+        msg += '\n';
+        for (var i = 0; i < ranked.length; i++) {
+            var r = ranked[i];
+            var medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : '🏅';
+            msg += '\n' + medal + ' ' + r.label + ' ' + r.rank + t('submit_rank_suffix');
+        }
+    } else {
+        // ランク外の場合、最も良い順位を表示
+        var best = ranks.reduce(function(a, b) { return a.rank < b.rank ? a : b; });
+        msg += '\n\n' + best.label + ' ' + best.rank + t('submit_rank_suffix');
     }
     return msg;
 }
@@ -2047,13 +2107,13 @@ function submitScore() {
         btn.disabled = false;
         btn.textContent = t('name_submit');
         st.textContent = t('submit_rank_check');
-        return fetchRank(scoreData.score);
-    }).then(function(rank) {
+        return fetchAllRanks(scoreData);
+    }).then(function(ranks) {
         st.textContent = '';
-        var msg = t('submit_success') + '\n' + buildRankMessage(name, rank);
+        var msg = t('submit_success') + '\n' + buildRankMessage(name, ranks);
         showGameModal(msg).then(function() {
             hideNameInputDirect();
-            showRanking();
+            showGameOverScreen();
         });
     }).catch(function(err) {
         btn.disabled = false;
@@ -2080,23 +2140,23 @@ function skipSubmit() {
     if (database) {
         database.ref('scores').push().set(scoreData).then(function() {
             st.textContent = t('submit_rank_check');
-            return fetchRank(scoreData.score);
-        }).then(function(rank) {
+            return fetchAllRanks(scoreData);
+        }).then(function(ranks) {
             st.textContent = '';
             hideNameInputDirect();
-            var msg = buildRankMessage(t('submit_skip_name'), rank);
+            var msg = buildRankMessage(t('submit_skip_name'), ranks);
             showGameModal(msg).then(function() {
-                showRanking();
+                showGameOverScreen();
             });
         }).catch(function() {
             st.textContent = '';
             hideNameInputDirect();
-            resetGame();
+            showGameOverScreen();
         });
     } else {
         st.textContent = '';
         hideNameInputDirect();
-        resetGame();
+        showGameOverScreen();
     }
 }
 
@@ -2612,12 +2672,17 @@ function updateEnemies() {
     }
 }
 
+var damageFlashTimer = 0; // 赤フラッシュ演出タイマー
+
 function takeDamage() {
     if (gameState.isInvincible) return;
     gameState.lives--;
     if (soundManager) soundManager.playDamage();
     gameState.isInvincible = true;
     gameState.invincibleTimer = INVINCIBLE_FRAMES;
+    damageFlashTimer = 20; // 赤フラッシュ 20フレーム
+    // 💔-1 フロートエフェクト
+    spawnDamageEffect(player.x + player.width / 2, player.y);
     // 敵被弾: その場で点滅+無敵（位置リセットしない）
     player.velY = -6; // 軽くノックバック（上方向）
     if (gameState.lives <= 0) gameOver();
@@ -2629,6 +2694,8 @@ function fallDeath() {
     if (soundManager) soundManager.playDamage();
     gameState.isInvincible = true;
     gameState.invincibleTimer = INVINCIBLE_FRAMES;
+    damageFlashTimer = 20;
+    spawnDamageEffect(player.x + player.width / 2, player.y);
     resetPlayerPosition(); // 上から降ってくる
     if (gameState.lives <= 0) gameOver();
 }
@@ -2645,6 +2712,14 @@ function updatePlatforms() {
             if (player.onGround && player.y + player.height >= prevY - 2 && player.y + player.height <= prevY + 4 &&
                 player.x + player.width > p.x && player.x < p.x + p.width) {
                 player.y += deltaY;
+                // 地面にめり込まないようクランプ（地形の最低地点=GROUND_Y）
+                var maxY = GROUND_Y - player.height;
+                if (player.y > maxY) {
+                    player.y = maxY;
+                    // 地面に着地したのでプラットフォームから降りる
+                    player.onGround = true;
+                    player.groundType = 'normal';
+                }
             }
         } else if (p.special === 'disappearing') {
             if (p.disappearTimer >= 0) {
@@ -2826,16 +2901,40 @@ function gameOver() {
             if (isHigh) {
                 showNameInput();
             } else {
-                showGameModal(t('gameover_title') + '\n' +
-                    t('gameover_distance') + finalGameStats.distance + 'm\n' +
-                    t('gameover_score') + finalGameStats.score + t('ranking_unit_score') + '\n' +
-                    t('gameover_kills') + finalGameStats.enemyKills + t('ranking_unit_kills') + '\n' +
-                    t('gameover_level') + finalGameStats.speedLevel).then(function() {
-                    resetGame();
-                });
+                showGameOverScreen();
             }
         }, 500);
     });
+}
+
+function showGameOverScreen() {
+    var screen = document.getElementById('gameOverScreen');
+    // スタッツ表示
+    var statsEl = document.getElementById('gameOverStats');
+    statsEl.innerHTML =
+        t('gameover_distance') + finalGameStats.distance + 'm<br>' +
+        t('gameover_score') + finalGameStats.score + (t('ranking_unit_score') || '円') + '<br>' +
+        t('gameover_kills') + finalGameStats.enemyKills + (t('ranking_unit_kills') || '体') + '<br>' +
+        t('gameover_level') + finalGameStats.speedLevel;
+    screen.classList.remove('hidden');
+    screen.style.display = 'flex';
+    history.pushState({ screen: 'gameOver' }, '');
+}
+
+function hideGameOverScreen() {
+    var el = document.getElementById('gameOverScreen');
+    if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
+}
+
+function retryGame() {
+    hideGameOverScreen();
+    resetGame();
+    startGame();
+}
+
+function goToTitle() {
+    hideGameOverScreen();
+    showStartScreen();
 }
 
 // ─── 描画 ───
@@ -3149,6 +3248,29 @@ function drawStar(cx, cy, outerR, innerR, points, color) {
 }
 
 // ─── フロートエフェクトシステム ───
+function spawnDamageEffect(worldX, worldY) {
+    // 💔-1 テキスト浮上
+    floatEffects.push({
+        type: 'damage_text',
+        worldX: worldX, worldY: worldY,
+        timer: 0, duration: 70,
+        offsetY: 0
+    });
+    // 赤パーティクル散布
+    for (var i = 0; i < 8; i++) {
+        var angle = (i / 8) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        var speed = 1.5 + Math.random() * 2.5;
+        floatEffects.push({
+            type: 'damage_particle',
+            worldX: worldX, worldY: worldY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 2,
+            timer: 0, duration: 30 + Math.floor(Math.random() * 15),
+            size: 2.5 + Math.random() * 3
+        });
+    }
+}
+
 function spawnExplosionEffect(worldX, worldY) {
     // 爆発リング (2重)
     floatEffects.push({
@@ -3263,6 +3385,42 @@ function drawFloatEffects() {
             drawHeart(ctx, -62, -2, 10);
             ctx.fillStyle = 'rgba(255,70,100,' + alpha + ')';
             drawHeart(ctx, 52, -2, 10);
+            ctx.restore();
+        }
+
+        if (ef.type === 'damage_text') {
+            // 💔-1 テキスト浮上 + 赤グロー
+            ef.offsetY += 1.0;
+            var da = progress < 0.6 ? 1 : (1 - progress) / 0.4;
+            var ds = progress < 0.1 ? 0.5 + progress / 0.1 * 0.8 : (progress < 0.2 ? 1.3 - (progress - 0.1) / 0.1 * 0.3 : 1.0);
+            var dy = ef.worldY - ef.offsetY;
+            ctx.save();
+            ctx.globalAlpha = da;
+            ctx.translate(wx, dy);
+            ctx.scale(ds, ds);
+            ctx.shadowColor = 'rgba(255,0,0,0.9)';
+            ctx.shadowBlur = 12;
+            ctx.font = "bold 20px 'M PLUS Rounded 1c', sans-serif";
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ff3333';
+            ctx.fillText('💔 -1', 0, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        if (ef.type === 'damage_particle') {
+            ef.worldX += ef.vx;
+            ef.worldY += ef.vy;
+            ef.vy += 0.07;
+            ef.vx *= 0.97;
+            var dpA = progress < 0.2 ? progress / 0.2 : (1 - progress) / 0.8;
+            dpA *= 0.85;
+            ctx.save();
+            ctx.globalAlpha = dpA;
+            ctx.fillStyle = 'rgba(255,' + Math.floor(30 + Math.random() * 40) + ',30,1)';
+            ctx.beginPath();
+            ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.5), 0, Math.PI * 2);
+            ctx.fill();
             ctx.restore();
         }
 
@@ -3502,10 +3660,14 @@ function drawPlayer(x, y) {
     ctx.save();
     var gt = gameState.time;
 
-    // 被ダメ無敵: 点滅 + 金色エフェクト
+    // 被ダメ無敵: 赤点滅→金点滅
     if (gameState.isInvincible) {
         var blink = Math.sin(gt * 0.5) * 0.35 + 0.65;
         ctx.globalAlpha = blink;
+        if (damageFlashTimer > 0) {
+            // 被弾直後: 赤く点滅
+            ctx.globalAlpha = Math.sin(gt * 1.2) > 0 ? 0.9 : 0.2;
+        }
         drawInvincibleEffect(x, y, gt);
     }
 
@@ -3855,6 +4017,14 @@ function render() {
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             ctx.globalAlpha = 1;
         }
+    }
+
+    // ─── ダメージ赤フラッシュ ───
+    if (damageFlashTimer > 0) {
+        damageFlashTimer--;
+        var dfAlpha = damageFlashTimer / 20 * 0.45;
+        ctx.fillStyle = 'rgba(255,0,0,' + dfAlpha + ')';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
 
     // ─── HUDオーバーレイ (複数パワーアップ対応) ───
@@ -4273,6 +4443,31 @@ function setRandomTitleImage() {
         skipSubmit();
     });
 
+    // ─ ゲームオーバー画面ボタン: touchend で即反応 ─
+    var retryBtnEl = document.getElementById('retryBtn');
+    var toTitleBtnEl = document.getElementById('toTitleBtn');
+    var retryTouchFired = false, toTitleTouchFired = false;
+    retryBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
+    retryBtnEl.addEventListener('touchend', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        retryTouchFired = true;
+        retryGame();
+    });
+    retryBtnEl.addEventListener('click', function(e) {
+        if (retryTouchFired) { retryTouchFired = false; return; }
+        retryGame();
+    });
+    toTitleBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
+    toTitleBtnEl.addEventListener('touchend', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        toTitleTouchFired = true;
+        goToTitle();
+    });
+    toTitleBtnEl.addEventListener('click', function(e) {
+        if (toTitleTouchFired) { toTitleTouchFired = false; return; }
+        goToTitle();
+    });
+
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
         if (e.target === document.getElementById('pauseScreen')) pauseGame();
     });
@@ -4323,7 +4518,7 @@ window.addEventListener('orientationchange', function() {
 document.addEventListener('touchmove', function(e) {
     // INPUT要素とオーバーレイ画面内のスクロールは許可
     if (e.target.tagName === 'INPUT') return;
-    if (e.target.closest('#nameInputScreen, #rankingScreen, #settingsScreen, #pauseScreen')) return;
+    if (e.target.closest('#nameInputScreen, #rankingScreen, #settingsScreen, #pauseScreen, #gameOverScreen')) return;
     e.preventDefault();
 }, { passive: false });
 document.addEventListener('visibilitychange', function() {
@@ -4404,6 +4599,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var nameInput = document.getElementById('nameInputScreen');
                 var modal = document.getElementById('gameModal');
                 var settings = document.getElementById('settingsScreen');
+                var gameOverEl = document.getElementById('gameOverScreen');
 
                 if (settings && !settings.classList.contains('hidden') && settings.style.display !== 'none') {
                     hideSettings();
@@ -4412,6 +4608,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (nameInput && !nameInput.classList.contains('hidden') && nameInput.style.display !== 'none') {
                     hideNameInputDirect();
                     resetGame();
+                } else if (gameOverEl && !gameOverEl.classList.contains('hidden') && gameOverEl.style.display !== 'none') {
+                    goToTitle();
                 } else if (ranking && !ranking.classList.contains('hidden') && ranking.style.display !== 'none') {
                     hideRanking();
                 } else if (gameState && gameState.gameStarted && !gameState.gamePaused) {
