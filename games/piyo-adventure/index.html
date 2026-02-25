@@ -569,7 +569,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.137</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.139</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -871,7 +871,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.137
+ * ぴよ氏の冒険 v1.139
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1362,7 +1362,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.137';
+const CURRENT_VERSION     = '1.139';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2982,7 +2982,7 @@ function updateBullets() {
 
         // ボスとの衝突
         if (bossState.boss && bossState.phase === 3 && aabb(b, bossState.boss)) {
-            bossState.boss.hp -= 0.5;
+            bossState.boss.hp -= 0.2; // 5発で1HP
             spawnExplosionEffect(b.x, b.y);
             bullets.splice(i, 1);
             if (soundManager) soundManager.playKill();
@@ -3381,8 +3381,8 @@ function spawnBossItem() {
     var aL = bossState.arenaLeft;
     var aR = bossState.arenaRight;
     var r = Math.random();
-    // ボス戦アイテム: ハート多め、シールド多め（戦闘支援）
-    var t = r < 0.30 ? 'heart' : r < 0.55 ? 'shield' : r < 0.72 ? 'energy' : r < 0.88 ? 'lemon_can' : 'magnet';
+    // ボス戦アイテム: ハート/シールド/エネルギーのみ（マグネット・レモン缶は除外）
+    var t = r < 0.40 ? 'heart' : r < 0.75 ? 'shield' : 'energy';
     powerUps.push({
         x: aL + 60 + Math.random() * (aR - aL - 120),
         y: 160 + Math.random() * 100,
