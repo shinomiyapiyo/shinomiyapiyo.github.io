@@ -536,7 +536,7 @@
         <div id="ui" style="display: none;">
             <div>📏 <span id="distance">0</span>m</div>
             <div>💴 <span id="score">0</span></div>
-            <div>💖 <span id="lives">5</span></div>
+            <div>💖 <span id="lives">5</span> <span id="reviveIndicator" style="display:none; color:#ffd700;"></span></div>
             <div>👹 <span id="enemyKills">0</span><span data-i18n="hud_kills_suffix">体撃破</span></div>
             <div>⚡ <span data-i18n="hud_level_prefix">レベル</span><span id="speedLevel">1</span> (<span id="speedPercent">100</span>%)</div>
             <div>📈 <span data-i18n="hud_next_prefix">次まで</span><span id="nextSpeedUp">300</span>m</div>
@@ -1356,7 +1356,14 @@ ja: {
     tshop_magnet_boost: 'マグネット強化',
     tshop_magnet_boost_desc: 'マグネットの吸引範囲UP',
     tshop_combo_master: 'コンボマスター',
-    tshop_combo_master_desc: 'コンボ受付時間を延長'
+    tshop_combo_master_desc: 'コンボ受付時間を延長',
+    tshop_revival_feather: '復活の羽',
+    tshop_revival_feather_desc: '死亡時にHP1で復活（1ランN回）',
+    // ── 復活 ──
+    revival_text: '✨ 復活！',
+    revival_potion_text: '💊 復活薬で復活！',
+    shop_item_revive: '復活薬',
+    shop_item_revive_desc: '死亡時にHP2で復活（1回）'
 },
 en: {
     splash_warning: '⚠️ Notice ⚠️',
@@ -1486,7 +1493,14 @@ en: {
     tshop_magnet_boost: 'Magnet Boost',
     tshop_magnet_boost_desc: 'Magnet range increase',
     tshop_combo_master: 'Combo Master',
-    tshop_combo_master_desc: 'Longer combo window'
+    tshop_combo_master_desc: 'Longer combo window',
+    tshop_revival_feather: 'Revival Feather',
+    tshop_revival_feather_desc: 'Revive with 1HP on death (N per run)',
+    // ── Revival ──
+    revival_text: '✨ Revived!',
+    revival_potion_text: '💊 Revived by potion!',
+    shop_item_revive: 'Revival Potion',
+    shop_item_revive_desc: 'Revive with 2HP on death (1 use)'
 }
 };
 
@@ -1893,7 +1907,8 @@ var gameState = {
     downSwipeTimer: 0, downSwipeActive: false,
     isRespawning: false, enemyKills: 0,
     bulletFireTimer: 0,
-    comboCount: 0, comboTimer: 0
+    comboCount: 0, comboTimer: 0,
+    revivesLeft: 0, revivalFlashTimer: 0
 };
 
 var player = {
@@ -1968,6 +1983,18 @@ var STAGE_SHOP_ITEMS = [
             gameState.puEnergy = 900;
             gameState.puMagnet = 900;
         }
+    },
+    {
+        id: 'revive_potion', nameKey: 'shop_item_revive', descKey: 'shop_item_revive_desc',
+        icon: '\u{1F48A}', price: 8000, maxPerVisit: 1,
+        stockItem: true,
+        stockEffect: function() {
+            // ストックから手動使用した場合: HP2回復+バリア付与
+            gameState.lives = Math.min(gameState.lives + 2, 10);
+            gameState.puShield = 300;
+            gameState.isInvincible = true;
+            gameState.invincibleTimer = 300;
+        }
     }
 ];
 
@@ -1981,7 +2008,9 @@ var TITLE_SHOP_UPGRADES = [
     { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
       icon: '\u{1F9F2}', maxLevel: 2, prices: [6000, 18000], effectDesc: ['+50%', '+100%'] },
     { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
-      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [12000], effectDesc: ['1.5秒'] }
+      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [12000], effectDesc: ['1.5秒'] },
+    { id: 'revival_feather', nameKey: 'tshop_revival_feather', descKey: 'tshop_revival_feather_desc',
+      icon: '\u{1FAB6}', maxLevel: 2, prices: [15000, 35000], effectDesc: ['1回/ラン', '2回/ラン'] }
 ];
 
 // ─── デバッグモード ───
@@ -2167,6 +2196,7 @@ function updateBiome() {
         biomeState.current = newIdx;
         biomeState.transition = 0.001; // 遷移開始
         bgCache = null;
+        weatherParticles = []; // バイオーム切替時に天候パーティクルクリア
         // 既存地形のtypeを新バイオームに一括変換（地面も雲と同様に瞬時切替）
         retypeTerrainForBiome(newIdx);
     }
@@ -2287,8 +2317,13 @@ function resetGame() {
     gameState.enemyKills = 0;
     gameState.comboCount = 0;
     gameState.comboTimer = 0;
+    gameState.revivesLeft = 0;
+    gameState.revivalFlashTimer = 0;
     floatEffects = [];
     damageFlashTimer = 0;
+    screenShake = { intensity: 0, timer: 0 };
+    comboFlashTimer = 0;
+    weatherParticles = [];
 
     // ボスバトルリセット
     gameRound = 1;
@@ -2725,7 +2760,27 @@ function generateTerrain() {
     // バイオーム地形タイプ決定（砂漠=全面流砂, 雪原=全面氷床）
     var biomeType = biome === 1 ? 'quicksand' : biome === 2 ? 'ice' : 'ground';
 
-    if (roll < 0.7) {
+    // 砂漠バイオーム: 穴を生成しない（流砂の移動低下＋高速スクロールで理不尽になるため）
+    if (biome === 1) {
+        if (roll < 0.8) {
+            terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: biomeType });
+        } else {
+            var elev = 60 + Math.random() * 40;
+            terrain.push({ x: nextX, y: GROUND_Y - elev, width: 100, height: 130 + elev, type: 'quicksand_elevated' });
+        }
+        gameState.lastTerrainX = nextX;
+        return;
+    }
+
+    // 高速スクロール時は穴の確率を下げる（400%以上で段階的に減少）
+    var speedMult = gameState.gameSpeed / BASE_SCROLL_SPEED;
+    var holeChance = 0.15; // 通常15%（roll 0.70〜0.85）
+    if (speedMult >= 4.0) {
+        // 400%→7.5%, 500%(上限)→0%
+        holeChance = Math.max(0, 0.15 * (5.0 - speedMult));
+    }
+
+    if (roll < 0.85 - holeChance) {
         terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: biomeType });
     } else if (roll < 0.85) {
         var holeW = 120 + Math.random() * 100;
@@ -3120,6 +3175,16 @@ function registerKill(scoreValue, effectX, effectY) {
     if (gameState.comboCount >= 2) {
         spawnComboEffect(effectX, effectY, gameState.comboCount, comboScore);
     }
+    // 画面シェイク（5コンボ以上）
+    if (gameState.comboCount >= 5) {
+        var shakeStr = Math.min(gameState.comboCount - 4, 6); // 最大6
+        screenShake.intensity = shakeStr;
+        screenShake.timer = 12;
+    }
+    // マイルストーンフラッシュ（5の倍数）
+    if (gameState.comboCount >= 5 && gameState.comboCount % 5 === 0) {
+        comboFlashTimer = 15;
+    }
 }
 
 // ─── 敵更新 ───
@@ -3192,6 +3257,177 @@ function updateEnemies() {
 }
 
 var damageFlashTimer = 0; // 赤フラッシュ演出タイマー
+var screenShake = { intensity: 0, timer: 0 }; // 画面シェイク
+var comboFlashTimer = 0; // コンボマイルストーンフラッシュ
+
+// ─── 天候パーティクルシステム ───
+var weatherParticles = [];
+var WEATHER_MAX = 60;
+
+function updateWeatherParticles() {
+    var biome = biomeState.current;
+    // パーティクル生成
+    var targetCount = biome === 0 ? 15 : WEATHER_MAX; // 草原は少なめ
+    if (biome === 0 && Math.random() > 0.03) targetCount = weatherParticles.length; // 草原は低確率で追加
+    while (weatherParticles.length < targetCount) {
+        var wp = spawnWeatherParticle(biome, true);
+        if (wp) weatherParticles.push(wp);
+        else break;
+    }
+    // 更新
+    for (var i = weatherParticles.length - 1; i >= 0; i--) {
+        var p = weatherParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.type === 'firefly') {
+            p.x += Math.sin(p.phase + gameState.time * 0.04) * 0.3;
+            p.y += Math.cos(p.phase + gameState.time * 0.03) * 0.2;
+        }
+        p.life--;
+        if (p.life <= 0 || p.y > GAME_HEIGHT + 10 || p.x < -20 || p.x > GAME_WIDTH + 20) {
+            weatherParticles.splice(i, 1);
+        }
+    }
+}
+
+function spawnWeatherParticle(biome, initial) {
+    var p = null;
+    if (biome === 0) {
+        // 草原: 風に舞う葉
+        p = { type: 'leaf', x: initial ? Math.random() * GAME_WIDTH : GAME_WIDTH + 10,
+              y: Math.random() * GAME_HEIGHT * 0.8,
+              vx: -0.8 - Math.random() * 0.6, vy: 0.3 + Math.random() * 0.4,
+              size: 2 + Math.random() * 2, rot: Math.random() * Math.PI * 2,
+              rotSpeed: (Math.random() - 0.5) * 0.08,
+              life: 200 + Math.floor(Math.random() * 150) };
+    } else if (biome === 1) {
+        // 砂漠: 砂嵐パーティクル
+        p = { type: 'sand', x: initial ? Math.random() * GAME_WIDTH : GAME_WIDTH + 10,
+              y: GAME_HEIGHT * 0.3 + Math.random() * GAME_HEIGHT * 0.7,
+              vx: -2.5 - Math.random() * 2, vy: 0.5 + Math.random() * 0.8,
+              size: 1 + Math.random() * 1.5, alpha: 0.2 + Math.random() * 0.3,
+              life: 100 + Math.floor(Math.random() * 80) };
+    } else if (biome === 2) {
+        // 雪原: 降雪
+        p = { type: 'snow', x: initial ? Math.random() * GAME_WIDTH : Math.random() * GAME_WIDTH,
+              y: initial ? Math.random() * GAME_HEIGHT : -5,
+              vx: (Math.random() - 0.5) * 0.6, vy: 0.5 + Math.random() * 1.0,
+              size: 1.5 + Math.random() * 2, phase: Math.random() * Math.PI * 2,
+              life: 300 + Math.floor(Math.random() * 200) };
+    } else if (biome === 3) {
+        // 夜: 蛍 + 稀に流れ星
+        var hasShootingStar = false;
+        for (var si = 0; si < weatherParticles.length; si++) {
+            if (weatherParticles[si].type === 'shootingstar') { hasShootingStar = true; break; }
+        }
+        if (Math.random() < 0.02 && !hasShootingStar) {
+            p = { type: 'shootingstar', x: Math.random() * GAME_WIDTH * 0.7,
+                  y: Math.random() * GAME_HEIGHT * 0.3,
+                  vx: 4 + Math.random() * 3, vy: 2 + Math.random() * 1.5,
+                  length: 20 + Math.random() * 15,
+                  life: 30 + Math.floor(Math.random() * 20) };
+        } else {
+            p = { type: 'firefly', x: initial ? Math.random() * GAME_WIDTH : Math.random() * GAME_WIDTH,
+                  y: GAME_HEIGHT * 0.3 + Math.random() * GAME_HEIGHT * 0.5,
+                  vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.2,
+                  size: 1.5 + Math.random() * 1.5, phase: Math.random() * Math.PI * 2,
+                  life: 200 + Math.floor(Math.random() * 300) };
+        }
+    }
+    return p;
+}
+
+function drawWeatherParticles() {
+    for (var i = 0; i < weatherParticles.length; i++) {
+        var p = weatherParticles[i];
+        var fadeIn = Math.min(1, (p.type === 'shootingstar' ? 1 : Math.min(p.life / 30, 1)));
+        ctx.save();
+        if (p.type === 'leaf') {
+            p.rot += p.rotSpeed;
+            ctx.globalAlpha = fadeIn * 0.5;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = '#5a8a3c';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, p.size, p.size * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'sand') {
+            ctx.globalAlpha = p.alpha * fadeIn;
+            ctx.fillStyle = '#d4a040';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'snow') {
+            p.x += Math.sin(p.phase + gameState.time * 0.02) * 0.3;
+            ctx.globalAlpha = fadeIn * 0.7;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'firefly') {
+            var glow = 0.3 + 0.7 * Math.abs(Math.sin(p.phase + gameState.time * 0.06));
+            ctx.globalAlpha = fadeIn * glow;
+            ctx.shadowColor = '#aaffaa';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#ccffaa';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        } else if (p.type === 'shootingstar') {
+            var tailAlpha = Math.min(1, p.life / 10);
+            ctx.globalAlpha = tailAlpha * 0.9;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - p.vx * p.length / 5, p.y - p.vy * p.length / 5);
+            ctx.stroke();
+            ctx.globalAlpha = tailAlpha * 0.3;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p.x - p.vx * p.length / 5, p.y - p.vy * p.length / 5);
+            ctx.lineTo(p.x - p.vx * p.length / 3, p.y - p.vy * p.length / 3);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// ── 復活判定 ──
+// 優先順: 1.復活薬(ストック,HP2) → 2.復活の羽(永続,HP1) → 3.ゲームオーバー
+function tryRevive() {
+    // 1. ストック内の復活薬を探す
+    var potionIdx = -1;
+    for (var i = 0; i < stockState.items.length; i++) {
+        if (stockState.items[i].id === 'revive_potion') { potionIdx = i; break; }
+    }
+    if (potionIdx >= 0) {
+        stockState.items.splice(potionIdx, 1);
+        updateStockUI();
+        gameState.lives = 2;
+        gameState.isInvincible = true;
+        gameState.invincibleTimer = INVINCIBLE_FRAMES;
+        gameState.revivalFlashTimer = 90; // 1.5秒の復活演出
+        if (soundManager) soundManager.playItem();
+        spawnRevivalEffect(player.x + player.width / 2, player.y, 'revival_potion_text');
+        resetPlayerPosition();
+        return true;
+    }
+    // 2. 復活の羽（永続スキル）
+    if (gameState.revivesLeft > 0) {
+        gameState.revivesLeft--;
+        gameState.lives = 1;
+        gameState.isInvincible = true;
+        gameState.invincibleTimer = INVINCIBLE_FRAMES;
+        gameState.revivalFlashTimer = 90;
+        if (soundManager) soundManager.playItem();
+        spawnRevivalEffect(player.x + player.width / 2, player.y, 'revival_text');
+        resetPlayerPosition();
+        return true;
+    }
+    return false;
+}
 
 function takeDamage() {
     if (gameState.isInvincible) return;
@@ -3204,7 +3440,9 @@ function takeDamage() {
     spawnDamageEffect(player.x + player.width / 2, player.y);
     // 敵被弾: その場で点滅+無敵（位置リセットしない）
     player.velY = -6; // 軽くノックバック（上方向）
-    if (!debugMode && gameState.lives <= 0) gameOver();
+    if (!debugMode && gameState.lives <= 0) {
+        if (!tryRevive()) gameOver();
+    }
 }
 
 function fallDeath() {
@@ -3216,7 +3454,9 @@ function fallDeath() {
     damageFlashTimer = 20;
     spawnDamageEffect(player.x + player.width / 2, player.y);
     resetPlayerPosition(); // 上から降ってくる
-    if (!debugMode && gameState.lives <= 0) gameOver();
+    if (!debugMode && gameState.lives <= 0) {
+        if (!tryRevive()) gameOver();
+    }
 }
 
 function updatePlatforms() {
@@ -3864,6 +4104,9 @@ function applyUpgrades() {
     gameState.magnetRange = 200 * (1 + magnetLv * 0.5);
     var comboLv = ups.combo_master || 0;
     COMBO_TIMEOUT = 60 + comboLv * 30; // コンボマスター: 受付時間延長
+    // 復活の羽: Lv1=1回/ラン, Lv2=2回/ラン
+    var revivalLv = ups.revival_feather || 0;
+    gameState.revivesLeft = revivalLv;
 }
 
 // ── ストックシステム ──
@@ -4754,6 +4997,29 @@ function spawnDamageEffect(worldX, worldY) {
     }
 }
 
+function spawnRevivalEffect(worldX, worldY, textKey) {
+    // 復活テキスト浮上
+    floatEffects.push({
+        type: 'revival_text',
+        worldX: worldX, worldY: worldY,
+        timer: 0, duration: 90,
+        offsetY: 0, textKey: textKey
+    });
+    // 金色パーティクル散布
+    for (var i = 0; i < 12; i++) {
+        var angle = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+        var speed = 2 + Math.random() * 3;
+        floatEffects.push({
+            type: 'revival_particle',
+            worldX: worldX, worldY: worldY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 3,
+            timer: 0, duration: 40 + Math.floor(Math.random() * 20),
+            size: 2 + Math.random() * 3
+        });
+    }
+}
+
 function spawnExplosionEffect(worldX, worldY) {
     // 爆発リング (2重)
     floatEffects.push({
@@ -4792,16 +5058,31 @@ function spawnComboEffect(worldX, worldY, count, score) {
         comboCount: count,
         comboScore: score
     });
-    for (var i = 0; i < 6; i++) {
-        var angle = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-        var speed = 2 + Math.random() * 2;
+    // スパーク数: コンボ数に応じて増加（6→最大18）
+    var sparkCount = Math.min(6 + count * 2, 18);
+    var sparkSpeed = 2 + Math.min(count * 0.3, 2);
+    for (var i = 0; i < sparkCount; i++) {
+        var angle = (i / sparkCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        var speed = sparkSpeed + Math.random() * 2;
+        // コンボ数で色相変化: 金(40)→橙(25)→赤(0)
+        var hue = Math.max(0, 40 - count * 3);
         floatEffects.push({
             type: 'combo_spark',
             worldX: worldX, worldY: worldY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed - 2,
             timer: 0, duration: 35 + Math.floor(Math.random() * 15),
-            size: 2 + Math.random() * 2.5
+            size: 2 + Math.random() * 2.5,
+            hue: hue + Math.floor(Math.random() * 10)
+        });
+    }
+    // コンボリング（3コンボ以上）
+    if (count >= 3) {
+        floatEffects.push({
+            type: 'combo_ring',
+            worldX: worldX, worldY: worldY,
+            timer: 0, duration: 30,
+            comboCount: count
         });
     }
 }
@@ -4907,6 +5188,46 @@ function drawFloatEffects() {
             ctx.restore();
         }
 
+        // ── 復活テキスト ──
+        if (ef.type === 'revival_text') {
+            ef.offsetY += 0.8;
+            var ra = progress < 0.7 ? 1 : (1 - progress) / 0.3;
+            var rs = progress < 0.1 ? 0.5 + progress / 0.1 * 0.8 : (progress < 0.25 ? 1.3 - (progress - 0.1) / 0.15 * 0.3 : 1.0);
+            var ry = ef.worldY - ef.offsetY;
+            ctx.save();
+            ctx.globalAlpha = ra;
+            ctx.translate(wx, ry);
+            ctx.scale(rs, rs);
+            ctx.shadowColor = 'rgba(255,215,0,0.9)';
+            ctx.shadowBlur = 16;
+            ctx.font = "bold 22px 'M PLUS Rounded 1c', sans-serif";
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText(t(ef.textKey), 0, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        // ── 復活パーティクル（金色） ──
+        if (ef.type === 'revival_particle') {
+            ef.worldX += ef.vx;
+            ef.worldY += ef.vy;
+            ef.vy += 0.05;
+            ef.vx *= 0.97;
+            var rpA = progress < 0.2 ? progress / 0.2 : (1 - progress) / 0.8;
+            rpA *= 0.9;
+            ctx.save();
+            ctx.globalAlpha = rpA;
+            ctx.shadowColor = 'rgba(255,215,0,0.6)';
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = 'rgba(255,' + (200 + Math.floor(Math.random() * 55)) + ',0,1)';
+            ctx.beginPath();
+            ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.4), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
         if (ef.type === 'heart_particle') {
             ef.worldX += ef.vx;
             ef.worldY += ef.vy;
@@ -5005,18 +5326,29 @@ function drawFloatEffects() {
             ef.offsetY += 1.5;
             var ctAlpha = progress < 0.7 ? 1 : (1 - progress) / 0.3;
             var ctScale = progress < 0.1 ? 0.5 + progress / 0.1 * 0.5 : 1.0;
-            var ctShake = ef.comboCount >= 5 ? Math.sin(ef.timer * 0.8) * 2 : 0;
+            // 高コンボでスケールをさらにポップさせる
+            if (ef.comboCount >= 5) ctScale *= 1 + Math.sin(ef.timer * 0.4) * 0.08;
+            var ctShake = ef.comboCount >= 5 ? Math.sin(ef.timer * 0.8) * (1 + ef.comboCount * 0.3) : 0;
             var ctY = ef.worldY - ef.offsetY;
+            // 色エスカレーション: 金→橙→赤
+            var ctHue = Math.max(0, 45 - ef.comboCount * 3);
+            var ctColor = 'hsl(' + ctHue + ',100%,60%)';
+            var ctGlow = 'hsla(' + ctHue + ',100%,50%,0.8)';
             ctx.save();
             ctx.globalAlpha = ctAlpha;
             ctx.translate(wx + ctShake, ctY);
             ctx.scale(ctScale, ctScale);
-            ctx.shadowColor = 'rgba(255,200,0,0.8)';
-            ctx.shadowBlur = 12;
-            ctx.font = "bold " + Math.min(16 + ef.comboCount * 2, 32) + "px 'M PLUS Rounded 1c', sans-serif";
+            ctx.shadowColor = ctGlow;
+            ctx.shadowBlur = 12 + ef.comboCount;
+            ctx.font = "bold " + Math.min(16 + ef.comboCount * 2, 36) + "px 'M PLUS Rounded 1c', sans-serif";
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffd700';
-            ctx.fillText(ef.comboCount + ' COMBO!', 0, 0);
+            ctx.fillStyle = ctColor;
+            // マイルストーンテキスト
+            var comboLabel = ef.comboCount + ' COMBO!';
+            if (ef.comboCount >= 15) comboLabel = ef.comboCount + ' COMBO! INSANE!';
+            else if (ef.comboCount >= 10) comboLabel = ef.comboCount + ' COMBO! AMAZING!';
+            else if (ef.comboCount >= 5) comboLabel = ef.comboCount + ' COMBO! GREAT!';
+            ctx.fillText(comboLabel, 0, 0);
             ctx.shadowBlur = 0;
             ctx.font = "bold 12px 'DotGothic16', monospace";
             ctx.fillStyle = '#fff';
@@ -5030,12 +5362,37 @@ function drawFloatEffects() {
             ef.vy += 0.06;
             var csA = progress < 0.3 ? progress / 0.3 : (1 - progress) / 0.7;
             csA *= 0.8;
+            var csHue = ef.hue !== undefined ? ef.hue : (40 + Math.floor(ef.size * 8));
             ctx.save();
             ctx.globalAlpha = csA;
-            ctx.fillStyle = 'hsl(' + (40 + Math.floor(ef.size * 8)) + ',100%,60%)';
+            ctx.fillStyle = 'hsl(' + csHue + ',100%,60%)';
             ctx.beginPath();
             ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.4), 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+        }
+
+        // コンボリングエフェクト
+        if (ef.type === 'combo_ring') {
+            var crRadius = 10 + progress * (30 + ef.comboCount * 5);
+            var crAlpha = (1 - progress) * 0.6;
+            var crHue = Math.max(0, 45 - ef.comboCount * 3);
+            ctx.save();
+            ctx.globalAlpha = crAlpha;
+            ctx.strokeStyle = 'hsl(' + crHue + ',100%,60%)';
+            ctx.lineWidth = 2.5 * (1 - progress);
+            ctx.beginPath();
+            ctx.arc(wx, ef.worldY, crRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            // 二重リング（高コンボ時）
+            if (ef.comboCount >= 7) {
+                ctx.globalAlpha = crAlpha * 0.5;
+                ctx.strokeStyle = 'hsl(' + (crHue + 15) + ',100%,70%)';
+                ctx.lineWidth = 1.5 * (1 - progress);
+                ctx.beginPath();
+                ctx.arc(wx, ef.worldY, crRadius * 0.7, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.restore();
         }
 
@@ -5586,12 +5943,25 @@ function cacheUIElements() {
     uiElements.speedLevel = document.getElementById('speedLevel');
     uiElements.speedPercent = document.getElementById('speedPercent');
     uiElements.nextSpeedUp = document.getElementById('nextSpeedUp');
+    uiElements.reviveIndicator = document.getElementById('reviveIndicator');
 }
 var prevUI = {};
 
 function render() {
     // nearest-neighbor拡大でドット絵くっきり
     ctx.imageSmoothingEnabled = false;
+
+    // 画面シェイク適用
+    var shaking = screenShake.timer > 0;
+    if (shaking) {
+        screenShake.timer--;
+        var shakeDecay = screenShake.timer / 12;
+        ctx.save();
+        ctx.translate(
+            (Math.random() - 0.5) * screenShake.intensity * shakeDecay * 2,
+            (Math.random() - 0.5) * screenShake.intensity * shakeDecay * 2
+        );
+    }
 
     // 背景グラデーション（キャッシュから描画）
     ctx.drawImage(getBgCache(), 0, 0);
@@ -5732,6 +6102,9 @@ function render() {
       }
     }
 
+    // ─── 天候パーティクル描画 ───
+    if (weatherParticles.length > 0) drawWeatherParticles();
+
     // ─── ダメージ赤フラッシュ ───
     if (damageFlashTimer > 0) {
         damageFlashTimer--;
@@ -5739,6 +6112,25 @@ function render() {
         ctx.fillStyle = 'rgba(255,0,0,' + dfAlpha + ')';
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
+
+    // ─── 復活ゴールドフラッシュ ───
+    if (gameState.revivalFlashTimer > 0) {
+        gameState.revivalFlashTimer--;
+        var rvAlpha = gameState.revivalFlashTimer / 90 * 0.35;
+        ctx.fillStyle = 'rgba(255,215,0,' + rvAlpha + ')';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
+
+    // ─── コンボマイルストーンフラッシュ ───
+    if (comboFlashTimer > 0) {
+        comboFlashTimer--;
+        var cfAlpha = comboFlashTimer / 15 * 0.25;
+        ctx.fillStyle = 'rgba(255,200,0,' + cfAlpha + ')';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
+
+    // 画面シェイク復元（HUDはシェイクしない）
+    if (shaking) ctx.restore();
 
     // ─── HUDオーバーレイ (複数パワーアップ対応) ───
     var puList = [
@@ -5826,20 +6218,35 @@ function render() {
         drawProgressBar(bHpX + 16, bHpY + 19, bHpW - 32, 8, bhpRatio, '#ff2222', '#ff6666');
     }
 
-    // コンボHUD
+    // コンボHUD（色エスカレーション＋強化パルス）
     if (gameState.comboCount >= 2) {
         var comboY = gameState.isInvincible ? 72 : 14;
         var comboAlpha = gameState.comboTimer / COMBO_TIMEOUT;
-        var comboPulse = 1 + Math.sin(gameState.time * 0.3) * 0.05;
+        var cc = gameState.comboCount;
+        // パルス強度: コンボ数に応じて増加
+        var pulseAmp = Math.min(0.05 + cc * 0.01, 0.15);
+        var comboPulse = 1 + Math.sin(gameState.time * 0.3) * pulseAmp;
+        // 色エスカレーション: 金→橙→赤
+        var hudHue = Math.max(0, 45 - cc * 3);
+        var hudR = hudHue <= 20 ? 255 : Math.floor(200 + (45 - hudHue));
+        var hudG = Math.floor(150 * (hudHue / 45));
+        var hudBorder = 'hsl(' + hudHue + ',100%,50%)';
+        var hudGlow = 'hsla(' + hudHue + ',100%,50%,0.3)';
+        var hudBg = 'rgba(' + Math.floor(80 - cc) + ',' + Math.floor(Math.max(10, 60 - cc * 4)) + ',10,0.85)';
         ctx.save();
         ctx.globalAlpha = Math.max(0.4, comboAlpha);
-        var comboX = GAME_WIDTH / 2 - 80;
-        drawHudPanel(comboX, comboY, 160, 42, 'rgba(80,60,10,0.85)', 'rgba(50,35,5,0.9)', '#ffa500', 'rgba(255,165,0,0.3)');
+        var comboX = GAME_WIDTH / 2 - 90;
+        drawHudPanel(comboX, comboY, 180, 42, hudBg, 'rgba(50,35,5,0.9)', hudBorder, hudGlow);
         ctx.font = "bold " + Math.floor(18 * comboPulse) + "px 'M PLUS Rounded 1c', sans-serif";
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffd700';
-        ctx.shadowColor = 'rgba(255,200,0,0.6)'; ctx.shadowBlur = 8;
-        ctx.fillText(gameState.comboCount + ' COMBO', GAME_WIDTH / 2, comboY + 22);
+        ctx.fillStyle = 'hsl(' + hudHue + ',100%,65%)';
+        ctx.shadowColor = 'hsla(' + hudHue + ',100%,50%,0.7)';
+        ctx.shadowBlur = 8 + cc;
+        var hudLabel = cc + ' COMBO';
+        if (cc >= 15) hudLabel = cc + ' COMBO INSANE';
+        else if (cc >= 10) hudLabel = cc + ' COMBO AMAZING';
+        else if (cc >= 5) hudLabel = cc + ' COMBO GREAT';
+        ctx.fillText(hudLabel, GAME_WIDTH / 2, comboY + 22);
         ctx.shadowBlur = 0;
         ctx.restore();
     }
@@ -5965,6 +6372,27 @@ function updateUI() {
     if (prevUI.speedLevel !== gameState.speedLevel) { uiElements.speedLevel.textContent = gameState.speedLevel; prevUI.speedLevel = gameState.speedLevel; }
     if (prevUI.pct !== pct) { uiElements.speedPercent.textContent = pct; prevUI.pct = pct; }
     if (prevUI.next !== next) { uiElements.nextSpeedUp.textContent = next; prevUI.next = next; }
+    // 復活の羽 残り回数表示
+    var revEl = uiElements.reviveIndicator;
+    if (revEl) {
+        // ストック内の復活薬の数もカウント
+        var potionCount = 0;
+        for (var ri = 0; ri < stockState.items.length; ri++) {
+            if (stockState.items[ri].id === 'revive_potion') potionCount++;
+        }
+        var totalRevives = gameState.revivesLeft + potionCount;
+        if (totalRevives > 0 && prevUI.revives !== totalRevives) {
+            var featherStr = '';
+            for (var fi = 0; fi < gameState.revivesLeft; fi++) featherStr += '\u{1FAB6}';
+            for (var pi = 0; pi < potionCount; pi++) featherStr += '\u{1F48A}';
+            revEl.textContent = featherStr;
+            revEl.style.display = 'inline';
+            prevUI.revives = totalRevives;
+        } else if (totalRevives === 0 && prevUI.revives !== 0) {
+            revEl.style.display = 'none';
+            prevUI.revives = 0;
+        }
+    }
 }
 
 // ─── メインループ（固定60fpsタイムステップ） ───
@@ -5998,6 +6426,7 @@ function gameLoop(timestamp) {
             updateBullets();
             manageTerrain();
             manageObjects();
+            updateWeatherParticles();
         }
         accumulator -= FIXED_DT;
     }
