@@ -76,6 +76,16 @@ var PALETTES = {
         '#000000','#000000','#000000','#000000','#000000',
         '#000000','#000000','#000000','#000000','#000000','#000000'
     ],
+    cloud_desert: [
+        'transparent','#e8c878','#d4a850','#c09038','#a87828',
+        '#000000','#000000','#000000','#000000','#000000',
+        '#000000','#000000','#000000','#000000','#000000','#000000'
+    ],
+    cloud_ice: [
+        'transparent','#b8c0c8','#a0a8b0','#8890a0','#707880',
+        '#000000','#000000','#000000','#000000','#000000',
+        '#000000','#000000','#000000','#000000','#000000','#000000'
+    ],
     magnet: [
         'transparent','#ff2255','#cc0033','#3366ff','#0044cc',
         '#dddddd','#aaaaaa','#777777','#ffffff','#ff8899',
@@ -276,7 +286,9 @@ var PALETTES = {
         // アイテム (プロシージャル)
         powerup_magnet: { w: 32, h: 32, palette: 'magnet', frames: [buildMagnet()] },
 
-        platform_cloud:  { w: 32, h: 32, palette: 'cloud', frames: [buildCloudPlatform()] },
+        platform_cloud:         { w: 32, h: 32, palette: 'cloud',         frames: [buildCloudPlatform()] },
+        platform_cloud_desert:  { w: 32, h: 32, palette: 'cloud_desert',  frames: [buildCloudPlatform()] },
+        platform_cloud_ice:     { w: 32, h: 32, palette: 'cloud_ice',     frames: [buildCloudPlatform()] },
         platform_ground: { w: 32, h: 32, palette: 'terrain', frames: [buildGroundPlatform()] },
 
         // 背景

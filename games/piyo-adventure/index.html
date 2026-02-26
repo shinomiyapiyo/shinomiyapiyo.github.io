@@ -500,6 +500,27 @@
             .copyright-text { font-size: 12px !important; }
             .creator-text { font-size: 10px !important; }
         }
+
+        /* ── ショップ共通 ── */
+        #stageShopScreen .game-button:disabled,
+        #titleShopScreen .game-button:disabled {
+            opacity: 0.5; pointer-events: none; filter: grayscale(0.5);
+        }
+        .stock-slot {
+            width: 44px; height: 44px; border-radius: 10px;
+            border: 2px solid rgba(255,215,0,0.4);
+            background: linear-gradient(135deg, rgba(30,15,50,0.85), rgba(15,5,30,0.85));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.1s ease;
+        }
+        .stock-slot:active { transform: scale(0.9); }
+        .stock-slot-empty {
+            border-color: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            pointer-events: none;
+        }
     </style>
 
     <!-- Firebase CDN -->
@@ -518,6 +539,7 @@
             <div>⚡ <span data-i18n="hud_level_prefix">レベル</span><span id="speedLevel">1</span> (<span id="speedPercent">100</span>%)</div>
             <div>📈 <span data-i18n="hud_next_prefix">次まで</span><span id="nextSpeedUp">300</span>m</div>
             <div id="debugBossBtn" style="display:none; margin-top:4px; background:rgba(100,0,180,0.85); color:#ffcc00; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(180,100,255,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">⚔️ BOSS FIGHT</div>
+            <div id="debugShopBtn" style="display:none; margin-top:4px; background:rgba(0,120,80,0.85); color:#88ffcc; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(100,255,180,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">🏪 SHOP WARP</div>
         </div>
 
         <!-- スプラッシュ画面 -->
@@ -569,7 +591,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.143</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.163</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -583,6 +605,8 @@
                 display: flex; flex-direction: column; gap: 10px; z-index: 25;">
                 <button class="game-button" id="settingsButton">⚙️ SETTING</button>
                 <button class="game-button" id="rankingButton">🏆 RANKING</button>
+                <button class="game-button" id="shopButton" disabled
+                    style="opacity:0.4; pointer-events:none; filter:grayscale(0.8);">🛒 SHOP (準備中)</button>
             </div>
 
             <!-- クレジット：右下へ分散 -->
@@ -739,6 +763,160 @@
             <button class="game-button" onclick="hideSettings()" data-i18n="btn_back" style="margin-top: 1vh; flex-shrink: 0; z-index: 31; font-size: 3vw; padding: 8px 20px;">🔙 戻る</button>
         </div>
 
+        <!-- ステージショップ画面（RPG風） -->
+        <div id="stageShopScreen" class="hidden" style="
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            display: none; flex-direction: column;
+            z-index: 30; overflow: hidden;">
+            <!-- RPG背景イラスト（全画面・差分切替対応） -->
+            <div id="shopBgImg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: url('images/shop01.jpg') center center / cover no-repeat;
+                image-rendering: pixelated; transition: opacity 0.25s ease;"></div>
+            <!-- 暗幕（下部のみ薄く） -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: linear-gradient(180deg, transparent 0%, transparent 55%, rgba(0,0,0,0.6) 72%, rgba(0,0,0,0.85) 85%);
+                pointer-events: none;"></div>
+            <!-- ステータス（左上に小さく表示） -->
+            <div style="position: absolute; top: 6px; left: 8px; display:flex; gap:6px; z-index:2;">
+                <span id="stageShopScore" style="color: #fff; font-size: clamp(10px, 2.2vw, 14px);
+                    font-family: 'DotGothic16', monospace;
+                    background: rgba(0,0,48,0.85); padding: 2px 8px; border-radius: 4px;
+                    border: 2px solid rgba(255,255,255,0.7);
+                    text-shadow: 1px 1px 0 rgba(0,0,0,0.8);">💴 0円</span>
+                <span id="stageShopLives" style="color: #fff; font-size: clamp(10px, 2.2vw, 14px);
+                    font-family: 'DotGothic16', monospace;
+                    background: rgba(0,0,48,0.85); padding: 2px 8px; border-radius: 4px;
+                    border: 2px solid rgba(255,255,255,0.7);
+                    text-shadow: 1px 1px 0 rgba(0,0,0,0.8);">❤ 5</span>
+            </div>
+            <!-- DQ風UIパネル（下部コンパクト配置） -->
+            <div style="position: absolute; bottom: 0; left: 0; right: 0;
+                padding: 4px 6px 6px;">
+                <!-- 店員セリフ枠（DQ風：紺背景＋白枠） -->
+                <div id="shopKeeperBox" style="
+                    background: rgba(0,0,48,0.92);
+                    border: 2px solid #fff;
+                    border-radius: 6px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+                    padding: 6px 10px;
+                    margin-bottom: 4px;
+                    position: relative;">
+                    <div style="display:flex; align-items:flex-start; gap:6px;">
+                        <span style="font-size:clamp(14px,3.2vw,22px); line-height:1; flex-shrink:0;">👧</span>
+                        <span id="shopKeeperText" style="
+                            color: #fff; font-family: 'DotGothic16', monospace;
+                            font-size: clamp(11px, 2.4vw, 15px);
+                            line-height: 1.5; white-space: pre-line;
+                            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"></span>
+                    </div>
+                    <!-- はい/いいえ確認ボックス（DQ風） -->
+                    <div id="shopConfirmBox" style="display:none;
+                        position: absolute; right: 8px; bottom: -36px;
+                        background: rgba(0,0,48,0.95);
+                        border: 2px solid #fff; border-radius: 5px;
+                        padding: 2px 0; min-width: 80px; z-index: 5;
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.6);">
+                        <div id="shopConfirmYes" style="
+                            color: #fff; font-family: 'DotGothic16', monospace;
+                            font-size: clamp(11px, 2.2vw, 15px); padding: 5px 14px;
+                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                            ">▶ はい</div>
+                        <div id="shopConfirmNo" style="
+                            color: #fff; font-family: 'DotGothic16', monospace;
+                            font-size: clamp(11px, 2.2vw, 15px); padding: 5px 14px;
+                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                            ">　 いいえ</div>
+                    </div>
+                </div>
+                <!-- 商品リスト（DQコマンドメニュー風・コンパクト） -->
+                <div id="stageShopItems" style="
+                    background: rgba(0,0,48,0.92);
+                    border: 2px solid #fff; border-radius: 6px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                    display: flex; flex-direction: column;
+                    max-height: 20vh; overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
+                    padding: 2px 0;"></div>
+                <!-- 預金（準備中）＋閉じるボタン行 -->
+                <div style="display: flex; gap: 5px; margin-top: 4px; align-items: center;">
+                    <div id="stageShopDeposit" style="flex: 1;">
+                        <button id="depositBtn" class="game-button" disabled style="
+                            width: 100%; padding: 4px 8px; font-size: clamp(9px, 1.8vw, 13px);
+                            background: #555; border: 2px solid #888; border-radius: 4px;
+                            color: #999; font-weight: 700; opacity: 0.5; pointer-events: none;
+                            font-family: 'DotGothic16', monospace;">🏦 預金口座 準備中</button>
+                        <div id="depositInfo" style="display:none;"></div>
+                    </div>
+                    <button id="stageShopCloseBtn" class="game-button" style="
+                        padding: 6px 12px; font-size: clamp(10px, 2.2vw, 15px);
+                        background: rgba(0,0,48,0.9);
+                        border: 2px solid #fff; border-radius: 5px;
+                        color: #fff; font-weight: 800;
+                        text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                        font-family: 'DotGothic16', monospace;
+                        white-space: nowrap;" data-i18n="shop_close">▶ お店を出る</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- タイトルショップ画面（RPG風・shop05背景） -->
+        <div id="titleShopScreen" class="hidden" style="
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            box-sizing: border-box;
+            background: #000;
+            display: none; flex-direction: column;
+            z-index: 9999;
+            overflow: hidden;">
+            <!-- RPG背景（巻物の部屋） -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: url('images/shop05.jpg') center center / cover no-repeat;
+                image-rendering: pixelated;"></div>
+            <!-- 暗幕オーバーレイ -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.92) 78%);
+                pointer-events: none;"></div>
+            <!-- UIパネル（下部RPG風） -->
+            <div style="position: absolute; bottom: 0; left: 0; right: 0;
+                background: linear-gradient(180deg, rgba(20,12,8,0.92), rgba(10,5,2,0.96));
+                border-top: 3px solid rgba(255,215,0,0.5);
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,215,0,0.15);
+                padding: 8px 12px 10px; max-height: 58%;
+                display: flex; flex-direction: column;">
+                <!-- タイトル行 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-shrink: 0;">
+                    <span data-i18n="tshop_title" style="color: #ffd700; font-size: clamp(14px, 3.2vw, 20px); font-weight: 800;
+                        font-family: 'DotGothic16', 'M PLUS Rounded 1c', sans-serif;
+                        text-shadow: 0 0 8px rgba(255,215,0,0.4), 0 1px 3px rgba(0,0,0,0.9);
+                        letter-spacing: 0.05em;">🛒 ショップ</span>
+                    <span id="titleShopSavings" style="color: #fff; font-size: clamp(11px, 2.4vw, 16px);
+                        font-family: 'DotGothic16', monospace;
+                        background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 6px;
+                        border: 1px solid rgba(255,215,0,0.3);
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.8);">🏦 0</span>
+                </div>
+                <!-- アップグレードリスト -->
+                <div id="titleShopList" style="
+                    display: flex; flex-direction: column; gap: 4px;
+                    flex: 1; min-height: 0;
+                    overflow-y: auto; overflow-x: hidden;
+                    color: #fff; font-size: clamp(10px, 2.2vw, 15px);
+                    font-family: 'DotGothic16', 'M PLUS Rounded 1c', sans-serif;
+                    -webkit-overflow-scrolling: touch;
+                    touch-action: pan-y; overscroll-behavior: contain;
+                    padding: 2px 0;"></div>
+                <!-- 戻るボタン -->
+                <button class="game-button" data-i18n="btn_back" id="titleShopBackBtn" style="
+                    margin-top: 6px; flex-shrink: 0; font-size: clamp(11px, 2.6vw, 17px); padding: 8px 20px;
+                    background: linear-gradient(180deg, #6a4c2a, #4a3018);
+                    border: 2px solid rgba(255,215,0,0.4);
+                    color: #ffd700; font-weight: 800;
+                    text-shadow: 0 1px 3px rgba(0,0,0,0.8);">🔙 戻る</button>
+            </div>
+        </div>
+
         <!-- ゲームオーバー画面 -->
         <div id="gameOverScreen" class="hidden" style="
             position: absolute; top: 0; left: 0;
@@ -820,6 +998,12 @@
         <div id="rightArea" class="touch-area"></div>
         <div id="jumpArea" class="touch-area"></div>
 
+        <!-- ストックスロット（常時表示、アイテムがあれば使用可能） -->
+        <div id="stockSlots" style="
+            position: absolute; top: 50px; right: calc(10px + env(safe-area-inset-right, 0px));
+            display: none; flex-direction: column; gap: 4px;
+            z-index: 100;"></div>
+
         <!-- フッターコントロールバー -->
         <div id="controlBar">
             <div class="control-zone control-left" id="ctrlLeft">
@@ -871,7 +1055,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.143
+ * ぴよ氏の冒険 v1.146
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1004,7 +1188,7 @@ window.showAd = window.showAd || function(type) {
 };
 
 // ─── ゲーム設定 (localStorage永続化) ───
-var gameSettings = { soundEnabled: true, language: 'ja', adFree: false };
+var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {} };
 (function loadSettings() {
     try {
         var saved = localStorage.getItem('piyo_settings');
@@ -1013,6 +1197,9 @@ var gameSettings = { soundEnabled: true, language: 'ja', adFree: false };
             if (typeof parsed.soundEnabled === 'boolean') gameSettings.soundEnabled = parsed.soundEnabled;
             if (parsed.language === 'ja' || parsed.language === 'en') gameSettings.language = parsed.language;
             if (typeof parsed.adFree === 'boolean') gameSettings.adFree = parsed.adFree;
+            // ── ショップ関連 ──
+            if (typeof parsed.savings === 'number') gameSettings.savings = parsed.savings;
+            if (parsed.upgrades && typeof parsed.upgrades === 'object') gameSettings.upgrades = parsed.upgrades;
         }
     } catch (_) {}
 })();
@@ -1122,7 +1309,51 @@ ja: {
     confirm_yes: 'はい',
     confirm_no: 'いいえ',
     privacy_link: '🔒 プライバシーポリシー',
-    privacy_url: 'https://nullpoworks.github.io/privacy-policy.html'
+    privacy_url: 'https://nullpoworks.github.io/privacy-policy.html',
+    // ── ステージショップ ──
+    shop_stage_title: '🏪 ショップ',
+    shop_buy: '購入',
+    shop_sold_out: '売切',
+    shop_close: '▶ お店を出る',
+    shop_deposit_btn: '💰 預金する（スコアの50%）',
+    shop_deposit_amount: '預入額: {amount}円',
+    shop_current_savings: '現在の貯金: {savings}',
+    shop_deposited: '✅ 預金済み',
+    shop_stock_full: 'ストックがいっぱいです',
+    shop_not_enough: '残金が足りません',
+    shop_item_heal: '回復薬',
+    shop_item_heal_desc: 'ライフ+2（上限10）',
+    shop_item_barrier: 'バリア',
+    shop_item_barrier_desc: '10秒間完全無敵',
+    shop_item_lemon: 'レモンスペシャル',
+    shop_item_lemon_desc: 'ジャンプ強化20秒',
+    shop_item_fullcharge: 'フルチャージ',
+    shop_item_fullcharge_desc: '全パワーアップ15秒同時発動',
+    shop_keeper_greet: 'いらっしゃいませ！\nなにを お買い求めですか？',
+    shop_keeper_buy_ok: 'ありがとうございます！\nがんばってくださいね♪',
+    shop_keeper_no_money: 'お金が 足りないみたいです…',
+    shop_keeper_sold_out: 'ごめんなさい、売り切れです',
+    shop_keeper_stock_full: 'ストックが いっぱいみたいです',
+    shop_keeper_deposit_ok: 'お預かりしますね！\n大切に 保管しておきます',
+    shop_keeper_deposit_zero: '預けるお金が ないみたいです…',
+    shop_keeper_leave_confirm: 'お買い物を\n終了しますか？',
+    shop_keeper_close: 'お気をつけて！\nボスは 手ごわいですよ！',
+    shop_keeper_heal_maxhp: 'もう十分\nお元気そうですよ！',
+    shop_keeper_confirm: '{item}を {price}円で\nお買い上げですか？',
+    shop_confirm_yes: 'はい',
+    shop_confirm_no: 'いいえ',
+    // ── タイトルショップ ──
+    tshop_title: '🛒 ショップ',
+    tshop_coin_master: 'コインマスター',
+    tshop_coin_master_desc: 'コイン獲得量UP',
+    tshop_toughness: 'タフネス',
+    tshop_toughness_desc: '初期ライフ増加',
+    tshop_stock_expand: 'ストック拡張',
+    tshop_stock_expand_desc: 'ストック枠を増やす',
+    tshop_magnet_boost: 'マグネット強化',
+    tshop_magnet_boost_desc: 'マグネットの吸引範囲UP',
+    tshop_combo_master: 'コンボマスター',
+    tshop_combo_master_desc: 'コンボ受付時間を延長'
 },
 en: {
     splash_warning: '⚠️ Notice ⚠️',
@@ -1208,7 +1439,51 @@ en: {
     confirm_yes: 'Yes',
     confirm_no: 'No',
     privacy_link: '🔒 Privacy Policy',
-    privacy_url: 'https://nullpoworks.github.io/privacy-policy.html?lang=en'
+    privacy_url: 'https://nullpoworks.github.io/privacy-policy.html?lang=en',
+    // ── Stage Shop ──
+    shop_stage_title: '🏪 Shop',
+    shop_buy: 'Buy',
+    shop_sold_out: 'Sold',
+    shop_close: '▶ Leave',
+    shop_deposit_btn: '💰 Deposit (50% of score)',
+    shop_deposit_amount: 'Deposit: {amount}',
+    shop_current_savings: 'Savings: {savings}',
+    shop_deposited: '✅ Deposited',
+    shop_stock_full: 'Stock is full',
+    shop_not_enough: 'Not enough funds',
+    shop_item_heal: 'Healing Potion',
+    shop_item_heal_desc: 'Life +2 (max 10)',
+    shop_item_barrier: 'Barrier',
+    shop_item_barrier_desc: '10s full invincibility',
+    shop_item_lemon: 'Lemon Special',
+    shop_item_lemon_desc: 'Jump boost for 20s',
+    shop_item_fullcharge: 'Full Charge',
+    shop_item_fullcharge_desc: 'All power-ups for 15s',
+    shop_keeper_greet: 'Welcome!\nWhat can I get for you?',
+    shop_keeper_buy_ok: 'Thank you!\nGood luck out there♪',
+    shop_keeper_no_money: "You don't seem to\nhave enough money...",
+    shop_keeper_sold_out: "Sorry, that's sold out",
+    shop_keeper_stock_full: 'Your stock seems full...',
+    shop_keeper_deposit_ok: "I'll keep it safe!\nDon't worry about a thing",
+    shop_keeper_deposit_zero: "You don't have\nanything to deposit...",
+    shop_keeper_leave_confirm: 'Done shopping?\nReady to go?',
+    shop_keeper_close: 'Take care!\nThe boss is tough!',
+    shop_keeper_heal_maxhp: "Oh, you're already\nin great shape!",
+    shop_keeper_confirm: 'Buy {item} for {price}?\nShall I wrap it up?',
+    shop_confirm_yes: 'Yes',
+    shop_confirm_no: 'No',
+    // ── Title Shop ──
+    tshop_title: '🛒 Shop',
+    tshop_coin_master: 'Coin Master',
+    tshop_coin_master_desc: 'Coin gain boost',
+    tshop_toughness: 'Toughness',
+    tshop_toughness_desc: 'Starting life increase',
+    tshop_stock_expand: 'Stock Expand',
+    tshop_stock_expand_desc: 'More stock slots',
+    tshop_magnet_boost: 'Magnet Boost',
+    tshop_magnet_boost_desc: 'Magnet range increase',
+    tshop_combo_master: 'Combo Master',
+    tshop_combo_master_desc: 'Longer combo window'
 }
 };
 
@@ -1362,7 +1637,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.143';
+const CURRENT_VERSION     = '1.163';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1380,9 +1655,12 @@ class SoundManager {
 
         this.titleBGM    = this._createBGM('title.mp3',    0.6);
         this.stageBGM    = this._createBGM('stage.mp3',    0.5);
+        this.stage2BGM   = this._createBGM('stage2.mp3',   0.5);
+        this.stage3BGM   = this._createBGM('stage3.mp3',   0.5);
         this.gameoverBGM = this._createBGM('gameover.mp3', 0.7);
         this.rankingBGM  = this._createBGM('ranking.mp3',  0.6);
         this.bossBGM     = this._createBGM('boss.mp3',     0.6);
+        this.shopBGM     = this._createBGM('shop.mp3',     0.5);
         this.winBGM      = new Audio('win.mp3');
         this.winBGM.loop = false;
         this.winBGM.volume = 0.7;
@@ -1583,7 +1861,7 @@ class SoundManager {
     }
 
     stopAllBGM() {
-        var bgms = [this.titleBGM, this.stageBGM, this.gameoverBGM, this.rankingBGM, this.bossBGM, this.winBGM];
+        var bgms = [this.titleBGM, this.stageBGM, this.stage2BGM, this.stage3BGM, this.gameoverBGM, this.rankingBGM, this.bossBGM, this.shopBGM, this.winBGM];
         for (var i = 0; i < bgms.length; i++) {
             if (bgms[i]) { bgms[i].pause(); bgms[i].currentTime = 0; }
         }
@@ -1599,7 +1877,7 @@ var currentRankingType = 'score';
 var gameState = {
     score: 0, lives: 5,
     camera: { x: 0, y: 0 },
-    input: { left: false, right: false, jump: false, jumpPressed: false, down: false },
+    input: { left: false, right: false, jump: false, jumpPressed: false, down: false, up: false },
     recentlyDropped: false, dropFromY: 0, time: 0,
     gameStarted: false, gamePaused: false,
     enemySpawnTimer: 0, platformSpawnTimer: 0, coinSpawnTimer: 0,
@@ -1635,6 +1913,74 @@ var bossState = {
     eggs: [], summonTimer: 0
 };
 
+// ─── ショップシステム ───
+var SHOP_SAFE_ZONE_START = 250; // ボス出現の250m前から安全地帯
+var SHOP_BUILDING_OFFSET = 100; // ボス出現の100m前にショップ建物
+var SHOP_SAFE_ZONE_SPEED = 1.5; // 安全地帯のスクロール速度
+
+var shopState = {
+    active: false,
+    visited: false,
+    deposited: false,
+    purchaseCounts: {},
+    savedGameSpeed: 0,
+    buildingPlaced: false, // ショップ建物を配置済みか
+    buildingX: 0           // ショップ建物のワールドX座標
+};
+
+var stockState = {
+    maxSlots: 3,
+    items: []
+};
+
+var STAGE_SHOP_ITEMS = [
+    {
+        id: 'heal', nameKey: 'shop_item_heal', descKey: 'shop_item_heal_desc',
+        icon: '\u{1F9EA}', price: 6000, maxPerVisit: 2,
+        effect: function() { gameState.lives = Math.min(gameState.lives + 2, 10); }
+    },
+    {
+        id: 'barrier', nameKey: 'shop_item_barrier', descKey: 'shop_item_barrier_desc',
+        icon: '\u{1F6E1}\u{FE0F}', price: 3000, maxPerVisit: 2,
+        stockItem: true,
+        stockEffect: function() {
+            gameState.puShield = 600;
+            gameState.isInvincible = true;
+            gameState.invincibleTimer = 600;
+        }
+    },
+    {
+        id: 'lemon_special', nameKey: 'shop_item_lemon', descKey: 'shop_item_lemon_desc',
+        icon: '\u{1F34B}', price: 1200, maxPerVisit: 2,
+        stockItem: true,
+        stockEffect: function() { gameState.puLemon = 1200; }
+    },
+    {
+        id: 'full_charge', nameKey: 'shop_item_fullcharge', descKey: 'shop_item_fullcharge_desc',
+        icon: '\u{2B50}', price: 5000, maxPerVisit: 1,
+        stockItem: true,
+        stockEffect: function() {
+            gameState.puLemon = 900;
+            gameState.puShield = 900;
+            gameState.puEnergy = 900;
+            gameState.puMagnet = 900;
+        }
+    }
+];
+
+var TITLE_SHOP_UPGRADES = [
+    { id: 'coin_master', nameKey: 'tshop_coin_master', descKey: 'tshop_coin_master_desc',
+      icon: '\u{1F4B0}', maxLevel: 3, prices: [5000, 15000, 30000], effectDesc: ['+10%', '+20%', '+30%'] },
+    { id: 'toughness', nameKey: 'tshop_toughness', descKey: 'tshop_toughness_desc',
+      icon: '\u{1F496}', maxLevel: 3, prices: [8000, 20000, 40000], effectDesc: ['+1', '+2', '+3'] },
+    { id: 'stock_expand', nameKey: 'tshop_stock_expand', descKey: 'tshop_stock_expand_desc',
+      icon: '\u{1F392}', maxLevel: 2, prices: [10000, 25000], effectDesc: ['4枠', '5枠'] },
+    { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
+      icon: '\u{1F9F2}', maxLevel: 2, prices: [6000, 18000], effectDesc: ['+50%', '+100%'] },
+    { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
+      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [12000], effectDesc: ['1.5秒'] }
+];
+
 // ─── デバッグモード ───
 var debugMode = false;
 var debugTapCount = 0;
@@ -1650,8 +1996,10 @@ function handleDebugTap() {
         debugMode = !debugMode;
         if (debugMode) {
             gameState.lives = 99;
+            gameState.score = 50000;
         } else {
             gameState.lives = 5;
+            gameState.score = 0;
         }
         // ポーズタイトルに状態表示
         var titleEl = document.getElementById('pauseTitle');
@@ -1791,13 +2139,33 @@ function applyBiomePalette(idx) {
     rebuildTerrainSprites(BIOME_CONFIGS[idx].terrainPalette);
 }
 
+// バイオーム変更時に既存地形のtypeを一括更新
+function retypeTerrainForBiome(biomeIdx) {
+    var groundType = biomeIdx === 1 ? 'quicksand' : biomeIdx === 2 ? 'ice' : 'ground';
+    var elevType = biomeIdx === 1 ? 'quicksand_elevated' : biomeIdx === 2 ? 'ice_elevated' : 'elevated';
+    for (var i = 0; i < terrain.length; i++) {
+        var t = terrain[i];
+        if (t.type === 'hole') continue;
+        if (t.type === 'elevated' || t.type === 'quicksand_elevated' || t.type === 'ice_elevated') {
+            t.type = elevType;
+        } else if (t.type === 'ground' || t.type === 'quicksand' || t.type === 'ice') {
+            t.type = groundType;
+        }
+    }
+}
+
 function updateBiome() {
     var newIdx = getBiomeIndex(gameState.distance);
-    if (newIdx !== biomeState.current && biomeState.transition === 0) {
+    // ボス戦直前・ボス戦中はバイオーム遷移を開始しない（草原に戻す必要なし）
+    var bossDistance = BOSS_TRIGGER_DISTANCE * gameRound;
+    var nearBoss = gameState.distance >= bossDistance - 200 || bossState.active || shopState.active;
+    if (newIdx !== biomeState.current && biomeState.transition === 0 && !nearBoss) {
         biomeState.previous = biomeState.current;
         biomeState.current = newIdx;
         biomeState.transition = 0.001; // 遷移開始
         bgCache = null;
+        // 既存地形のtypeを新バイオームに一括変換（地面も雲と同様に瞬時切替）
+        retypeTerrainForBiome(newIdx);
     }
 
     if (biomeState.transition > 0 && biomeState.transition < 1) {
@@ -1851,10 +2219,11 @@ function handleTitleScreenClick(e) {
 }
 
 function startGame() {
-    if (soundManager) { try { soundManager.playBGM('stage'); } catch (_) {} }
+    try { playStageBGM(); } catch (_) {}
 
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) requestFullscreen();
 
+    applyUpgrades();
     gameState.gameStarted = true;
     gameState.gamePaused  = false;
 
@@ -1925,6 +2294,11 @@ function resetGame() {
         defeatedTimer: 0, roundTextTimer: 0,
         bossTriggered: false, savedGameSpeed: 0,
         eggs: [], summonTimer: 0 };
+
+    // ショップ・ストックリセット
+    shopState = { active: false, visited: false, deposited: false, purchaseCounts: {}, savedGameSpeed: 0, buildingPlaced: false, buildingX: 0 };
+    stockState.items = [];
+    updateStockUI();
 
     // バイオームリセット
     biomeState.current = 0;
@@ -2327,32 +2701,40 @@ function initTerrain() {
     gameState.lastTerrainX = 1900;
 }
 
+function isInSafeZone(distanceM) {
+    var bossDistance = BOSS_TRIGGER_DISTANCE * gameRound;
+    return distanceM >= bossDistance - SHOP_SAFE_ZONE_START && !bossState.active;
+}
+
 function generateTerrain() {
     var nextX = gameState.lastTerrainX + 100;
+    var nextDistM = Math.floor(nextX / 10);
     var roll = Math.random();
-    var biome = getBiomeIndex(Math.floor(nextX / 10)); // 地形位置のバイオーム（プレイヤー位置ではなく）
+    var biome = biomeState.current; // 現在のバイオームで生成（先読み地形も統一）
+
+    // 安全地帯: 平地のみ（穴・高台なし）
+    if (isInSafeZone(nextDistM)) {
+        terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: 'ground' });
+        gameState.lastTerrainX = nextX;
+        return;
+    }
+
+    // バイオーム地形タイプ決定（砂漠=全面流砂, 雪原=全面氷床）
+    var biomeType = biome === 1 ? 'quicksand' : biome === 2 ? 'ice' : 'ground';
 
     if (roll < 0.7) {
-        // 通常地面 — バイオームに応じてギミック地面を混ぜる
-        var gimmickRoll = Math.random();
-        // バイオームギミック: 地面の大半をギミック化（高レベルでもmin50%）
-        var gimmickRate = Math.max(0.5, 0.7 - (gameState.speedLevel - 1) * 0.02);
-        var tType = 'ground';
-        if (biome === 1 && gimmickRoll < gimmickRate) {
-            tType = 'quicksand'; // 砂漠: 流砂
-        } else if (biome === 2 && gimmickRoll < gimmickRate) {
-            tType = 'ice'; // 雪原: 氷床
-        }
-        terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: tType });
+        terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: biomeType });
     } else if (roll < 0.85) {
         var holeW = 120 + Math.random() * 100;
         terrain.push({ x: nextX, y: GROUND_Y, width: 0, height: 0, type: 'hole' });
-        terrain.push({ x: nextX + holeW, y: GROUND_Y, width: 100, height: 130, type: 'ground' });
+        terrain.push({ x: nextX + holeW, y: GROUND_Y, width: 100, height: 130, type: biomeType });
         gameState.lastTerrainX = nextX + holeW;
         return;
     } else {
         var elev = 60 + Math.random() * 40;
-        terrain.push({ x: nextX, y: GROUND_Y - elev, width: 100, height: 130 + elev, type: 'elevated' });
+        // 高台もバイオームギミック適用（elevated描画 + ギミック効果）
+        var elevType = biome === 1 ? 'quicksand_elevated' : biome === 2 ? 'ice_elevated' : 'elevated';
+        terrain.push({ x: nextX, y: GROUND_Y - elev, width: 100, height: 130 + elev, type: elevType });
     }
     gameState.lastTerrainX = nextX;
 }
@@ -2462,16 +2844,19 @@ function manageObjects() {
     // ボス戦中は通常スポーン停止
     if (bossState.active && bossState.phase >= 2) return;
 
+    // 安全地帯: 敵・飛行敵スポーン停止
+    var inSafe = isInSafeZone(gameState.distance);
+
     gameState.enemySpawnTimer++;
     gameState.platformSpawnTimer++;
     gameState.coinSpawnTimer++;
     gameState.flyingEnemySpawnTimer++;
     gameState.powerUpSpawnTimer++;
 
-    if (gameState.enemySpawnTimer > 90 && Math.random() < 0.4) {
+    if (!inSafe && gameState.enemySpawnTimer > 90 && Math.random() < 0.4) {
         enemies.push(spawnEnemy()); gameState.enemySpawnTimer = 0;
     }
-    if (gameState.flyingEnemySpawnTimer > 180 && Math.random() < 0.15) {
+    if (!inSafe && gameState.flyingEnemySpawnTimer > 180 && Math.random() < 0.15) {
         flyingEnemies.push(spawnFlyingEnemy()); gameState.flyingEnemySpawnTimer = 0;
     }
     if (gameState.platformSpawnTimer > 120 && Math.random() < 0.6) {
@@ -2519,7 +2904,12 @@ function updateGameSpeed() {
         if (soundManager) soundManager.playLevelUp();
     }
     var mult = 1 + (lvl - 1) * SPEED_UP_RATE;
-    gameState.gameSpeed = Math.min(BASE_SCROLL_SPEED * mult, BASE_SCROLL_SPEED * 5.0);
+    var speed = Math.min(BASE_SCROLL_SPEED * mult, BASE_SCROLL_SPEED * 5.0);
+    // 安全地帯: スクロール減速
+    if (isInSafeZone(gameState.distance) && !shopState.active) {
+        speed = Math.min(speed, SHOP_SAFE_ZONE_SPEED);
+    }
+    gameState.gameSpeed = speed;
 }
 
 // ─── プレイヤー更新 ───
@@ -2636,7 +3026,11 @@ function updatePlayer() {
             player.y = t.y - player.height;
             player.velY = 0;
             player.onGround = true;
-            player.groundType = t.type || 'normal';
+            // elevated系ギミックは基本タイプにマッピング
+            var gt = t.type || 'normal';
+            if (gt === 'quicksand_elevated') gt = 'quicksand';
+            else if (gt === 'ice_elevated') gt = 'ice';
+            player.groundType = gt;
             if (gameState.isRespawning) gameState.isRespawning = false;
         } else if (player.velX > 0 && player.x + player.width - player.velX <= t.x) {
             player.x = t.x - player.width; player.velX = 0;
@@ -2690,6 +3084,9 @@ function updatePlayer() {
                 player.y = p.y - player.height;
                 player.velY = 0;
                 player.onGround = true;
+                // 足場もバイオームギミック適用（砂漠=流砂, 雪原=氷床）
+                var platBiome = getBiomeIndex(gameState.distance);
+                player.groundType = platBiome === 1 ? 'quicksand' : platBiome === 2 ? 'ice' : 'normal';
                 if (gameState.isRespawning) gameState.isRespawning = false;
             }
 
@@ -2837,7 +3234,8 @@ function updatePlatforms() {
                     player.y = maxY;
                     // 地面に着地したのでプラットフォームから降りる
                     player.onGround = true;
-                    player.groundType = 'normal';
+                    var mvBiome = getBiomeIndex(gameState.distance);
+                    player.groundType = mvBiome === 1 ? 'quicksand' : mvBiome === 2 ? 'ice' : 'normal';
                 }
             }
         } else if (p.special === 'disappearing') {
@@ -2869,8 +3267,9 @@ function updateCoins() {
             var dx = pcx - ccx;
             var dy = pcy - ccy;
             var dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 200 && dist > 1) {
-                var strength = 0.08 + (1 - dist / 200) * 0.12; // 近いほど強く吸引
+            var mRange = gameState.magnetRange || 200;
+            if (dist < mRange && dist > 1) {
+                var strength = 0.08 + (1 - dist / mRange) * 0.12; // 近いほど強く吸引
                 c.x += dx * strength;
                 c.y += dy * strength;
             }
@@ -2878,7 +3277,7 @@ function updateCoins() {
 
         if (aabb(player, c)) {
             c.collected = true;
-            gameState.score += 100;
+            gameState.score += Math.floor(100 * (gameState.coinBonus || 1));
             if (soundManager) soundManager.playCoin();
         }
     }
@@ -3012,6 +3411,493 @@ function resetPlayerPosition() {
     gameState.camera.x = Math.max(100, gameState.camera.x - 200);
 }
 
+// ─── ショップシステム ロジック ───
+
+// ラウンドに応じたステージBGMを再生（stage→stage2→stage3→stage→...）
+function playStageBGM() {
+    if (!soundManager) return;
+    var cycle = ((gameRound - 1) % 3); // 0=stage, 1=stage2, 2=stage3
+    var bgmType = cycle === 0 ? 'stage' : cycle === 1 ? 'stage2' : 'stage3';
+    soundManager.playBGM(bgmType);
+}
+
+// ── ステージショップ ──
+function checkShopTrigger() {
+    if (bossState.active || bossState.bossTriggered) return;
+    var bossDistance = BOSS_TRIGGER_DISTANCE * gameRound;
+
+    // ショップ建物をワールドに配置（一度だけ） — 安全地帯より100m手前で配置開始
+    if (!shopState.buildingPlaced && gameState.distance >= bossDistance - SHOP_SAFE_ZONE_START - 100) {
+        shopState.buildingPlaced = true;
+        shopState.buildingX = (bossDistance - SHOP_BUILDING_OFFSET) * 10; // m→px
+    }
+
+    // ショップの前で上入力 → 入店
+    if (shopState.buildingPlaced && !shopState.visited && !shopState.active) {
+        var shopDoorX = shopState.buildingX + 90; // ドア中央（建物幅180の中央）
+        var playerCX = player.x + player.width / 2;
+        var nearDoor = Math.abs(playerCX - shopDoorX) < 80 && player.onGround;
+        if (nearDoor && gameState.input.up) {
+            openStageShop();
+        }
+    }
+}
+
+function openStageShop() {
+    shopState.active = true;
+    shopState.visited = true;
+    shopState.savedGameSpeed = gameState.gameSpeed;
+    gameState.gameSpeed = 0;
+    gameState.gamePaused = true;
+    gameState.input.up = false;    // 入力消費（ジャンプ暴発防止）
+    gameState.input.jump = false;
+    preloadShopImages();
+    if (soundManager) soundManager.playBGM('shop');
+    showStageShopScreen();
+}
+
+var shopClosing = false; // 退店確認中フラグ
+
+function closeStageShop() {
+    if (shopClosing) return;
+    // 退店確認ダイアログ表示
+    shopConfirmingItem = null;
+    shopClosing = true;
+    setKeeperText('shop_keeper_leave_confirm');
+    showShopConfirm(true);
+}
+
+function confirmCloseShop() {
+    showShopConfirm(false);
+    shopClosing = false;
+    setKeeperText('shop_keeper_close');
+    setTimeout(function() {
+        shopExitSequence(function() {
+            shopState.active = false;
+            gameState.gamePaused = false;
+            gameState.gameSpeed = shopState.savedGameSpeed || gameState.gameSpeed;
+            playStageBGM();
+            hideStageShopScreen();
+        });
+    }, 600);
+}
+
+function cancelCloseShop() {
+    showShopConfirm(false);
+    shopClosing = false;
+    setKeeperText('shop_keeper_greet');
+}
+
+var shopConfirmingItem = null;  // DQ風：確認中のアイテムID
+
+function setKeeperText(key, replacements) {
+    var txt = t(key);
+    if (replacements) {
+        for (var k in replacements) {
+            txt = txt.replace('{' + k + '}', replacements[k]);
+        }
+    }
+    var el = document.getElementById('shopKeeperText');
+    if (el) el.textContent = txt;
+}
+
+function showShopConfirm(show) {
+    var box = document.getElementById('shopConfirmBox');
+    if (box) box.style.display = show ? 'block' : 'none';
+}
+
+function showStageShopScreen() {
+    shopState.purchaseCounts = {};
+    shopConfirmingItem = null;
+    setShopBg('shop01');
+    var el = document.getElementById('stageShopScreen');
+    el.classList.remove('hidden');
+    el.style.display = 'flex';
+    history.pushState({ screen: 'stageShop' }, '');
+    setKeeperText('shop_keeper_greet');
+    showShopConfirm(false);
+    // はい/いいえの表示テキスト更新
+    var yesEl = document.getElementById('shopConfirmYes');
+    var noEl = document.getElementById('shopConfirmNo');
+    if (yesEl) yesEl.textContent = '▶ ' + t('shop_confirm_yes');
+    if (noEl) noEl.textContent = '　 ' + t('shop_confirm_no');
+    updateStageShopUI();
+}
+
+function hideStageShopScreen() {
+    var el = document.getElementById('stageShopScreen');
+    el.classList.add('hidden');
+    el.style.display = 'none';
+    setShopBg('shop01');  // 次回用にリセット
+}
+
+// ── ショップ背景差分切替 ──
+// shop01:入店(デフォルト) shop02:購入成功 shop03:預金成功 shop04:所持金不足 shop05:退店
+var shopBgCurrent = 'shop01';
+var shopBgTimer = null;
+var shopImgsPreloaded = false;
+function preloadShopImages() {
+    if (shopImgsPreloaded) return;
+    shopImgsPreloaded = true;
+    for (var i = 1; i <= 5; i++) {
+        var img = new Image();
+        img.src = 'images/shop0' + i + '.jpg';
+    }
+}
+
+function setShopBg(name, revertMs) {
+    var bgEl = document.getElementById('shopBgImg');
+    if (!bgEl) return;
+    shopBgCurrent = name;
+    bgEl.style.backgroundImage = "url('images/" + name + ".jpg')";
+    if (shopBgTimer) { clearTimeout(shopBgTimer); shopBgTimer = null; }
+    if (revertMs) {
+        shopBgTimer = setTimeout(function() {
+            shopBgTimer = null;
+            setShopBg('shop01');
+        }, revertMs);
+    }
+}
+
+var shopExiting = false;
+function shopExitSequence(callback) {
+    if (shopExiting) return;
+    shopExiting = true;
+    setShopBg('shop05');
+    var bgEl = document.getElementById('shopBgImg');
+    // UIパネル（下部）とステータス（左上）の両方をフェードアウト
+    var panels = document.querySelectorAll('#stageShopScreen > div:nth-child(n+3)');
+    panels.forEach(function(p) { p.style.transition = 'opacity 0.4s ease'; p.style.opacity = '0'; });
+    setTimeout(function() {
+        if (bgEl) { bgEl.style.opacity = '0'; }
+        setTimeout(function() {
+            if (bgEl) { bgEl.style.opacity = '1'; }
+            panels.forEach(function(p) { p.style.opacity = '1'; p.style.transition = ''; });
+            shopExiting = false;
+            if (callback) callback();
+        }, 350);
+    }, 800);
+}
+
+function renderStageShopItem(item, purchaseCount) {
+    var canBuy = gameState.score >= item.price && purchaseCount < item.maxPerVisit;
+    if (item.stockItem && stockState.items.length >= stockState.maxSlots) canBuy = false;
+    // ライフ上限チェック（回復薬はライフ10で買えない）
+    if (item.id === 'heal' && gameState.lives >= 10) canBuy = false;
+    var soldOut = purchaseCount >= item.maxPerVisit;
+    var hpFull = (item.id === 'heal' && gameState.lives >= 10);
+    // DQ風メニュー項目：▶ アイテム名　　　価格
+    var isConfirming = (shopConfirmingItem === item.id);
+    var cursor = isConfirming ? '▶' : '　';
+    var textColor = canBuy ? '#fff' : 'rgba(180,180,180,0.5)';
+    var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + '円');
+    return '<div onclick="selectShopItem(\'' + item.id + '\')" style="' +
+        'display:flex; align-items:center; justify-content:space-between;' +
+        'padding:4px 8px; cursor:pointer;' +
+        (isConfirming ? 'background:rgba(255,255,255,0.1);' : '') +
+        'border-bottom:1px solid rgba(255,255,255,0.06);' +
+        (canBuy ? '' : 'opacity:0.45;pointer-events:none;') + '">' +
+        '<div style="display:flex; align-items:center; gap:4px;">' +
+            '<span style="color:#fff; font-family:DotGothic16,monospace;' +
+                'font-size:clamp(10px,2vw,14px); width:1em; text-align:center;' +
+                'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
+            '<span style="font-size:clamp(12px,2.6vw,18px);">' + item.icon + '</span>' +
+            '<span style="color:' + textColor + '; font-size:clamp(10px,2vw,14px);' +
+                'font-weight:700; font-family:DotGothic16,monospace;' +
+                'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(item.nameKey)) + '</span>' +
+        '</div>' +
+        '<span style="color:#ffd700; font-size:clamp(9px,1.8vw,13px); font-weight:700;' +
+            'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
+            'white-space:nowrap;">' + escapeHtml(priceText) + '</span>' +
+    '</div>';
+}
+
+function updateStageShopUI() {
+    document.getElementById('stageShopScore').textContent = '💴 ' + gameState.score + '円';
+    var livesEl = document.getElementById('stageShopLives');
+    if (livesEl) livesEl.textContent = '❤ ' + gameState.lives;
+    var container = document.getElementById('stageShopItems');
+    var html = '';
+    for (var i = 0; i < STAGE_SHOP_ITEMS.length; i++) {
+        var item = STAGE_SHOP_ITEMS[i];
+        var count = shopState.purchaseCounts[item.id] || 0;
+        html += renderStageShopItem(item, count);
+    }
+    container.innerHTML = html;
+    // 預金ボタンは常にグレーアウト（準備中）
+}
+
+// DQ風：アイテム選択 → 確認ダイアログ
+function selectShopItem(itemId) {
+    var item = STAGE_SHOP_ITEMS.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    var bought = shopState.purchaseCounts[itemId] || 0;
+    // 売り切れチェック
+    if (bought >= item.maxPerVisit) {
+        setKeeperText('shop_keeper_sold_out');
+        if (soundManager) soundManager.playDamage();
+        setShopBg('shop04', 1200);
+        return;
+    }
+    // ライフ上限チェック
+    if (item.id === 'heal' && gameState.lives >= 10) {
+        setKeeperText('shop_keeper_heal_maxhp');
+        if (soundManager) soundManager.playDamage();
+        return;
+    }
+    // 所持金チェック
+    if (gameState.score < item.price) {
+        setKeeperText('shop_keeper_no_money');
+        if (soundManager) soundManager.playDamage();
+        setShopBg('shop04', 1200);
+        return;
+    }
+    // ストック満杯チェック
+    if (item.stockItem && stockState.items.length >= stockState.maxSlots) {
+        setKeeperText('shop_keeper_stock_full');
+        if (soundManager) soundManager.playDamage();
+        return;
+    }
+    // 確認ダイアログ表示
+    shopConfirmingItem = itemId;
+    setKeeperText('shop_keeper_confirm', { item: t(item.nameKey), price: item.price });
+    showShopConfirm(true);
+    updateStageShopUI();
+}
+
+function confirmShopBuy() {
+    // 退店確認中なら退店実行
+    if (shopClosing) { confirmCloseShop(); return; }
+    showShopConfirm(false);
+    if (!shopConfirmingItem) return;
+    var itemId = shopConfirmingItem;
+    shopConfirmingItem = null;
+    buyStageItem(itemId);
+}
+
+function cancelShopBuy() {
+    // 退店確認中ならキャンセル
+    if (shopClosing) { cancelCloseShop(); return; }
+    showShopConfirm(false);
+    shopConfirmingItem = null;
+    setKeeperText('shop_keeper_greet');
+    updateStageShopUI();
+}
+
+function buyStageItem(itemId) {
+    var item = STAGE_SHOP_ITEMS.find(function(i) { return i.id === itemId; });
+    if (!item) return false;
+    // ライフ上限チェック（回復薬はライフ10で買えない）
+    if (item.id === 'heal' && gameState.lives >= 10) {
+        setKeeperText('shop_keeper_heal_maxhp');
+        if (soundManager) soundManager.playDamage();
+        shopConfirmingItem = null;
+        updateStageShopUI();
+        return false;
+    }
+    if (gameState.score < item.price) {
+        setKeeperText('shop_keeper_no_money');
+        if (soundManager) soundManager.playDamage();
+        setShopBg('shop04', 1200);
+        shopConfirmingItem = null;
+        updateStageShopUI();
+        return false;
+    }
+    var bought = shopState.purchaseCounts[itemId] || 0;
+    if (bought >= item.maxPerVisit) {
+        setKeeperText('shop_keeper_sold_out');
+        if (soundManager) soundManager.playDamage();
+        setShopBg('shop04', 1200);
+        shopConfirmingItem = null;
+        updateStageShopUI();
+        return false;
+    }
+    if (item.stockItem) {
+        if (!addToStock(itemId)) {
+            setKeeperText('shop_keeper_stock_full');
+            if (soundManager) soundManager.playDamage();
+            setShopBg('shop04', 1200);
+            shopConfirmingItem = null;
+            updateStageShopUI();
+            return false;
+        }
+    }
+    gameState.score -= item.price;
+    shopState.purchaseCounts[itemId] = bought + 1;
+    if (!item.stockItem) item.effect();
+    if (soundManager) soundManager.playItem();
+    setKeeperText('shop_keeper_buy_ok');
+    setShopBg('shop02', 1500);
+    shopConfirmingItem = null;
+    updateStageShopUI();
+    return true;
+}
+
+function depositScore() {
+    return false; // 預金口座 準備中
+    if (shopState.deposited) return false;
+    if (gameState.score <= 0) {
+        setKeeperText('shop_keeper_deposit_zero');
+        if (soundManager) soundManager.playDamage();
+        return false;
+    }
+    var depositAmount = Math.floor(gameState.score * 0.5);
+    gameSettings.savings += depositAmount;
+    gameState.score = gameState.score - depositAmount;
+    shopState.deposited = true;
+    saveSettings();
+    if (soundManager) soundManager.playCoin();
+    setKeeperText('shop_keeper_deposit_ok');
+    setShopBg('shop03', 1500);
+    updateStageShopUI();
+    return true;
+}
+
+// ── タイトルショップ ──
+function showTitleShop() {
+    var el = document.getElementById('titleShopScreen');
+    el.classList.remove('hidden');
+    el.style.display = 'flex';
+    history.pushState({ screen: 'titleShop' }, '');
+    updateTitleShopUI();
+}
+
+function hideTitleShop() {
+    var el = document.getElementById('titleShopScreen');
+    el.classList.add('hidden');
+    el.style.display = 'none';
+}
+
+function renderTitleShopItem(upgrade) {
+    var currentLevel = (gameSettings.upgrades || {})[upgrade.id] || 0;
+    var isMax = currentLevel >= upgrade.maxLevel;
+    var price = isMax ? 0 : upgrade.prices[currentLevel];
+    var canBuy = !isMax && gameSettings.savings >= price;
+    var levelDots = '';
+    for (var i = 0; i < upgrade.maxLevel; i++) {
+        levelDots += i < currentLevel ? '●' : '○';
+    }
+    var borderColor = canBuy ? 'rgba(255,215,0,0.3)' : 'rgba(255,255,255,0.08)';
+    var bgColor = canBuy ? 'rgba(40,25,10,0.85)' : 'rgba(20,12,8,0.7)';
+    return '<div style="display:flex; align-items:center; justify-content:space-between;' +
+        'padding:5px 8px; background:' + bgColor + '; border-radius:6px;' +
+        'border:1px solid ' + borderColor + ';' +
+        (canBuy || isMax ? '' : 'opacity:0.55;') + '">' +
+        '<div style="display:flex; align-items:center; gap:6px; flex:1;">' +
+            '<span style="font-size:clamp(14px,3vw,20px); filter:' + (canBuy || isMax ? 'none' : 'grayscale(0.7)') + ';">' + upgrade.icon + '</span>' +
+            '<div>' +
+                '<div style="color:#ffe0a0; font-size:clamp(10px,2vw,14px); font-weight:700; font-family:DotGothic16,monospace;' +
+                    'text-shadow:0 1px 2px rgba(0,0,0,0.9);">' +
+                    escapeHtml(t(upgrade.nameKey)) +
+                    ' <span style="color:#ffd700; font-size:clamp(8px,1.6vw,12px);">' + levelDots + '</span>' +
+                '</div>' +
+                '<div style="color:rgba(255,220,180,0.5); font-size:clamp(8px,1.4vw,11px); font-family:DotGothic16,monospace;">' +
+                    escapeHtml(t(upgrade.descKey)) +
+                    (isMax ? '' : ' → ' + upgrade.effectDesc[currentLevel]) +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div style="display:flex; align-items:center; gap:5px;">' +
+            (isMax
+                ? '<span style="color:#4CAF50; font-size:clamp(10px,2vw,14px); font-weight:800;' +
+                    'font-family:DotGothic16,monospace; text-shadow:0 0 6px rgba(76,175,80,0.4);">MAX</span>'
+                : '<span style="color:#ffd700; font-size:clamp(9px,1.8vw,13px); font-weight:700; font-family:DotGothic16,monospace;' +
+                    'text-shadow:0 0 6px rgba(255,215,0,0.3);">' + price + '</span>' +
+                  '<button class="game-button" onclick="buyTitleUpgrade(\'' + upgrade.id + '\')" ' +
+                    (canBuy ? '' : 'disabled') +
+                    ' style="min-width:auto; padding:4px 10px; font-size:clamp(9px,1.8vw,13px); min-height:28px;' +
+                    'background:linear-gradient(180deg,#6a4c2a,#4a3018);border:1px solid rgba(255,215,0,0.4);' +
+                    'color:#ffd700;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.8);' +
+                    (canBuy ? '' : 'opacity:0.4;pointer-events:none;') + '">' +
+                    escapeHtml(t('shop_buy')) +
+                  '</button>'
+            ) +
+        '</div>' +
+    '</div>';
+}
+
+function updateTitleShopUI() {
+    document.getElementById('titleShopSavings').textContent = '🏦 ' + gameSettings.savings;
+    var container = document.getElementById('titleShopList');
+    var html = '';
+    for (var i = 0; i < TITLE_SHOP_UPGRADES.length; i++) {
+        html += renderTitleShopItem(TITLE_SHOP_UPGRADES[i]);
+    }
+    container.innerHTML = html;
+}
+
+function buyTitleUpgrade(upgradeId) {
+    var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
+    if (!upgrade) return false;
+    var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
+    if (currentLevel >= upgrade.maxLevel) return false;
+    var price = upgrade.prices[currentLevel];
+    if (gameSettings.savings < price) { if (soundManager) soundManager.playDamage(); return false; }
+    gameSettings.savings -= price;
+    if (!gameSettings.upgrades) gameSettings.upgrades = {};
+    gameSettings.upgrades[upgradeId] = currentLevel + 1;
+    saveSettings();
+    if (soundManager) soundManager.playItem();
+    updateTitleShopUI();
+    return true;
+}
+
+function applyUpgrades() {
+    var ups = gameSettings.upgrades || {};
+    var coinLv = ups.coin_master || 0;
+    gameState.coinBonus = 1.0 + coinLv * 0.1;
+    var toughLv = ups.toughness || 0;
+    gameState.lives = 5 + toughLv;
+    var stockLv = ups.stock_expand || 0;
+    stockState.maxSlots = 3 + stockLv;
+    var magnetLv = ups.magnet_boost || 0;
+    gameState.magnetRange = 200 * (1 + magnetLv * 0.5);
+    var comboLv = ups.combo_master || 0;
+    COMBO_TIMEOUT = 60 + comboLv * 30; // コンボマスター: 受付時間延長
+}
+
+// ── ストックシステム ──
+function addToStock(itemId) {
+    if (stockState.items.length >= stockState.maxSlots) return false;
+    stockState.items.push({ id: itemId });
+    updateStockUI();
+    return true;
+}
+
+function useStockItem(index) {
+    if (index < 0 || index >= stockState.items.length) return false;
+    var item = stockState.items[index];
+    var shopItem = STAGE_SHOP_ITEMS.find(function(s) { return s.id === item.id; });
+    if (!shopItem || !shopItem.stockEffect) return false;
+    shopItem.stockEffect();
+    stockState.items.splice(index, 1);
+    if (soundManager) soundManager.playItem();
+    updateStockUI();
+    return true;
+}
+
+function updateStockUI() {
+    var container = document.getElementById('stockSlots');
+    if (!container) return;
+    if (stockState.items.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    var html = '';
+    for (var i = 0; i < stockState.maxSlots; i++) {
+        if (i < stockState.items.length) {
+            var itm = stockState.items[i];
+            var si = STAGE_SHOP_ITEMS.find(function(s) { return s.id === itm.id; });
+            html += '<div class="stock-slot" onclick="useStockItem(' + i + ')">' +
+                (si ? si.icon : '?') + '</div>';
+        } else {
+            html += '<div class="stock-slot stock-slot-empty"></div>';
+        }
+    }
+    container.innerHTML = html;
+}
+
 // ─── ボスバトルシステム ───
 
 function checkBossTrigger() {
@@ -3087,7 +3973,7 @@ function setupBossArena() {
     };
     bossState.phase = 2; // entering
     bossState.summonTimer = BOSS_SUMMON_INTERVAL;
-    bossState.itemSpawnTimer = 300; // ボス戦アイテム初回出現まで5秒
+    bossState.itemSpawnTimer = 480; // ボス戦アイテム初回出現まで8秒（ショップ導入で抑制）
     bgCache = null; // ボス戦背景に切り替え
     if (soundManager) soundManager.playBossBGM();
 }
@@ -3182,7 +4068,12 @@ function updateBoss() {
             gameState.gameSpeed = Math.min(bossState.savedGameSpeed * roundMult, BASE_SCROLL_SPEED * 5.0);
             // 通常BGM・背景復帰
             bgCache = null;
-            if (soundManager) soundManager.playBGM('stage');
+            playStageBGM();
+            // ショップ訪問フラグリセット（次ラウンド用）
+            shopState.visited = false;
+            shopState.deposited = false;
+            shopState.buildingPlaced = false;
+            shopState.buildingX = 0;
         }
         return;
     }
@@ -3401,7 +4292,7 @@ function updateBossItems() {
     bossState.itemSpawnTimer--;
     if (bossState.itemSpawnTimer <= 0) {
         spawnBossItem();
-        bossState.itemSpawnTimer = 360 + Math.floor(Math.random() * 240); // 6〜10秒間隔
+        bossState.itemSpawnTimer = 540 + Math.floor(Math.random() * 360); // 9〜15秒間隔（ショップ導入で抑制）
     }
     // アイテム寿命管理
     for (var i = powerUps.length - 1; i >= 0; i--) {
@@ -4324,14 +5215,66 @@ function drawPlayer(x, y) {
     ctx.restore();
 }
 
+// ─── ショップ建物描画 ───
+// ショップ建物画像のプリロード
+var shopBuildingImg = new Image();
+shopBuildingImg.src = 'images/shop.png';
+
+function drawShopBuilding() {
+    if (!shopState.buildingPlaced) return;
+    var screenX = shopState.buildingX - gameState.camera.x;
+    if (screenX < -200 || screenX > GAME_WIDTH + 200) return; // 画面外チェック
+
+    // shop.png（700x508）を180x131に縮小して地面に配置
+    var bw = 180, bh = 131;
+    var bx = shopState.buildingX, by = GROUND_Y - bh; // ワールド座標（ctx.translate適用済み）
+
+    ctx.save();
+    if (shopBuildingImg.complete && shopBuildingImg.naturalWidth > 0) {
+        ctx.imageSmoothingEnabled = false; // ピクセルアート感を保持
+        ctx.drawImage(shopBuildingImg, bx, by, bw, bh);
+    }
+
+    // 入店プロンプト（未訪問 & ドア近く）
+    if (!shopState.visited && !shopState.active) {
+        var playerCX = player.x + player.width / 2;
+        var doorCX = shopState.buildingX + bw / 2;
+        if (Math.abs(playerCX - doorCX) < 80 && player.onGround) {
+            var bounce = Math.sin(gameState.time * 0.08) * 3;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 11px DotGothic16, monospace';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = 'rgba(0,0,0,0.9)';
+            ctx.shadowBlur = 4;
+            ctx.fillText('⬆ ENTER', bx + bw / 2, by - 8 + bounce);
+            ctx.shadowBlur = 0;
+        }
+    }
+    // 訪問済み表示
+    if (shopState.visited && !shopState.active) {
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#aaa';
+        ctx.font = 'bold 9px DotGothic16, monospace';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        ctx.shadowBlur = 3;
+        ctx.fillText('CLOSED', bx + bw / 2, by - 4);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+}
+
 function drawTerrain(t) {
     if (t.type === 'hole') return;
     var topTile;
     switch (t.type) {
-        case 'elevated':  topTile = 'terrain_elevated_top'; break;
-        case 'quicksand': topTile = 'terrain_quicksand'; break;
-        case 'ice':       topTile = 'terrain_ice'; break;
-        default:          topTile = 'terrain_grass_top'; break;
+        case 'elevated':           topTile = 'terrain_elevated_top'; break;
+        case 'quicksand':          topTile = 'terrain_quicksand'; break;
+        case 'quicksand_elevated': topTile = 'terrain_quicksand'; break;
+        case 'ice':                topTile = 'terrain_ice'; break;
+        case 'ice_elevated':       topTile = 'terrain_ice'; break;
+        default:                   topTile = 'terrain_grass_top'; break;
     }
     var TILE = 34;
     var GRASS_OFFSET = 5; // 草スプライト上部の透明行を補正 (描画を上にずらす)
@@ -4347,7 +5290,15 @@ function drawTerrain(t) {
 }
 
 function drawPlatform(p) {
-    var tileName = p.type === 'cloud' ? 'platform_cloud' : 'platform_ground';
+    var pBiome = getBiomeIndex(gameState.distance);
+    var tileName;
+    if (p.type === 'cloud') {
+        // 雲足場: バイオーム別カラー（砂漠=茶, 冬=グレー）
+        tileName = pBiome === 1 ? 'platform_cloud_desert' : pBiome === 2 ? 'platform_cloud_ice' : 'platform_cloud';
+    } else {
+        // floating_ground: バイオームに応じたタイル
+        tileName = pBiome === 1 ? 'terrain_quicksand' : pBiome === 2 ? 'terrain_ice' : 'platform_ground';
+    }
     var TILE = 34;
 
     // 消える足場: 点滅エフェクト
@@ -4704,6 +5655,7 @@ function render() {
         var tr = terrain[j];
         if (tr.x + tr.width > camL && tr.x < camR) drawTerrain(tr);
     }
+    drawShopBuilding(); // ショップ建物（地形の上、足場の下）
     for (j = 0; j < platforms.length; j++) {
         var p = platforms[j];
         if (p.x + p.width > camL && p.x < camR) drawPlatform(p);
@@ -4883,10 +5835,14 @@ function render() {
     }
 
     // ─── デバッグモード表示 ───
-    // ボス戦即開始ボタン表示切り替え（DOM版）
+    // デバッグボタン表示切り替え（DOM版）
     var bossBtn = document.getElementById('debugBossBtn');
     if (bossBtn) {
         bossBtn.style.display = (debugMode && !bossState.active && gameState.gameStarted && !gameState.gamePaused) ? 'block' : 'none';
+    }
+    var shopWarpBtn = document.getElementById('debugShopBtn');
+    if (shopWarpBtn) {
+        shopWarpBtn.style.display = (debugMode && !bossState.active && !shopState.active && gameState.gameStarted && !gameState.gamePaused) ? 'block' : 'none';
     }
     if (debugMode) {
         var dbX = 8, dbY = GAME_HEIGHT - 28;
@@ -5020,6 +5976,7 @@ function gameLoop(timestamp) {
     while (accumulator >= FIXED_DT) {
         if (gameState.gameStarted && !gameState.gamePaused) {
             updateGameSpeed();
+            checkShopTrigger();
             checkBossTrigger();
             updateBoss();
             updateBiome();
@@ -5169,7 +6126,7 @@ function setRandomTitleImage() {
         }
     }
 
-    // ─ 下スワイプ（足場貫通）共通処理 ─
+    // ─ 下スワイプ（足場貫通）/ 上スワイプ（ショップ入店）共通処理 ─
     function handleSwipeDown(e) {
         if (moveSwiped) return;
         var touch = e.touches[0];
@@ -5184,6 +6141,11 @@ function setRandomTitleImage() {
                 gameState.input.left = false; gameState.input.right = false;
                 highlightControl(null);
             }
+        } else if (dy < -20 && dt < 500) {
+            // 上スワイプ: ショップ入店用
+            moveSwiped = true;
+            gameState.input.up = true;
+            setTimeout(function() { gameState.input.up = false; }, 200);
         }
     }
 
@@ -5356,6 +6318,37 @@ function setRandomTitleImage() {
         });
     }
 
+    // SHOP WARPボタン（デバッグ用：ショップ出現地点にワープ）
+    var debugShopBtnEl = document.getElementById('debugShopBtn');
+    if (debugShopBtnEl) {
+        function triggerDebugShopWarp() {
+            if (!debugMode || !gameState.gameStarted || gameState.gamePaused) return;
+            if (bossState.active || shopState.active) return;
+            // ボス出現の200m手前（≒2200m）にワープ
+            var targetDist = BOSS_TRIGGER_DISTANCE * gameRound - 200;
+            var warpDelta = targetDist - gameState.distance;
+            if (warpDelta > 0) {
+                gameState.camera.x += warpDelta * 10;
+                gameState.distance = targetDist;
+                player.x = gameState.camera.x + 150;
+            }
+            // ワープ時に即座にショップ建物を配置
+            if (!shopState.buildingPlaced) {
+                var bossDistance = BOSS_TRIGGER_DISTANCE * gameRound;
+                shopState.buildingPlaced = true;
+                shopState.buildingX = (bossDistance - SHOP_BUILDING_OFFSET) * 10;
+            }
+        }
+        debugShopBtnEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            triggerDebugShopWarp();
+        });
+        debugShopBtnEl.addEventListener('touchend', function(e) {
+            e.preventDefault(); e.stopPropagation();
+            triggerDebugShopWarp();
+        });
+    }
+
     window.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { e.preventDefault(); pauseGame(); return; }
         if (gameState.gamePaused && e.key === ' ') { e.preventDefault(); pauseGame(); return; }
@@ -5371,7 +6364,9 @@ function setRandomTitleImage() {
                 }
                 break;
             case ' ': case 'ArrowUp': case 'w': case 'W':
-                gameState.input.jump = true; e.preventDefault(); break;
+                gameState.input.jump = true;
+                gameState.input.up = true;
+                e.preventDefault(); break;
         }
     });
 
@@ -5384,7 +6379,10 @@ function setRandomTitleImage() {
                 gameState.downSwipeActive = false;
                 gameState.downSwipeTimer = 0;
                 break;
-            case ' ': case 'ArrowUp': case 'w': case 'W': gameState.input.jump = false; break;
+            case ' ': case 'ArrowUp': case 'w': case 'W':
+                gameState.input.jump = false;
+                gameState.input.up = false;
+                break;
         }
     });
 })();
@@ -5449,6 +6447,34 @@ function initialize() {
         showSettings();
     });
 
+    // ショップボタン（タイトル画面）— 現在は準備中のため無効化
+    // var shopBtn = document.getElementById('shopButton');
+    // shopBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showTitleShop(); });
+    // shopBtn.addEventListener('click', function(e) { e.stopPropagation(); showTitleShop(); });
+
+    // タイトルショップ戻るボタン
+    var tShopBack = document.getElementById('titleShopBackBtn');
+    tShopBack.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); hideTitleShop(); });
+    tShopBack.addEventListener('click', function(e) { e.stopPropagation(); hideTitleShop(); });
+
+    // ステージショップ閉じるボタン
+    var ssClose = document.getElementById('stageShopCloseBtn');
+    ssClose.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeStageShop(); });
+    ssClose.addEventListener('click', function(e) { e.stopPropagation(); closeStageShop(); });
+
+    // 預金ボタン
+    var depBtn = document.getElementById('depositBtn');
+    depBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); depositScore(); });
+    depBtn.addEventListener('click', function(e) { e.stopPropagation(); depositScore(); });
+
+    // DQ風 はい/いいえ確認ボタン
+    var cfYes = document.getElementById('shopConfirmYes');
+    cfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); confirmShopBuy(); });
+    cfYes.addEventListener('click', function(e) { e.stopPropagation(); confirmShopBuy(); });
+    var cfNo = document.getElementById('shopConfirmNo');
+    cfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); cancelShopBuy(); });
+    cfNo.addEventListener('click', function(e) { e.stopPropagation(); cancelShopBuy(); });
+
     // タイトル画面の背景タップでゲーム開始
     startScreen.addEventListener('click', function(e) {
         handleTitleScreenClick(e);
@@ -5484,6 +6510,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 var modal = document.getElementById('gameModal');
                 var settings = document.getElementById('settingsScreen');
                 var gameOverEl = document.getElementById('gameOverScreen');
+
+                // ショップ画面の閉じ処理
+                if (shopState.active) {
+                    closeStageShop();
+                    return;
+                }
+                var titleShop = document.getElementById('titleShopScreen');
+                if (titleShop && titleShop.style.display !== 'none' && !titleShop.classList.contains('hidden')) {
+                    hideTitleShop();
+                    return;
+                }
 
                 if (settings && !settings.classList.contains('hidden') && settings.style.display !== 'none') {
                     hideSettings();
