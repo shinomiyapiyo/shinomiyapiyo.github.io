@@ -150,23 +150,19 @@
 
         /* --- タイトル画像 --- */
         #titleImage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             width: auto;
             height: auto;
-            max-width: 90vw;
-            max-height: 80vh;
+            max-width: 85vw;
+            max-height: 75vh;
             object-fit: contain;
             border: none;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            z-index: 1;
             display: block;
         }
         @media (min-width: 600px) {
-            #titleImage { max-width: 50vw; max-height: 70vh; left: 38%; }
+            #titleImage { max-width: 50vw; max-height: 70vh; }
+            #titleCenter { left: 38% !important; }
         }
 
         /* --- ボタン共通 --- */
@@ -386,8 +382,8 @@
             animation: tapBounce 2s ease-in-out infinite;
         }
         @keyframes tapBounce {
-            0%, 100% { opacity: 0.7; transform: translateX(-50%) translateY(0); }
-            50% { opacity: 1; transform: translateX(-50%) translateY(-3px); }
+            0%, 100% { opacity: 0.7; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-3px); }
         }
         @media (min-width: 600px) {
             .tap-to-start { font-size: 16px; }
@@ -579,14 +575,30 @@
 
         <!-- タイトル画面 -->
         <div id="startScreen" class="overlay hidden" style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
-            <img src="images/logo.png" alt="ロゴ" style="
-                position: absolute; top: -3%; left: 50%;
-                transform: translateX(-50%);
-                width: 25vw; height: auto; z-index: 10;">
-            
-            <img id="titleImage" src="" alt="ぴよ氏の冒険">
+            <!-- 中央列：ロゴ＋メイン画像＋開始ボタン（縦整列） -->
+            <div id="titleCenter" style="
+                position: absolute; top: 44%; left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex; flex-direction: column; align-items: center;
+                gap: 0px; z-index: 10;
+                max-height: 92vh; box-sizing: border-box;">
+                <img src="images/logo.png" alt="ロゴ" style="
+                    width: 22vw; height: auto; flex-shrink: 0; margin-bottom: -2px;">
+                <img id="titleImage" src="" alt="ぴよ氏の冒険">
+            </div>
 
-            <!-- バージョン情報：左下へ分散 -->
+            <div id="startMessage" class="tap-to-start" style="
+                position: absolute; bottom: 6px; left: 50%;
+                transform: translateX(-50%); z-index: 10;
+                font-size: 1.3vw; color: rgba(255,255,255,0.55);
+                font-family: 'M PLUS Rounded 1c', sans-serif;
+                font-weight: 600;
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+                letter-spacing: 0.05em; white-space: nowrap;" data-i18n="start_tap">
+                ▶ 画面をタップで開始
+            </div>
+
+            <!-- バージョン情報：左下 -->
             <div style="
                 position: absolute; bottom: 15px; left: 15px;
                 z-index: 10;
@@ -612,7 +624,7 @@
                     style="opacity:0.4; pointer-events:none; filter:grayscale(0.8);">🛒 SHOP (準備中)</button>
             </div>
 
-            <!-- クレジット：右下へ分散 -->
+            <!-- クレジット：右下 -->
             <div style="
                 position: absolute; bottom: 15px; right: 15px;
                 z-index: 10;
@@ -620,21 +632,6 @@
                 font-size: 1.5vw; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
                 line-height: 1.2;">
                 © 2026 ぴよ氏の冒険<br>Created by NullPo Works
-            </div>
-
-            <div id="startMessage" class="tap-to-start" style="
-                position: absolute; bottom: 10vh; left: 50%;
-                transform: translateX(-50%); z-index: 10;
-                font-size: 2.2vw; text-align: center; color: #fff;
-                font-family: 'M PLUS Rounded 1c', sans-serif;
-                font-weight: 700;
-                background: linear-gradient(135deg, rgba(76,175,80,0.85), rgba(56,142,60,0.85));
-                padding: 10px 28px; border-radius: 25px;
-                border: 1px solid rgba(255,255,255,0.25);
-                box-shadow: 0 4px 16px rgba(76,175,80,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-                text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-                letter-spacing: 0.1em;" data-i18n="start_tap">
-                ▶ 画面をタップで開始
             </div>
         </div>
 
@@ -774,7 +771,7 @@
             display: none; flex-direction: row;
             z-index: 30; overflow: hidden;">
             <!-- 左側：DQ風UIパネル -->
-            <div id="shopUIPanel" style="flex: 0 0 25%; display: flex; flex-direction: column;
+            <div id="shopUIPanel" style="flex: 0 0 33%; display: flex; flex-direction: column;
                 background: rgba(0,0,30,0.98); padding: 3px 4px;
                 overflow: hidden; box-sizing: border-box;
                 border-right: 2px solid rgba(255,255,255,0.3);">
@@ -811,10 +808,10 @@
                     </div>
                     <!-- はい/いいえ確認ボックス（DQ風） -->
                     <div id="shopConfirmBox" style="display:none;
-                        position: absolute; right: 6px; bottom: -34px;
-                        background: rgba(0,0,48,0.95);
+                        position: absolute; left: 4px; top: 100%; margin-top: 2px;
+                        background: rgba(0,0,48,0.97);
                         border: 2px solid #fff; border-radius: 5px;
-                        padding: 2px 0; min-width: 70px; z-index: 5;
+                        padding: 2px 0; min-width: 70px; z-index: 10;
                         box-shadow: 0 3px 10px rgba(0,0,0,0.6);">
                         <div id="shopConfirmYes" style="
                             color: #fff; font-family: 'DotGothic16', monospace;
@@ -3510,7 +3507,10 @@ function setKeeperText(key, replacements) {
 
 function showShopConfirm(show) {
     var box = document.getElementById('shopConfirmBox');
+    var keeperBox = document.getElementById('shopKeeperBox');
     if (box) box.style.display = show ? 'block' : 'none';
+    // 確認ボックス表示中はmarginを広げてアイテムリストとの重なりを防止
+    if (keeperBox) keeperBox.style.marginBottom = show ? '38px' : '3px';
 }
 
 function showStageShopScreen() {
