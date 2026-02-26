@@ -16,6 +16,10 @@
 - `games/piyo-adventure/` — ぴよアドベンチャーのメインゲーム
 - `games/piyo-adventure/index.html` — ゲーム本体（単一HTMLファイル）
 
+## 操作範囲の制限
+
+- **`games/piyo-adventure/` 内のファイルのみ操作可能** — それ以外のディレクトリやファイルの作成・編集・削除は禁止（この `CLAUDE.md` の更新を除く）
+
 ## 開発ルール
 
 - ゲームは単一HTMLファイル（`index.html`）に全コードを含む構成
