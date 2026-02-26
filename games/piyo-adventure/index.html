@@ -2167,6 +2167,7 @@ function updateBiome() {
         biomeState.current = newIdx;
         biomeState.transition = 0.001; // 遷移開始
         bgCache = null;
+        weatherParticles = []; // バイオーム切替時に天候パーティクルクリア
         // 既存地形のtypeを新バイオームに一括変換（地面も雲と同様に瞬時切替）
         retypeTerrainForBiome(newIdx);
     }
@@ -2289,6 +2290,9 @@ function resetGame() {
     gameState.comboTimer = 0;
     floatEffects = [];
     damageFlashTimer = 0;
+    screenShake = { intensity: 0, timer: 0 };
+    comboFlashTimer = 0;
+    weatherParticles = [];
 
     // ボスバトルリセット
     gameRound = 1;
@@ -3140,6 +3144,16 @@ function registerKill(scoreValue, effectX, effectY) {
     if (gameState.comboCount >= 2) {
         spawnComboEffect(effectX, effectY, gameState.comboCount, comboScore);
     }
+    // 画面シェイク（5コンボ以上）
+    if (gameState.comboCount >= 5) {
+        var shakeStr = Math.min(gameState.comboCount - 4, 6); // 最大6
+        screenShake.intensity = shakeStr;
+        screenShake.timer = 12;
+    }
+    // マイルストーンフラッシュ（5の倍数）
+    if (gameState.comboCount >= 5 && gameState.comboCount % 5 === 0) {
+        comboFlashTimer = 15;
+    }
 }
 
 // ─── 敵更新 ───
@@ -3212,6 +3226,138 @@ function updateEnemies() {
 }
 
 var damageFlashTimer = 0; // 赤フラッシュ演出タイマー
+var screenShake = { intensity: 0, timer: 0 }; // 画面シェイク
+var comboFlashTimer = 0; // コンボマイルストーンフラッシュ
+
+// ─── 天候パーティクルシステム ───
+var weatherParticles = [];
+var WEATHER_MAX = 60;
+
+function updateWeatherParticles() {
+    var biome = biomeState.current;
+    // パーティクル生成
+    var targetCount = biome === 0 ? 15 : WEATHER_MAX; // 草原は少なめ
+    if (biome === 0 && Math.random() > 0.03) targetCount = weatherParticles.length; // 草原は低確率で追加
+    while (weatherParticles.length < targetCount) {
+        var wp = spawnWeatherParticle(biome, true);
+        if (wp) weatherParticles.push(wp);
+        else break;
+    }
+    // 更新
+    for (var i = weatherParticles.length - 1; i >= 0; i--) {
+        var p = weatherParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.type === 'firefly') {
+            p.x += Math.sin(p.phase + gameState.time * 0.04) * 0.3;
+            p.y += Math.cos(p.phase + gameState.time * 0.03) * 0.2;
+        }
+        p.life--;
+        if (p.life <= 0 || p.y > GAME_HEIGHT + 10 || p.x < -20 || p.x > GAME_WIDTH + 20) {
+            weatherParticles.splice(i, 1);
+        }
+    }
+}
+
+function spawnWeatherParticle(biome, initial) {
+    var p = null;
+    if (biome === 0) {
+        // 草原: 風に舞う葉
+        p = { type: 'leaf', x: initial ? Math.random() * GAME_WIDTH : GAME_WIDTH + 10,
+              y: Math.random() * GAME_HEIGHT * 0.8,
+              vx: -0.8 - Math.random() * 0.6, vy: 0.3 + Math.random() * 0.4,
+              size: 2 + Math.random() * 2, rot: Math.random() * Math.PI * 2,
+              rotSpeed: (Math.random() - 0.5) * 0.08,
+              life: 200 + Math.floor(Math.random() * 150) };
+    } else if (biome === 1) {
+        // 砂漠: 砂嵐パーティクル
+        p = { type: 'sand', x: initial ? Math.random() * GAME_WIDTH : GAME_WIDTH + 10,
+              y: GAME_HEIGHT * 0.3 + Math.random() * GAME_HEIGHT * 0.7,
+              vx: -2.5 - Math.random() * 2, vy: 0.5 + Math.random() * 0.8,
+              size: 1 + Math.random() * 1.5, alpha: 0.2 + Math.random() * 0.3,
+              life: 100 + Math.floor(Math.random() * 80) };
+    } else if (biome === 2) {
+        // 雪原: 降雪
+        p = { type: 'snow', x: initial ? Math.random() * GAME_WIDTH : Math.random() * GAME_WIDTH,
+              y: initial ? Math.random() * GAME_HEIGHT : -5,
+              vx: (Math.random() - 0.5) * 0.6, vy: 0.5 + Math.random() * 1.0,
+              size: 1.5 + Math.random() * 2, phase: Math.random() * Math.PI * 2,
+              life: 300 + Math.floor(Math.random() * 200) };
+    } else if (biome === 3) {
+        // 夜: 蛍 + 稀に流れ星
+        if (Math.random() < 0.02 && weatherParticles.filter(function(w){return w.type==='shootingstar'}).length === 0) {
+            p = { type: 'shootingstar', x: Math.random() * GAME_WIDTH * 0.7,
+                  y: Math.random() * GAME_HEIGHT * 0.3,
+                  vx: 4 + Math.random() * 3, vy: 2 + Math.random() * 1.5,
+                  length: 20 + Math.random() * 15,
+                  life: 30 + Math.floor(Math.random() * 20) };
+        } else {
+            p = { type: 'firefly', x: initial ? Math.random() * GAME_WIDTH : Math.random() * GAME_WIDTH,
+                  y: GAME_HEIGHT * 0.3 + Math.random() * GAME_HEIGHT * 0.5,
+                  vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.2,
+                  size: 1.5 + Math.random() * 1.5, phase: Math.random() * Math.PI * 2,
+                  life: 200 + Math.floor(Math.random() * 300) };
+        }
+    }
+    return p;
+}
+
+function drawWeatherParticles() {
+    for (var i = 0; i < weatherParticles.length; i++) {
+        var p = weatherParticles[i];
+        var fadeIn = Math.min(1, (p.type === 'shootingstar' ? 1 : Math.min(p.life / 30, 1)));
+        ctx.save();
+        if (p.type === 'leaf') {
+            p.rot += p.rotSpeed;
+            ctx.globalAlpha = fadeIn * 0.5;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = '#5a8a3c';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, p.size, p.size * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'sand') {
+            ctx.globalAlpha = p.alpha * fadeIn;
+            ctx.fillStyle = '#d4a040';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'snow') {
+            p.x += Math.sin(p.phase + gameState.time * 0.02) * 0.3;
+            ctx.globalAlpha = fadeIn * 0.7;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'firefly') {
+            var glow = 0.3 + 0.7 * Math.abs(Math.sin(p.phase + gameState.time * 0.06));
+            ctx.globalAlpha = fadeIn * glow;
+            ctx.shadowColor = '#aaffaa';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#ccffaa';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        } else if (p.type === 'shootingstar') {
+            var tailAlpha = Math.min(1, p.life / 10);
+            ctx.globalAlpha = tailAlpha * 0.9;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - p.vx * p.length / 5, p.y - p.vy * p.length / 5);
+            ctx.stroke();
+            ctx.globalAlpha = tailAlpha * 0.3;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p.x - p.vx * p.length / 5, p.y - p.vy * p.length / 5);
+            ctx.lineTo(p.x - p.vx * p.length / 3, p.y - p.vy * p.length / 3);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
 
 function takeDamage() {
     if (gameState.isInvincible) return;
@@ -4812,16 +4958,31 @@ function spawnComboEffect(worldX, worldY, count, score) {
         comboCount: count,
         comboScore: score
     });
-    for (var i = 0; i < 6; i++) {
-        var angle = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-        var speed = 2 + Math.random() * 2;
+    // スパーク数: コンボ数に応じて増加（6→最大18）
+    var sparkCount = Math.min(6 + count * 2, 18);
+    var sparkSpeed = 2 + Math.min(count * 0.3, 2);
+    for (var i = 0; i < sparkCount; i++) {
+        var angle = (i / sparkCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        var speed = sparkSpeed + Math.random() * 2;
+        // コンボ数で色相変化: 金(40)→橙(25)→赤(0)
+        var hue = Math.max(0, 40 - count * 3);
         floatEffects.push({
             type: 'combo_spark',
             worldX: worldX, worldY: worldY,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed - 2,
             timer: 0, duration: 35 + Math.floor(Math.random() * 15),
-            size: 2 + Math.random() * 2.5
+            size: 2 + Math.random() * 2.5,
+            hue: hue + Math.floor(Math.random() * 10)
+        });
+    }
+    // コンボリング（3コンボ以上）
+    if (count >= 3) {
+        floatEffects.push({
+            type: 'combo_ring',
+            worldX: worldX, worldY: worldY,
+            timer: 0, duration: 30,
+            comboCount: count
         });
     }
 }
@@ -5025,18 +5186,29 @@ function drawFloatEffects() {
             ef.offsetY += 1.5;
             var ctAlpha = progress < 0.7 ? 1 : (1 - progress) / 0.3;
             var ctScale = progress < 0.1 ? 0.5 + progress / 0.1 * 0.5 : 1.0;
-            var ctShake = ef.comboCount >= 5 ? Math.sin(ef.timer * 0.8) * 2 : 0;
+            // 高コンボでスケールをさらにポップさせる
+            if (ef.comboCount >= 5) ctScale *= 1 + Math.sin(ef.timer * 0.4) * 0.08;
+            var ctShake = ef.comboCount >= 5 ? Math.sin(ef.timer * 0.8) * (1 + ef.comboCount * 0.3) : 0;
             var ctY = ef.worldY - ef.offsetY;
+            // 色エスカレーション: 金→橙→赤
+            var ctHue = Math.max(0, 45 - ef.comboCount * 3);
+            var ctColor = 'hsl(' + ctHue + ',100%,60%)';
+            var ctGlow = 'hsla(' + ctHue + ',100%,50%,0.8)';
             ctx.save();
             ctx.globalAlpha = ctAlpha;
             ctx.translate(wx + ctShake, ctY);
             ctx.scale(ctScale, ctScale);
-            ctx.shadowColor = 'rgba(255,200,0,0.8)';
-            ctx.shadowBlur = 12;
-            ctx.font = "bold " + Math.min(16 + ef.comboCount * 2, 32) + "px 'M PLUS Rounded 1c', sans-serif";
+            ctx.shadowColor = ctGlow;
+            ctx.shadowBlur = 12 + ef.comboCount;
+            ctx.font = "bold " + Math.min(16 + ef.comboCount * 2, 36) + "px 'M PLUS Rounded 1c', sans-serif";
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffd700';
-            ctx.fillText(ef.comboCount + ' COMBO!', 0, 0);
+            ctx.fillStyle = ctColor;
+            // マイルストーンテキスト
+            var comboLabel = ef.comboCount + ' COMBO!';
+            if (ef.comboCount >= 15) comboLabel = ef.comboCount + ' COMBO! INSANE!';
+            else if (ef.comboCount >= 10) comboLabel = ef.comboCount + ' COMBO! AMAZING!';
+            else if (ef.comboCount >= 5) comboLabel = ef.comboCount + ' COMBO! GREAT!';
+            ctx.fillText(comboLabel, 0, 0);
             ctx.shadowBlur = 0;
             ctx.font = "bold 12px 'DotGothic16', monospace";
             ctx.fillStyle = '#fff';
@@ -5050,12 +5222,37 @@ function drawFloatEffects() {
             ef.vy += 0.06;
             var csA = progress < 0.3 ? progress / 0.3 : (1 - progress) / 0.7;
             csA *= 0.8;
+            var csHue = ef.hue !== undefined ? ef.hue : (40 + Math.floor(ef.size * 8));
             ctx.save();
             ctx.globalAlpha = csA;
-            ctx.fillStyle = 'hsl(' + (40 + Math.floor(ef.size * 8)) + ',100%,60%)';
+            ctx.fillStyle = 'hsl(' + csHue + ',100%,60%)';
             ctx.beginPath();
             ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.4), 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+        }
+
+        // コンボリングエフェクト
+        if (ef.type === 'combo_ring') {
+            var crRadius = 10 + progress * (30 + ef.comboCount * 5);
+            var crAlpha = (1 - progress) * 0.6;
+            var crHue = Math.max(0, 45 - ef.comboCount * 3);
+            ctx.save();
+            ctx.globalAlpha = crAlpha;
+            ctx.strokeStyle = 'hsl(' + crHue + ',100%,60%)';
+            ctx.lineWidth = 2.5 * (1 - progress);
+            ctx.beginPath();
+            ctx.arc(wx, ef.worldY, crRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            // 二重リング（高コンボ時）
+            if (ef.comboCount >= 7) {
+                ctx.globalAlpha = crAlpha * 0.5;
+                ctx.strokeStyle = 'hsl(' + (crHue + 15) + ',100%,70%)';
+                ctx.lineWidth = 1.5 * (1 - progress);
+                ctx.beginPath();
+                ctx.arc(wx, ef.worldY, crRadius * 0.7, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.restore();
         }
 
@@ -5613,6 +5810,18 @@ function render() {
     // nearest-neighbor拡大でドット絵くっきり
     ctx.imageSmoothingEnabled = false;
 
+    // 画面シェイク適用
+    var shaking = screenShake.timer > 0;
+    if (shaking) {
+        screenShake.timer--;
+        var shakeDecay = screenShake.timer / 12;
+        ctx.save();
+        ctx.translate(
+            (Math.random() - 0.5) * screenShake.intensity * shakeDecay * 2,
+            (Math.random() - 0.5) * screenShake.intensity * shakeDecay * 2
+        );
+    }
+
     // 背景グラデーション（キャッシュから描画）
     ctx.drawImage(getBgCache(), 0, 0);
 
@@ -5752,6 +5961,9 @@ function render() {
       }
     }
 
+    // ─── 天候パーティクル描画 ───
+    if (weatherParticles.length > 0) drawWeatherParticles();
+
     // ─── ダメージ赤フラッシュ ───
     if (damageFlashTimer > 0) {
         damageFlashTimer--;
@@ -5759,6 +5971,17 @@ function render() {
         ctx.fillStyle = 'rgba(255,0,0,' + dfAlpha + ')';
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
+
+    // ─── コンボマイルストーンフラッシュ ───
+    if (comboFlashTimer > 0) {
+        comboFlashTimer--;
+        var cfAlpha = comboFlashTimer / 15 * 0.25;
+        ctx.fillStyle = 'rgba(255,200,0,' + cfAlpha + ')';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
+
+    // 画面シェイク復元（HUDはシェイクしない）
+    if (shaking) ctx.restore();
 
     // ─── HUDオーバーレイ (複数パワーアップ対応) ───
     var puList = [
@@ -5846,20 +6069,35 @@ function render() {
         drawProgressBar(bHpX + 16, bHpY + 19, bHpW - 32, 8, bhpRatio, '#ff2222', '#ff6666');
     }
 
-    // コンボHUD
+    // コンボHUD（色エスカレーション＋強化パルス）
     if (gameState.comboCount >= 2) {
         var comboY = gameState.isInvincible ? 72 : 14;
         var comboAlpha = gameState.comboTimer / COMBO_TIMEOUT;
-        var comboPulse = 1 + Math.sin(gameState.time * 0.3) * 0.05;
+        var cc = gameState.comboCount;
+        // パルス強度: コンボ数に応じて増加
+        var pulseAmp = Math.min(0.05 + cc * 0.01, 0.15);
+        var comboPulse = 1 + Math.sin(gameState.time * 0.3) * pulseAmp;
+        // 色エスカレーション: 金→橙→赤
+        var hudHue = Math.max(0, 45 - cc * 3);
+        var hudR = hudHue <= 20 ? 255 : Math.floor(200 + (45 - hudHue));
+        var hudG = Math.floor(150 * (hudHue / 45));
+        var hudBorder = 'hsl(' + hudHue + ',100%,50%)';
+        var hudGlow = 'hsla(' + hudHue + ',100%,50%,0.3)';
+        var hudBg = 'rgba(' + Math.floor(80 - cc) + ',' + Math.floor(Math.max(10, 60 - cc * 4)) + ',10,0.85)';
         ctx.save();
         ctx.globalAlpha = Math.max(0.4, comboAlpha);
-        var comboX = GAME_WIDTH / 2 - 80;
-        drawHudPanel(comboX, comboY, 160, 42, 'rgba(80,60,10,0.85)', 'rgba(50,35,5,0.9)', '#ffa500', 'rgba(255,165,0,0.3)');
+        var comboX = GAME_WIDTH / 2 - 90;
+        drawHudPanel(comboX, comboY, 180, 42, hudBg, 'rgba(50,35,5,0.9)', hudBorder, hudGlow);
         ctx.font = "bold " + Math.floor(18 * comboPulse) + "px 'M PLUS Rounded 1c', sans-serif";
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#ffd700';
-        ctx.shadowColor = 'rgba(255,200,0,0.6)'; ctx.shadowBlur = 8;
-        ctx.fillText(gameState.comboCount + ' COMBO', GAME_WIDTH / 2, comboY + 22);
+        ctx.fillStyle = 'hsl(' + hudHue + ',100%,65%)';
+        ctx.shadowColor = 'hsla(' + hudHue + ',100%,50%,0.7)';
+        ctx.shadowBlur = 8 + cc;
+        var hudLabel = cc + ' COMBO';
+        if (cc >= 15) hudLabel = cc + ' COMBO INSANE';
+        else if (cc >= 10) hudLabel = cc + ' COMBO AMAZING';
+        else if (cc >= 5) hudLabel = cc + ' COMBO GREAT';
+        ctx.fillText(hudLabel, GAME_WIDTH / 2, comboY + 22);
         ctx.shadowBlur = 0;
         ctx.restore();
     }
@@ -6018,6 +6256,7 @@ function gameLoop(timestamp) {
             updateBullets();
             manageTerrain();
             manageObjects();
+            updateWeatherParticles();
         }
         accumulator -= FIXED_DT;
     }
