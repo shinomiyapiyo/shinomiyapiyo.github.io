@@ -2737,7 +2737,15 @@ function generateTerrain() {
         return;
     }
 
-    if (roll < 0.7) {
+    // 高速スクロール時は穴の確率を下げる（400%以上で段階的に減少）
+    var speedMult = gameState.gameSpeed / BASE_SCROLL_SPEED;
+    var holeChance = 0.15; // 通常15%（roll 0.70〜0.85）
+    if (speedMult >= 4.0) {
+        // 400%→7.5%, 500%(上限)→0%
+        holeChance = Math.max(0, 0.15 * (5.0 - speedMult));
+    }
+
+    if (roll < 0.85 - holeChance) {
         terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: biomeType });
     } else if (roll < 0.85) {
         var holeW = 120 + Math.random() * 100;
