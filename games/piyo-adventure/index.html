@@ -3285,7 +3285,11 @@ function spawnWeatherParticle(biome, initial) {
               life: 300 + Math.floor(Math.random() * 200) };
     } else if (biome === 3) {
         // 夜: 蛍 + 稀に流れ星
-        if (Math.random() < 0.02 && weatherParticles.filter(function(w){return w.type==='shootingstar'}).length === 0) {
+        var hasShootingStar = false;
+        for (var si = 0; si < weatherParticles.length; si++) {
+            if (weatherParticles[si].type === 'shootingstar') { hasShootingStar = true; break; }
+        }
+        if (Math.random() < 0.02 && !hasShootingStar) {
             p = { type: 'shootingstar', x: Math.random() * GAME_WIDTH * 0.7,
                   y: Math.random() * GAME_HEIGHT * 0.3,
                   vx: 4 + Math.random() * 3, vy: 2 + Math.random() * 1.5,
