@@ -603,7 +603,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.165</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.166</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -766,7 +766,9 @@
             width: 100%; height: 100%;
             background: #000;
             display: none; flex-direction: row;
-            z-index: 30; overflow: hidden;">
+            z-index: 30; overflow: hidden;
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);">
             <!-- 左側：DQ風UIパネル -->
             <div id="shopUIPanel" style="flex: 0 0 33%; display: flex; flex-direction: column;
                 background: rgba(0,0,30,0.98); padding: 3px 4px;
@@ -1056,7 +1058,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.165
+ * ぴよ氏の冒険 v1.166
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1638,7 +1640,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.165';
+const CURRENT_VERSION     = '1.166';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
