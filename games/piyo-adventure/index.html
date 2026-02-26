@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.181</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.182</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1363,6 +1363,7 @@ ja: {
     shop_keeper_stock_full: 'ストックが いっぱいみたいです',
     shop_keeper_deposit_ok: '{amount}円 お預かり！\n貯金合計 {total}円です',
     shop_keeper_deposit_zero: '貯金するお金が\nないみたいです…',
+    shop_keeper_deposit_confirm: '所持金の半分 {amount}円を\n貯金しますか？',
     shop_keeper_leave_confirm: 'お買い物を\n終了しますか？',
     shop_keeper_close: 'お気をつけて！\nボスは 手ごわいですよ！',
     shop_keeper_heal_maxhp: 'もう十分\nお元気そうですよ！',
@@ -1510,6 +1511,7 @@ en: {
     shop_keeper_stock_full: 'Your stock seems full...',
     shop_keeper_deposit_ok: "Saved {amount}!\nTotal: {total}",
     shop_keeper_deposit_zero: "You don't have\nanything to save...",
+    shop_keeper_deposit_confirm: "Deposit half your money\n({amount})? ",
     shop_keeper_leave_confirm: 'Done shopping?\nReady to go?',
     shop_keeper_close: 'Take care!\nThe boss is tough!',
     shop_keeper_heal_maxhp: "Oh, you're already\nin great shape!",
@@ -1695,7 +1697,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.181';
+const CURRENT_VERSION     = '1.182';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3799,6 +3801,7 @@ function openStageShop() {
 }
 
 var shopClosing = false; // 退店確認中フラグ
+var shopDepositing = false; // 貯金確認中フラグ
 
 function closeStageShop() {
     if (shopClosing) return;
@@ -3948,6 +3951,7 @@ function returnToShopMenu() {
     shopHighlightedItem = null;
     shopSellingIndex = null;
     shopSellHighlightIndex = null;
+    shopDepositing = false;
     showShopConfirm(false);
     setKeeperText('shop_keeper_greet');
     updateStageShopUI();
@@ -4224,8 +4228,16 @@ function selectShopItem(itemId) {
                 if (soundManager) soundManager.playDamage();
                 return;
             }
-            depositScore();
-            updateStageShopUI();
+            if (gameState.score <= 0) {
+                setKeeperText('shop_keeper_deposit_zero');
+                if (soundManager) soundManager.playDamage();
+                return;
+            }
+            if (soundManager) soundManager.playCursorMove();
+            var depAmt = Math.floor(gameState.score * 0.5);
+            shopDepositing = true;
+            setKeeperText('shop_keeper_deposit_confirm', { amount: depAmt + '円' });
+            showShopConfirm(true);
         } else if (itemId === '_menu_leave') {
             if (soundManager) soundManager.playCursorMove();
             shopClosing = true;
@@ -4354,6 +4366,14 @@ function executeSellItem() {
 function confirmShopBuy() {
     // 退店確認中なら退店実行
     if (shopClosing) { confirmCloseShop(); return; }
+    // 貯金確認中なら貯金実行
+    if (shopDepositing) {
+        showShopConfirm(false);
+        shopDepositing = false;
+        depositScore();
+        updateStageShopUI();
+        return;
+    }
     // 売却確認中なら売却実行
     if (shopSellingIndex !== null) { executeSellItem(); return; }
     showShopConfirm(false);
@@ -4366,6 +4386,14 @@ function confirmShopBuy() {
 function cancelShopBuy() {
     // 退店確認中ならキャンセル
     if (shopClosing) { cancelCloseShop(); return; }
+    // 貯金確認中ならキャンセル
+    if (shopDepositing) {
+        showShopConfirm(false);
+        shopDepositing = false;
+        setKeeperText('shop_keeper_greet');
+        updateStageShopUI();
+        return;
+    }
     showShopConfirm(false);
     shopConfirmingItem = null;
     shopHighlightedItem = null;
