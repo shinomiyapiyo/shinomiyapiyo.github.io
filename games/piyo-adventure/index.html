@@ -536,7 +536,7 @@
         <div id="ui" style="display: none;">
             <div>📏 <span id="distance">0</span>m</div>
             <div>💴 <span id="score">0</span></div>
-            <div>💖 <span id="lives">5</span></div>
+            <div>💖 <span id="lives">5</span> <span id="reviveIndicator" style="display:none; color:#ffd700;"></span></div>
             <div>👹 <span id="enemyKills">0</span><span data-i18n="hud_kills_suffix">体撃破</span></div>
             <div>⚡ <span data-i18n="hud_level_prefix">レベル</span><span id="speedLevel">1</span> (<span id="speedPercent">100</span>%)</div>
             <div>📈 <span data-i18n="hud_next_prefix">次まで</span><span id="nextSpeedUp">300</span>m</div>
@@ -1356,7 +1356,14 @@ ja: {
     tshop_magnet_boost: 'マグネット強化',
     tshop_magnet_boost_desc: 'マグネットの吸引範囲UP',
     tshop_combo_master: 'コンボマスター',
-    tshop_combo_master_desc: 'コンボ受付時間を延長'
+    tshop_combo_master_desc: 'コンボ受付時間を延長',
+    tshop_revival_feather: '復活の羽',
+    tshop_revival_feather_desc: '死亡時にHP1で復活（1ランN回）',
+    // ── 復活 ──
+    revival_text: '✨ 復活！',
+    revival_potion_text: '💊 復活薬で復活！',
+    shop_item_revive: '復活薬',
+    shop_item_revive_desc: '死亡時にHP2で復活（1回）'
 },
 en: {
     splash_warning: '⚠️ Notice ⚠️',
@@ -1486,7 +1493,14 @@ en: {
     tshop_magnet_boost: 'Magnet Boost',
     tshop_magnet_boost_desc: 'Magnet range increase',
     tshop_combo_master: 'Combo Master',
-    tshop_combo_master_desc: 'Longer combo window'
+    tshop_combo_master_desc: 'Longer combo window',
+    tshop_revival_feather: 'Revival Feather',
+    tshop_revival_feather_desc: 'Revive with 1HP on death (N per run)',
+    // ── Revival ──
+    revival_text: '✨ Revived!',
+    revival_potion_text: '💊 Revived by potion!',
+    shop_item_revive: 'Revival Potion',
+    shop_item_revive_desc: 'Revive with 2HP on death (1 use)'
 }
 };
 
@@ -1893,7 +1907,8 @@ var gameState = {
     downSwipeTimer: 0, downSwipeActive: false,
     isRespawning: false, enemyKills: 0,
     bulletFireTimer: 0,
-    comboCount: 0, comboTimer: 0
+    comboCount: 0, comboTimer: 0,
+    revivesLeft: 0, revivalFlashTimer: 0
 };
 
 var player = {
@@ -1968,6 +1983,18 @@ var STAGE_SHOP_ITEMS = [
             gameState.puEnergy = 900;
             gameState.puMagnet = 900;
         }
+    },
+    {
+        id: 'revive_potion', nameKey: 'shop_item_revive', descKey: 'shop_item_revive_desc',
+        icon: '\u{1F48A}', price: 8000, maxPerVisit: 1,
+        stockItem: true,
+        stockEffect: function() {
+            // ストックから手動使用した場合: HP2回復+バリア付与
+            gameState.lives = Math.min(gameState.lives + 2, 10);
+            gameState.puShield = 300;
+            gameState.isInvincible = true;
+            gameState.invincibleTimer = 300;
+        }
     }
 ];
 
@@ -1981,7 +2008,9 @@ var TITLE_SHOP_UPGRADES = [
     { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
       icon: '\u{1F9F2}', maxLevel: 2, prices: [6000, 18000], effectDesc: ['+50%', '+100%'] },
     { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
-      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [12000], effectDesc: ['1.5秒'] }
+      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [12000], effectDesc: ['1.5秒'] },
+    { id: 'revival_feather', nameKey: 'tshop_revival_feather', descKey: 'tshop_revival_feather_desc',
+      icon: '\u{1FAB6}', maxLevel: 2, prices: [15000, 35000], effectDesc: ['1回/ラン', '2回/ラン'] }
 ];
 
 // ─── デバッグモード ───
@@ -2288,6 +2317,8 @@ function resetGame() {
     gameState.enemyKills = 0;
     gameState.comboCount = 0;
     gameState.comboTimer = 0;
+    gameState.revivesLeft = 0;
+    gameState.revivalFlashTimer = 0;
     floatEffects = [];
     damageFlashTimer = 0;
     screenShake = { intensity: 0, timer: 0 };
@@ -3363,6 +3394,41 @@ function drawWeatherParticles() {
     }
 }
 
+// ── 復活判定 ──
+// 優先順: 1.復活薬(ストック,HP2) → 2.復活の羽(永続,HP1) → 3.ゲームオーバー
+function tryRevive() {
+    // 1. ストック内の復活薬を探す
+    var potionIdx = -1;
+    for (var i = 0; i < stockState.items.length; i++) {
+        if (stockState.items[i].id === 'revive_potion') { potionIdx = i; break; }
+    }
+    if (potionIdx >= 0) {
+        stockState.items.splice(potionIdx, 1);
+        updateStockUI();
+        gameState.lives = 2;
+        gameState.isInvincible = true;
+        gameState.invincibleTimer = INVINCIBLE_FRAMES;
+        gameState.revivalFlashTimer = 90; // 1.5秒の復活演出
+        if (soundManager) soundManager.playItem();
+        spawnRevivalEffect(player.x + player.width / 2, player.y, 'revival_potion_text');
+        resetPlayerPosition();
+        return true;
+    }
+    // 2. 復活の羽（永続スキル）
+    if (gameState.revivesLeft > 0) {
+        gameState.revivesLeft--;
+        gameState.lives = 1;
+        gameState.isInvincible = true;
+        gameState.invincibleTimer = INVINCIBLE_FRAMES;
+        gameState.revivalFlashTimer = 90;
+        if (soundManager) soundManager.playItem();
+        spawnRevivalEffect(player.x + player.width / 2, player.y, 'revival_text');
+        resetPlayerPosition();
+        return true;
+    }
+    return false;
+}
+
 function takeDamage() {
     if (gameState.isInvincible) return;
     if (!debugMode) gameState.lives--;
@@ -3374,7 +3440,9 @@ function takeDamage() {
     spawnDamageEffect(player.x + player.width / 2, player.y);
     // 敵被弾: その場で点滅+無敵（位置リセットしない）
     player.velY = -6; // 軽くノックバック（上方向）
-    if (!debugMode && gameState.lives <= 0) gameOver();
+    if (!debugMode && gameState.lives <= 0) {
+        if (!tryRevive()) gameOver();
+    }
 }
 
 function fallDeath() {
@@ -3386,7 +3454,9 @@ function fallDeath() {
     damageFlashTimer = 20;
     spawnDamageEffect(player.x + player.width / 2, player.y);
     resetPlayerPosition(); // 上から降ってくる
-    if (!debugMode && gameState.lives <= 0) gameOver();
+    if (!debugMode && gameState.lives <= 0) {
+        if (!tryRevive()) gameOver();
+    }
 }
 
 function updatePlatforms() {
@@ -4034,6 +4104,9 @@ function applyUpgrades() {
     gameState.magnetRange = 200 * (1 + magnetLv * 0.5);
     var comboLv = ups.combo_master || 0;
     COMBO_TIMEOUT = 60 + comboLv * 30; // コンボマスター: 受付時間延長
+    // 復活の羽: Lv1=1回/ラン, Lv2=2回/ラン
+    var revivalLv = ups.revival_feather || 0;
+    gameState.revivesLeft = revivalLv;
 }
 
 // ── ストックシステム ──
@@ -4924,6 +4997,29 @@ function spawnDamageEffect(worldX, worldY) {
     }
 }
 
+function spawnRevivalEffect(worldX, worldY, textKey) {
+    // 復活テキスト浮上
+    floatEffects.push({
+        type: 'revival_text',
+        worldX: worldX, worldY: worldY,
+        timer: 0, duration: 90,
+        offsetY: 0, textKey: textKey
+    });
+    // 金色パーティクル散布
+    for (var i = 0; i < 12; i++) {
+        var angle = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+        var speed = 2 + Math.random() * 3;
+        floatEffects.push({
+            type: 'revival_particle',
+            worldX: worldX, worldY: worldY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 3,
+            timer: 0, duration: 40 + Math.floor(Math.random() * 20),
+            size: 2 + Math.random() * 3
+        });
+    }
+}
+
 function spawnExplosionEffect(worldX, worldY) {
     // 爆発リング (2重)
     floatEffects.push({
@@ -5089,6 +5185,46 @@ function drawFloatEffects() {
             ctx.beginPath();
             ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.5), 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+        }
+
+        // ── 復活テキスト ──
+        if (ef.type === 'revival_text') {
+            ef.offsetY += 0.8;
+            var ra = progress < 0.7 ? 1 : (1 - progress) / 0.3;
+            var rs = progress < 0.1 ? 0.5 + progress / 0.1 * 0.8 : (progress < 0.25 ? 1.3 - (progress - 0.1) / 0.15 * 0.3 : 1.0);
+            var ry = ef.worldY - ef.offsetY;
+            ctx.save();
+            ctx.globalAlpha = ra;
+            ctx.translate(wx, ry);
+            ctx.scale(rs, rs);
+            ctx.shadowColor = 'rgba(255,215,0,0.9)';
+            ctx.shadowBlur = 16;
+            ctx.font = "bold 22px 'M PLUS Rounded 1c', sans-serif";
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffd700';
+            ctx.fillText(t(ef.textKey), 0, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        // ── 復活パーティクル（金色） ──
+        if (ef.type === 'revival_particle') {
+            ef.worldX += ef.vx;
+            ef.worldY += ef.vy;
+            ef.vy += 0.05;
+            ef.vx *= 0.97;
+            var rpA = progress < 0.2 ? progress / 0.2 : (1 - progress) / 0.8;
+            rpA *= 0.9;
+            ctx.save();
+            ctx.globalAlpha = rpA;
+            ctx.shadowColor = 'rgba(255,215,0,0.6)';
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = 'rgba(255,' + (200 + Math.floor(Math.random() * 55)) + ',0,1)';
+            ctx.beginPath();
+            ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.4), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
             ctx.restore();
         }
 
@@ -5807,6 +5943,7 @@ function cacheUIElements() {
     uiElements.speedLevel = document.getElementById('speedLevel');
     uiElements.speedPercent = document.getElementById('speedPercent');
     uiElements.nextSpeedUp = document.getElementById('nextSpeedUp');
+    uiElements.reviveIndicator = document.getElementById('reviveIndicator');
 }
 var prevUI = {};
 
@@ -5973,6 +6110,14 @@ function render() {
         damageFlashTimer--;
         var dfAlpha = damageFlashTimer / 20 * 0.45;
         ctx.fillStyle = 'rgba(255,0,0,' + dfAlpha + ')';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
+
+    // ─── 復活ゴールドフラッシュ ───
+    if (gameState.revivalFlashTimer > 0) {
+        gameState.revivalFlashTimer--;
+        var rvAlpha = gameState.revivalFlashTimer / 90 * 0.35;
+        ctx.fillStyle = 'rgba(255,215,0,' + rvAlpha + ')';
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     }
 
@@ -6227,6 +6372,27 @@ function updateUI() {
     if (prevUI.speedLevel !== gameState.speedLevel) { uiElements.speedLevel.textContent = gameState.speedLevel; prevUI.speedLevel = gameState.speedLevel; }
     if (prevUI.pct !== pct) { uiElements.speedPercent.textContent = pct; prevUI.pct = pct; }
     if (prevUI.next !== next) { uiElements.nextSpeedUp.textContent = next; prevUI.next = next; }
+    // 復活の羽 残り回数表示
+    var revEl = uiElements.reviveIndicator;
+    if (revEl) {
+        // ストック内の復活薬の数もカウント
+        var potionCount = 0;
+        for (var ri = 0; ri < stockState.items.length; ri++) {
+            if (stockState.items[ri].id === 'revive_potion') potionCount++;
+        }
+        var totalRevives = gameState.revivesLeft + potionCount;
+        if (totalRevives > 0 && prevUI.revives !== totalRevives) {
+            var featherStr = '';
+            for (var fi = 0; fi < gameState.revivesLeft; fi++) featherStr += '\u{1FAB6}';
+            for (var pi = 0; pi < potionCount; pi++) featherStr += '\u{1F48A}';
+            revEl.textContent = featherStr;
+            revEl.style.display = 'inline';
+            prevUI.revives = totalRevives;
+        } else if (totalRevives === 0 && prevUI.revives !== 0) {
+            revEl.style.display = 'none';
+            prevUI.revives = 0;
+        }
+    }
 }
 
 // ─── メインループ（固定60fpsタイムステップ） ───
