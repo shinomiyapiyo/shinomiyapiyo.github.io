@@ -2725,6 +2725,18 @@ function generateTerrain() {
     // バイオーム地形タイプ決定（砂漠=全面流砂, 雪原=全面氷床）
     var biomeType = biome === 1 ? 'quicksand' : biome === 2 ? 'ice' : 'ground';
 
+    // 砂漠バイオーム: 穴を生成しない（流砂の移動低下＋高速スクロールで理不尽になるため）
+    if (biome === 1) {
+        if (roll < 0.8) {
+            terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: biomeType });
+        } else {
+            var elev = 60 + Math.random() * 40;
+            terrain.push({ x: nextX, y: GROUND_Y - elev, width: 100, height: 130 + elev, type: 'quicksand_elevated' });
+        }
+        gameState.lastTerrainX = nextX;
+        return;
+    }
+
     if (roll < 0.7) {
         terrain.push({ x: nextX, y: GROUND_Y, width: 100, height: 130, type: biomeType });
     } else if (roll < 0.85) {
