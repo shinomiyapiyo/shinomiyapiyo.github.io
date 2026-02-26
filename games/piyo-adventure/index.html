@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.173</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.174</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1688,7 +1688,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.173';
+const CURRENT_VERSION     = '1.174';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -4141,7 +4141,7 @@ function selectShopItem(itemId) {
     // ── メニューモード ──
     if (shopMode === 'menu') {
         if (itemId === '_menu_buy') {
-            if (soundManager) soundManager.playConfirmSelect();
+            if (soundManager) soundManager.playCursorMove();
             shopMode = 'buy';
             shopHighlightedItem = null;
             setKeeperText('shop_keeper_buy_greet');
@@ -4152,13 +4152,13 @@ function selectShopItem(itemId) {
                 if (soundManager) soundManager.playDamage();
                 return;
             }
-            if (soundManager) soundManager.playConfirmSelect();
+            if (soundManager) soundManager.playCursorMove();
             shopMode = 'sell';
             shopSellHighlightIndex = null;
             setKeeperText('shop_keeper_sell_greet');
             updateStageShopUI();
         } else if (itemId === '_menu_leave') {
-            if (soundManager) soundManager.playConfirmSelect();
+            if (soundManager) soundManager.playCursorMove();
             shopClosing = true;
             shopHighlightedItem = null;
             setKeeperText('shop_keeper_leave_confirm');
@@ -4188,7 +4188,7 @@ function selectShopItem(itemId) {
             return;
         }
         // 2回目タップ：売却確認ダイアログ
-        if (soundManager) soundManager.playConfirmSelect();
+        if (soundManager) soundManager.playCursorMove();
         shopSellHighlightIndex = null;
         var sellPrice2 = Math.floor(shopItem.price / 2);
         shopSellingIndex = sellIdx;
@@ -4215,7 +4215,7 @@ function selectShopItem(itemId) {
     }
 
     // 2回目タップ：購入チェック＆確認ダイアログ
-    if (soundManager) soundManager.playConfirmSelect();
+    if (soundManager) soundManager.playCursorMove();
     shopHighlightedItem = null;
     var bought = shopState.purchaseCounts[itemId] || 0;
     // 売り切れチェック
