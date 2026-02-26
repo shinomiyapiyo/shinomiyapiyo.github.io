@@ -810,17 +810,19 @@
                         position: absolute; left: 4px; top: 100%; margin-top: 2px;
                         background: rgba(0,0,48,0.97);
                         border: 2px solid #fff; border-radius: 5px;
-                        padding: 2px 0; min-width: 70px; z-index: 10;
+                        padding: 3px 0; min-width: 90px; z-index: 10;
                         box-shadow: 0 3px 10px rgba(0,0,0,0.6);">
                         <div id="shopConfirmYes" style="
                             color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(10px, 2vw, 14px); padding: 3px 10px;
+                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
                             cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
                             ">▶ はい</div>
                         <div id="shopConfirmNo" style="
                             color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(10px, 2vw, 14px); padding: 3px 10px;
+                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
                             cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
                             ">　 いいえ</div>
                     </div>
                 </div>
@@ -1058,7 +1060,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.166
+ * ぴよ氏の冒険 v1.167
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -3785,9 +3787,15 @@ function setKeeperText(key, replacements) {
 function showShopConfirm(show) {
     var box = document.getElementById('shopConfirmBox');
     var keeperBox = document.getElementById('shopKeeperBox');
+    var itemsList = document.getElementById('stageShopItems');
     if (box) box.style.display = show ? 'block' : 'none';
     // 確認ボックス表示中はmarginを広げてアイテムリストとの重なりを防止
-    if (keeperBox) keeperBox.style.marginBottom = show ? '38px' : '3px';
+    if (keeperBox) {
+        keeperBox.style.marginBottom = show ? '54px' : '3px';
+        keeperBox.style.zIndex = show ? '12' : '';
+    }
+    // 確認ダイアログ表示中はアイテムリストのタッチを無効化（タッチ奪取防止）
+    if (itemsList) itemsList.style.pointerEvents = show ? 'none' : '';
 }
 
 function showStageShopScreen() {
@@ -7108,7 +7116,7 @@ window.addEventListener('orientationchange', function() {
 document.addEventListener('touchmove', function(e) {
     // INPUT要素とオーバーレイ画面内のスクロールは許可
     if (e.target.tagName === 'INPUT') return;
-    if (e.target.closest('#nameInputScreen, #rankingScreen, #settingsScreen, #pauseScreen, #gameOverScreen')) return;
+    if (e.target.closest('#nameInputScreen, #rankingScreen, #settingsScreen, #pauseScreen, #gameOverScreen, #stageShopScreen, #titleShopScreen')) return;
     e.preventDefault();
 }, { passive: false });
 document.addEventListener('visibilitychange', function() {
