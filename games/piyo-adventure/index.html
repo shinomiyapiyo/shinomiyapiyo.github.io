@@ -4266,11 +4266,13 @@ function setupBossArena() {
         type: 'cloud', special: 'normal', isBossArena: true
     });
     // ボスオブジェクト生成
+    var bossMaxHp = BOSS_MAX_HP + Math.max(0, gameRound - 3) * 3; // ROUND4以降+3ずつ
+    bossState.maxHp = bossMaxHp;
     bossState.boss = {
         x: gameState.camera.x + GAME_WIDTH + 50,
         y: GROUND_Y - BOSS_HEIGHT,
         width: BOSS_WIDTH, height: BOSS_HEIGHT,
-        hp: BOSS_MAX_HP,
+        hp: bossMaxHp,
         velX: 0, velY: 0,
         facing: 'left',
         animFrame: 0,
@@ -4283,6 +4285,8 @@ function setupBossArena() {
         isJumping: false,
         isFlaming: false,
         flameTimer: 0,
+        isCharging: false,
+        chargeTimer: 0,
         spriteFrame: 0,
         spriteResetTimer: 0,
         stompCooldown: 0
@@ -4290,6 +4294,9 @@ function setupBossArena() {
     bossState.phase = 2; // entering
     bossState.summonTimer = BOSS_SUMMON_INTERVAL;
     bossState.itemSpawnTimer = 480; // ボス戦アイテム初回出現まで8秒（ショップ導入で抑制）
+    bossState.flashAttackTimer = 0; // 閃光攻撃タイマー
+    bossState.edgeSpawnTimer = 180; // 画面外雑魚スポーンタイマー
+    bossState.flyingEdgeSpawnTimer = 240; // 画面外飛行敵スポーンタイマー
     bgCache = null; // ボス戦背景に切り替え
     if (soundManager) soundManager.playBossBGM();
 }
@@ -4322,6 +4329,32 @@ function updateBoss() {
         if (b.spriteResetTimer > 0) {
             b.spriteResetTimer--;
             if (b.spriteResetTimer <= 0) b.spriteFrame = BOSS_FRAME_IDLE;
+        }
+        // ── 閃光攻撃ダメージ判定 ──
+        if (bossState.flashAttackTimer > 0) {
+            bossState.flashAttackTimer--;
+            // 発動直後（残り28フレーム）にダメージ判定：地面近くにいたら被弾
+            if (bossState.flashAttackTimer === 27) {
+                if (!gameState.isInvincible && player.y + player.height >= GROUND_Y - 70) {
+                    takeDamage();
+                }
+            }
+        }
+        // ── ROUND2+: 画面外から雑魚敵スポーン ──
+        if (gameRound >= 2) {
+            bossState.edgeSpawnTimer--;
+            if (bossState.edgeSpawnTimer <= 0) {
+                spawnEdgeEnemy();
+                bossState.edgeSpawnTimer = Math.max(90, 180 - (gameRound - 2) * 20);
+            }
+        }
+        // ── ROUND3+: 飛行敵も画面外からスポーン ──
+        if (gameRound >= 3) {
+            bossState.flyingEdgeSpawnTimer--;
+            if (bossState.flyingEdgeSpawnTimer <= 0) {
+                spawnEdgeFlyingEnemy();
+                bossState.flyingEdgeSpawnTimer = Math.max(120, 240 - (gameRound - 3) * 20);
+            }
         }
         return;
 
@@ -4406,7 +4439,8 @@ var BOSS_FRAME_FLAME   = 6;
 
 function updateBossAI(b) {
     // フェーズ判定
-    var hpRatio = b.hp / BOSS_MAX_HP;
+    var maxHp = bossState.maxHp || BOSS_MAX_HP;
+    var hpRatio = b.hp / maxHp;
     var phase = hpRatio > 0.7 ? 1 : hpRatio > 0.3 ? 2 : 3;
 
     // 怒りモードカウントダウン
@@ -4477,6 +4511,23 @@ function updateBossAI(b) {
         return;
     }
 
+    // ── 閃光チャージ中（ROUND2+） ──
+    if (b.isCharging) {
+        b.chargeTimer--;
+        // チャージ中はその場で停止、プレイヤーの方を向く
+        b.facing = b.x + b.width / 2 > player.x + player.width / 2 ? 'left' : 'right';
+        b.spriteFrame = BOSS_FRAME_SUMMON; // チャージポーズ
+        if (b.chargeTimer <= 0) {
+            b.isCharging = false;
+            b.spriteFrame = BOSS_FRAME_FLAME;
+            b.spriteResetTimer = 30;
+            // 閃光発動！
+            bossState.flashAttackTimer = 30;
+            if (soundManager) soundManager.playDamage(); // 閃光音
+        }
+        return;
+    }
+
     // ── パトロール移動 ──
     var patrolSpeed = (phase === 1 ? 1.0 : phase === 2 ? 1.5 : 2.0) * speedMult;
     b.x += b.patrolDir * patrolSpeed;
@@ -4502,11 +4553,20 @@ function updateBossAI(b) {
 
     // ── 攻撃選択 ──
     var r = Math.random();
+    var canFlash = gameRound >= 2; // ROUND2以降で閃光攻撃解禁
     if (phase === 1) {
-        // Phase1: パトロール＋召喚のみ
+        // Phase1: パトロール＋召喚のみ（ROUND2+は閃光チャンス有り）
+        if (canFlash && r < 0.15) {
+            b.isCharging = true;
+            b.chargeTimer = 50; // チャージ時間
+        }
         b.attackTimer = 180;
     } else if (phase === 2) {
-        if (r < 0.3) {
+        if (canFlash && r < 0.15) {
+            // 閃光攻撃（チャージ開始）
+            b.isCharging = true;
+            b.chargeTimer = 45;
+        } else if (r < 0.35) {
             // 突進
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
@@ -4526,16 +4586,20 @@ function updateBossAI(b) {
             b.attackTimer = 90;
         }
     } else { // phase 3
-        if (r < 0.2) {
+        if (canFlash && r < 0.15) {
+            // 閃光攻撃（チャージ短い）
+            b.isCharging = true;
+            b.chargeTimer = 35;
+        } else if (r < 0.3) {
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
             b.spriteFrame = BOSS_FRAME_RUSH;
-        } else if (r < 0.4) {
+        } else if (r < 0.5) {
             spawnEggProjectiles(b, 4);
             b.spriteFrame = BOSS_FRAME_SUMMON;
             b.spriteResetTimer = 20;
             b.attackTimer = 90;
-        } else if (r < 0.6) {
+        } else if (r < 0.65) {
             // ジャンプ攻撃
             b.isJumping = true;
             b.velY = -14;
@@ -4574,6 +4638,7 @@ function updateBossCollision(b) {
         b.isRushing = false;
         b.isJumping = false;
         b.isFlaming = false;
+        b.isCharging = false;
         if (b.hp <= 0) {
             bossState.phase = 4;
             bossState.defeatedTimer = 0;
@@ -4605,6 +4670,16 @@ function spawnBossItem() {
 function updateBossItems() {
     // ボス戦中のアイテムスポーン管理
     if (!bossState.active || bossState.phase !== 3) return;
+    // ROUND3以降はアイテムドロップなし（寿命管理のみ実行）
+    if (gameRound >= 3) {
+        for (var j = powerUps.length - 1; j >= 0; j--) {
+            var pu2 = powerUps[j];
+            if (pu2.collected || pu2.lifetime === undefined) continue;
+            pu2.lifetime--;
+            if (pu2.lifetime <= 0) powerUps.splice(j, 1);
+        }
+        return;
+    }
     bossState.itemSpawnTimer--;
     if (bossState.itemSpawnTimer <= 0) {
         spawnBossItem();
@@ -4630,6 +4705,35 @@ function spawnBossChick(boss) {
         velX: dir * 1.5,
         type: 'chick',
         animFrame: Math.floor(Math.random() * 100)
+    });
+}
+
+function spawnEdgeEnemy() {
+    var fromLeft = Math.random() < 0.5;
+    var spawnX = fromLeft ? bossState.arenaLeft - 50 : bossState.arenaRight + 10;
+    var dir = fromLeft ? 1 : -1;
+    enemies.push({
+        x: spawnX,
+        y: GROUND_Y - 38,
+        width: 42, height: 38,
+        velX: dir * (1.2 + Math.random() * 0.8),
+        type: 'chick',
+        animFrame: Math.floor(Math.random() * 100)
+    });
+}
+
+function spawnEdgeFlyingEnemy() {
+    var fromLeft = Math.random() < 0.5;
+    var spawnX = fromLeft ? bossState.arenaLeft - 50 : bossState.arenaRight + 10;
+    var dir = fromLeft ? 1 : -1;
+    flyingEnemies.push({
+        x: spawnX,
+        y: 80 + Math.random() * 150,
+        width: 40, height: 36,
+        velX: dir * (1.0 + Math.random() * 0.5),
+        type: 'flying_chick',
+        animFrame: Math.floor(Math.random() * 100),
+        waveOffset: Math.random() * Math.PI * 2
     });
 }
 
@@ -5910,6 +6014,46 @@ function drawBoss(b) {
         ctx.ellipse(acx, acy, arx, ary, 0, 0, Math.PI * 2);
         ctx.fill();
     }
+    // 閃光チャージエフェクト（白い光がボスに集まる）
+    if (b.isCharging) {
+        var ccx = b.x + b.width / 2;
+        var ccy = drawY + b.height * 0.4;
+        var chargeProgress = 1 - (b.chargeTimer / 50); // 0→1
+        var glowSize = 40 + chargeProgress * 80;
+        // 外側の白い光輪
+        ctx.globalAlpha = 0.3 + chargeProgress * 0.5;
+        var cgrd = ctx.createRadialGradient(ccx, ccy, 5, ccx, ccy, glowSize);
+        cgrd.addColorStop(0, 'rgba(255,255,200,0.9)');
+        cgrd.addColorStop(0.4, 'rgba(255,255,100,0.5)');
+        cgrd.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = cgrd;
+        ctx.beginPath();
+        ctx.arc(ccx, ccy, glowSize, 0, Math.PI * 2);
+        ctx.fill();
+        // 収束する光線パーティクル
+        ctx.globalAlpha = 0.6 + chargeProgress * 0.4;
+        for (var ci = 0; ci < 8; ci++) {
+            var cAngle = (ci / 8) * Math.PI * 2 + b.animFrame * 0.15;
+            var cDist = (1 - chargeProgress) * 80 + 15;
+            var cpx = ccx + Math.cos(cAngle) * cDist;
+            var cpy = ccy + Math.sin(cAngle) * cDist;
+            ctx.fillStyle = '#ffffcc';
+            ctx.beginPath();
+            ctx.arc(cpx, cpy, 2 + chargeProgress * 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // 「！」警告マーク
+        if (chargeProgress > 0.3) {
+            ctx.globalAlpha = Math.min(1, (chargeProgress - 0.3) * 2);
+            ctx.font = "bold 28px 'M PLUS Rounded 1c', sans-serif";
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 10;
+            ctx.fillText('！', ccx, drawY - 15);
+            ctx.shadowBlur = 0;
+        }
+    }
     ctx.restore();
 }
 
@@ -6265,7 +6409,8 @@ function render() {
     // ボスHPバー
     if (bossState.active && bossState.boss && bossState.phase >= 3 && bossState.phase <= 4) {
         var bossB = bossState.boss;
-        var bhpRatio = Math.max(0, bossB.hp / BOSS_MAX_HP);
+        var bossMaxHp = bossState.maxHp || BOSS_MAX_HP;
+        var bhpRatio = Math.max(0, bossB.hp / bossMaxHp);
         var bHpW = 300, bHpH = 32;
         var bHpX = GAME_WIDTH / 2 - bHpW / 2;
         var bHpY = GAME_HEIGHT - 48;
@@ -6278,7 +6423,7 @@ function render() {
         // HPテキスト
         ctx.fillStyle = '#ff8888';
         ctx.textAlign = 'right';
-        ctx.fillText(Math.ceil(bossB.hp) + '/' + BOSS_MAX_HP, bHpX + bHpW - 12, bHpY + 10);
+        ctx.fillText(Math.ceil(bossB.hp) + '/' + bossMaxHp, bHpX + bHpW - 12, bHpY + 10);
         ctx.textAlign = 'left';
         // HPバー
         drawProgressBar(bHpX + 16, bHpY + 19, bHpW - 32, 8, bhpRatio, '#ff2222', '#ff6666');
@@ -6371,6 +6516,55 @@ function render() {
         ctx.shadowColor = 'rgba(150,150,255,0.6)'; ctx.shadowBlur = 10;
         ctx.fillText(t('hud_pause'), GAME_WIDTH / 2, ppy + ph / 2);
         ctx.shadowBlur = 0;
+    }
+
+    // ─── ボス閃光攻撃エフェクト ───
+    if (bossState.active && bossState.flashAttackTimer > 0) {
+        var fProgress = 1 - bossState.flashAttackTimer / 30; // 0→1
+        ctx.save();
+        if (fProgress < 0.15) {
+            // 最初の瞬間：画面全体が白くフラッシュ
+            var flashAlpha = (1 - fProgress / 0.15) * 0.85;
+            ctx.fillStyle = 'rgba(255,255,240,' + flashAlpha + ')';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        }
+        // 地面レベルを走る閃光ビーム
+        if (fProgress < 0.7) {
+            var beamAlpha = fProgress < 0.1 ? fProgress / 0.1 : (0.7 - fProgress) / 0.6;
+            beamAlpha = Math.max(0, beamAlpha) * 0.8;
+            var beamY = GROUND_Y - 35;
+            var beamH = 70;
+            // メインビーム（黄白い光）
+            var bgrd = ctx.createLinearGradient(0, beamY - beamH / 2, 0, beamY + beamH / 2);
+            bgrd.addColorStop(0, 'rgba(255,255,200,0)');
+            bgrd.addColorStop(0.3, 'rgba(255,255,150,' + beamAlpha * 0.6 + ')');
+            bgrd.addColorStop(0.5, 'rgba(255,255,255,' + beamAlpha + ')');
+            bgrd.addColorStop(0.7, 'rgba(255,255,150,' + beamAlpha * 0.6 + ')');
+            bgrd.addColorStop(1, 'rgba(255,255,200,0)');
+            ctx.fillStyle = bgrd;
+            ctx.fillRect(0, beamY - beamH / 2, GAME_WIDTH, beamH);
+            // ビーム中心の輝線
+            ctx.globalAlpha = beamAlpha;
+            ctx.strokeStyle = '#ffffee';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ffffaa';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.moveTo(0, beamY);
+            ctx.lineTo(GAME_WIDTH, beamY);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            // 光の粒子が飛び散る
+            for (var fi = 0; fi < 6; fi++) {
+                var fpx = Math.random() * GAME_WIDTH;
+                var fpy = beamY - beamH / 2 + Math.random() * beamH;
+                ctx.fillStyle = 'rgba(255,255,200,' + (beamAlpha * 0.7) + ')';
+                ctx.beginPath();
+                ctx.arc(fpx, fpy, 1.5 + Math.random() * 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
     }
 
     // ─── ボス WARNING オーバーレイ ───
