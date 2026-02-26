@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.172</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.173</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1688,7 +1688,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.172';
+const CURRENT_VERSION     = '1.173';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1716,6 +1716,12 @@ class SoundManager {
         this.winBGM.loop = false;
         this.winBGM.volume = 0.7;
         this.currentBGM  = null;
+
+        // SE（効果音mp3）
+        this.selectSE = new Audio('select.mp3');
+        this.selectSE.volume = 0.5;
+        this.orSE = new Audio('or.mp3');
+        this.orSE.volume = 0.5;
     }
 
     _createBGM(src, vol) {
@@ -1919,42 +1925,18 @@ class SoundManager {
         this.currentBGM = null;
     }
 
-    // ─── DQ風カーソル移動音（ピッ） ───
+    // ─── カーソル移動・クリック音（select.mp3） ───
     playCursorMove() {
-        if (!this.ctx || !gameSettings.soundEnabled) return;
-        var t = this.ctx.currentTime;
-        var o = this.ctx.createOscillator();
-        var g = this.ctx.createGain();
-        o.connect(g); g.connect(this.ctx.destination);
-        o.frequency.value = 1047; // C6
-        o.type = 'square';
-        g.gain.setValueAtTime(0.12, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
-        o.start(t); o.stop(t + 0.06);
+        if (!gameSettings.soundEnabled) return;
+        this.selectSE.currentTime = 0;
+        this.selectSE.play().catch(function(){});
     }
 
-    // ─── DQ風決定音（ピロッ） ───
+    // ─── はい/いいえ決定音（or.mp3） ───
     playConfirmSelect() {
-        if (!this.ctx || !gameSettings.soundEnabled) return;
-        var t = this.ctx.currentTime;
-        // 1音目
-        var o1 = this.ctx.createOscillator();
-        var g1 = this.ctx.createGain();
-        o1.connect(g1); g1.connect(this.ctx.destination);
-        o1.frequency.value = 523; // C5
-        o1.type = 'square';
-        g1.gain.setValueAtTime(0.15, t);
-        g1.gain.exponentialRampToValueAtTime(0.01, t + 0.07);
-        o1.start(t); o1.stop(t + 0.07);
-        // 2音目（少し高い）
-        var o2 = this.ctx.createOscillator();
-        var g2 = this.ctx.createGain();
-        o2.connect(g2); g2.connect(this.ctx.destination);
-        o2.frequency.value = 784; // G5
-        o2.type = 'square';
-        g2.gain.setValueAtTime(0.15, t + 0.07);
-        g2.gain.exponentialRampToValueAtTime(0.01, t + 0.17);
-        o2.start(t + 0.07); o2.stop(t + 0.17);
+        if (!gameSettings.soundEnabled) return;
+        this.orSE.currentTime = 0;
+        this.orSE.play().catch(function(){});
     }
 }
 
