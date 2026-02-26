@@ -603,7 +603,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.168</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.169</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1660,7 +1660,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.167';
+const CURRENT_VERSION     = '1.169';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3895,8 +3895,7 @@ function renderStageShopItem(item, purchaseCount) {
     var highlighted = isConfirming || isHighlighted;
     var textColor = canBuy ? '#fff' : 'rgba(180,180,180,0.5)';
     var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + '円');
-    return '<div onclick="selectShopItem(\'' + item.id + '\')"' +
-        ' onmouseenter="previewShopItem(\'' + item.id + '\')" style="' +
+    return '<div data-item-id="' + item.id + '" style="' +
         'display:flex; align-items:center; gap:2px;' +
         'padding:2px 3px; cursor:pointer; flex-wrap:wrap;' +
         (highlighted ? 'background:rgba(255,255,255,0.1);' : '') +
@@ -7181,6 +7180,36 @@ function initialize() {
     var tShopBack = document.getElementById('titleShopBackBtn');
     tShopBack.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); hideTitleShop(); });
     tShopBack.addEventListener('click', function(e) { e.stopPropagation(); hideTitleShop(); });
+
+    // ── ステージショップ：アイテム選択（イベント委譲 — タッチ・マウス両対応） ──
+    var shopItemsContainer = document.getElementById('stageShopItems');
+    // タッチ操作：touchend で即反応し、synthesized click を抑止
+    shopItemsContainer.addEventListener('touchend', function(e) {
+        var itemEl = e.target.closest('[data-item-id]');
+        if (!itemEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectShopItem(itemEl.getAttribute('data-item-id'));
+    });
+    // マウス／トラックパッド操作
+    shopItemsContainer.addEventListener('click', function(e) {
+        var itemEl = e.target.closest('[data-item-id]');
+        if (!itemEl) return;
+        selectShopItem(itemEl.getAttribute('data-item-id'));
+    });
+    // デスクトップ用ホバープレビュー（mouseover で委譲、mouseenter は非バブルのため不可）
+    var shopLastHoveredItem = null;
+    shopItemsContainer.addEventListener('mouseover', function(e) {
+        var itemEl = e.target.closest('[data-item-id]');
+        var itemId = itemEl ? itemEl.getAttribute('data-item-id') : null;
+        if (itemId && itemId !== shopLastHoveredItem) {
+            shopLastHoveredItem = itemId;
+            previewShopItem(itemId);
+        }
+    });
+    shopItemsContainer.addEventListener('mouseleave', function() {
+        shopLastHoveredItem = null;
+    });
 
     // ステージショップ閉じるボタン
     var ssClose = document.getElementById('stageShopCloseBtn');
