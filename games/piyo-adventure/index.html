@@ -603,7 +603,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.167</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.168</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1060,7 +1060,7 @@
 <script src="sprites.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.167
+ * ぴよ氏の冒険 v1.168
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -3295,15 +3295,18 @@ var WEATHER_MAX = 60;
 
 function updateWeatherParticles() {
     var biome = biomeState.current;
-    // ボス戦中は蛍・流れ星を除去
-    if (bossState.active) {
-        for (var i = weatherParticles.length - 1; i >= 0; i--) {
-            if (weatherParticles[i].type === 'firefly' || weatherParticles[i].type === 'shootingstar') {
-                weatherParticles.splice(i, 1);
+    // ボス戦中は蛍・流れ星を徐々に消す（夜バイオーム=3）
+    if (bossState.active && biome === 3) {
+        for (var fi = weatherParticles.length - 1; fi >= 0; fi--) {
+            var pt = weatherParticles[fi].type;
+            if (pt === 'firefly' || pt === 'shootingstar') {
+                weatherParticles[fi].life -= 5; // 急速にフェードアウト
+                if (weatherParticles[fi].life <= 0) weatherParticles.splice(fi, 1);
             }
         }
+        return; // ボス戦中は新規生成しない
     }
-    // パーティクル生成（ボス戦中は蛍を生成しない）
+    // パーティクル生成
     var targetCount = biome === 0 ? 15 : WEATHER_MAX; // 草原は少なめ
     if (biome === 0 && Math.random() > 0.03) targetCount = weatherParticles.length; // 草原は低確率で追加
     if (bossState.active && biome === 3) targetCount = 0; // ボス戦中の夜バイオームは生成しない
