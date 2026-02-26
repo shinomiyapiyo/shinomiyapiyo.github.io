@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.176</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.177</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1688,7 +1688,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.176';
+const CURRENT_VERSION     = '1.177';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3959,8 +3959,13 @@ function hideStageShopScreen() {
 }
 
 // ── ショップ背景差分切替 ──
-// shop01:入店(デフォルト) shop02:購入成功 shop03:預金成功 shop04:所持金不足 shop05:退店
+// shop01:入店(デフォルト) shop02/03:成功(交互) shop04:所持金不足 shop05:退店
 var shopBgCurrent = 'shop01';
+var shopSuccessBgToggle = false; // 成功時にshop02/shop03を交互に切替
+function getSuccessShopBg() {
+    shopSuccessBgToggle = !shopSuccessBgToggle;
+    return shopSuccessBgToggle ? 'shop02' : 'shop03';
+}
 var shopBgTimer = null;
 var shopImgsPreloaded = false;
 function preloadShopImages() {
@@ -4276,7 +4281,7 @@ function executeSellItem() {
     gameState.score += sellPrice;
     if (soundManager) soundManager.playItem();
     setKeeperText('shop_keeper_sell_ok', { price: sellPrice });
-    setShopBg('shop02', 1500);
+    setShopBg(getSuccessShopBg(), 1500);
     updateStageShopUI();
     // ストックが空になったらメニューに戻る
     if (stockState.items.length === 0) {
@@ -4359,7 +4364,7 @@ function buyStageItem(itemId) {
     if (!item.stockItem) item.effect();
     if (soundManager) soundManager.playItem();
     setKeeperText('shop_keeper_buy_ok');
-    setShopBg('shop02', 1500);
+    setShopBg(getSuccessShopBg(), 1500);
     shopConfirmingItem = null;
     updateStageShopUI();
     return true;
@@ -4380,7 +4385,7 @@ function depositScore() {
     saveSettings();
     if (soundManager) soundManager.playCoin();
     setKeeperText('shop_keeper_deposit_ok');
-    setShopBg('shop03', 1500);
+    setShopBg(getSuccessShopBg(), 1500);
     updateStageShopUI();
     return true;
 }
