@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.182</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.183</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -629,8 +629,7 @@
                 display: flex; flex-direction: column; gap: 10px; z-index: 25;">
                 <button class="game-button" id="settingsButton">⚙️ SETTING</button>
                 <button class="game-button" id="rankingButton">🏆 RANKING</button>
-                <button class="game-button" id="shopButton" disabled
-                    style="opacity:0.4; pointer-events:none; filter:grayscale(0.8);">🛒 SHOP (準備中)</button>
+                <button class="game-button" id="shopButton">🛒 SHOP</button>
             </div>
 
             <!-- クレジット：右下 -->
@@ -885,59 +884,100 @@
             </div>
         </div>
 
-        <!-- タイトルショップ画面（RPG風・shop05背景） -->
+        <!-- タイトルショップ画面（DQ風・左メニュー＋右画像） -->
         <div id="titleShopScreen" class="hidden" style="
             position: fixed; top: 0; left: 0;
             width: 100vw; height: 100vh;
             box-sizing: border-box;
             background: #000;
-            display: none; flex-direction: column;
+            display: none; flex-direction: row;
             z-index: 9999;
-            overflow: hidden;">
-            <!-- RPG背景（巻物の部屋） -->
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                background: url('images/shop05.jpg') center center / cover no-repeat;
-                image-rendering: pixelated;"></div>
-            <!-- 暗幕オーバーレイ -->
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.92) 78%);
-                pointer-events: none;"></div>
-            <!-- UIパネル（下部RPG風） -->
-            <div style="position: absolute; bottom: 0; left: 0; right: 0;
-                background: linear-gradient(180deg, rgba(20,12,8,0.92), rgba(10,5,2,0.96));
-                border-top: 3px solid rgba(255,215,0,0.5);
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,215,0,0.15);
-                padding: 8px 12px 10px; max-height: 58%;
-                display: flex; flex-direction: column;">
-                <!-- タイトル行 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-shrink: 0;">
-                    <span data-i18n="tshop_title" style="color: #ffd700; font-size: clamp(14px, 3.2vw, 20px); font-weight: 800;
-                        font-family: 'DotGothic16', 'M PLUS Rounded 1c', sans-serif;
-                        text-shadow: 0 0 8px rgba(255,215,0,0.4), 0 1px 3px rgba(0,0,0,0.9);
-                        letter-spacing: 0.05em;">🛒 ショップ</span>
-                    <span id="titleShopSavings" style="color: #fff; font-size: clamp(11px, 2.4vw, 16px);
+            overflow: hidden;
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);">
+            <!-- 左側：DQ風UIパネル -->
+            <div id="tshopUIPanel" style="flex: 0 0 38%; display: flex; flex-direction: column;
+                background: rgba(0,0,30,0.98); padding: 3px 4px;
+                overflow: hidden; box-sizing: border-box;
+                border-right: 2px solid rgba(255,255,255,0.3);">
+                <!-- 貯金残高 -->
+                <div style="display:flex; gap:4px; margin-bottom: 3px; flex-shrink: 0;">
+                    <span id="titleShopSavings" style="color: #fff; font-size: clamp(9px, 2vw, 13px);
                         font-family: 'DotGothic16', monospace;
-                        background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 6px;
-                        border: 1px solid rgba(255,215,0,0.3);
-                        text-shadow: 0 1px 2px rgba(0,0,0,0.8);">🏦 0</span>
+                        background: rgba(0,0,48,0.85); padding: 1px 5px; border-radius: 3px;
+                        border: 1px solid rgba(255,255,255,0.6);
+                        text-shadow: 1px 1px 0 rgba(0,0,0,0.8);">🏦 0円</span>
                 </div>
-                <!-- アップグレードリスト -->
+                <!-- 店員セリフ枠（DQ風：紺背景＋白枠） -->
+                <div id="tshopKeeperBox" style="
+                    background: rgba(0,0,48,0.92);
+                    border: 2px solid #fff;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+                    padding: 4px 6px;
+                    margin-bottom: 3px;
+                    flex-shrink: 0;
+                    position: relative;">
+                    <div style="display:flex; align-items:flex-start; gap:4px;">
+                        <span style="font-size:clamp(12px,2.8vw,18px); line-height:1; flex-shrink:0;">🧙‍♀️</span>
+                        <span id="tshopKeeperText" style="
+                            color: #fff; font-family: 'DotGothic16', monospace;
+                            font-size: clamp(10px, 2vw, 14px);
+                            line-height: 1.3; white-space: pre-line;
+                            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"></span>
+                    </div>
+                    <!-- はい/いいえ確認ボックス（DQ風） -->
+                    <div id="tshopConfirmBox" style="display:none;
+                        position: absolute; left: 4px; top: 100%; margin-top: 2px;
+                        background: rgba(0,0,48,0.97);
+                        border: 2px solid #fff; border-radius: 5px;
+                        padding: 3px 0; min-width: 90px; z-index: 10;
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.6);">
+                        <div id="tshopConfirmYes" style="
+                            color: #fff; font-family: 'DotGothic16', monospace;
+                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
+                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
+                            ">　 はい</div>
+                        <div id="tshopConfirmNo" style="
+                            color: #fff; font-family: 'DotGothic16', monospace;
+                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
+                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
+                            ">　 いいえ</div>
+                    </div>
+                </div>
+                <!-- アップグレードリスト（DQコマンドメニュー風） -->
                 <div id="titleShopList" style="
-                    display: flex; flex-direction: column; gap: 4px;
-                    flex: 1; min-height: 0;
-                    overflow-y: auto; overflow-x: hidden;
-                    color: #fff; font-size: clamp(10px, 2.2vw, 15px);
-                    font-family: 'DotGothic16', 'M PLUS Rounded 1c', sans-serif;
+                    background: rgba(0,0,48,0.92);
+                    border: 2px solid #fff; border-radius: 5px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                    display: flex; flex-direction: column;
+                    flex: 1 1 0%; min-height: 0;
+                    overflow-y: auto;
                     -webkit-overflow-scrolling: touch;
-                    touch-action: pan-y; overscroll-behavior: contain;
                     padding: 2px 0;"></div>
                 <!-- 戻るボタン -->
-                <button class="game-button" data-i18n="btn_back" id="titleShopBackBtn" style="
-                    margin-top: 6px; flex-shrink: 0; font-size: clamp(11px, 2.6vw, 17px); padding: 8px 20px;
-                    background: linear-gradient(180deg, #6a4c2a, #4a3018);
-                    border: 2px solid rgba(255,215,0,0.4);
-                    color: #ffd700; font-weight: 800;
-                    text-shadow: 0 1px 3px rgba(0,0,0,0.8);">🔙 戻る</button>
+                <div style="margin-top: 3px; flex-shrink: 0;">
+                    <button class="game-button" id="titleShopBackBtn" style="
+                        width: 100%; padding: 4px 6px; font-size: clamp(10px, 2vw, 14px);
+                        background: rgba(0,0,48,0.9);
+                        border: 2px solid #fff; border-radius: 4px;
+                        color: #fff; font-weight: 800;
+                        text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+                        font-family: 'DotGothic16', monospace;
+                        white-space: nowrap;">▶ もどる</button>
+                </div>
+            </div>
+            <!-- 右側：ショップ画像エリア -->
+            <div id="tshopImgArea" style="flex: 1 1 0%; position: relative; overflow: hidden; min-width: 0;">
+                <div id="tshopBgImg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                    background: url('images/shop05.jpg') center center / cover no-repeat;
+                    image-rendering: pixelated;"></div>
+                <!-- 画像左端のなじませグラデーション -->
+                <div style="position: absolute; top: 0; left: 0; width: 25px; height: 100%;
+                    background: linear-gradient(90deg, rgba(0,0,30,0.7), transparent);
+                    pointer-events: none;"></div>
             </div>
         </div>
 
@@ -1379,6 +1419,12 @@ ja: {
     shop_confirm_no: 'いいえ',
     // ── タイトルショップ ──
     tshop_title: '🛒 ショップ',
+    tshop_keeper_greet: 'いらっしゃい！\nなにか お探しですか？',
+    tshop_keeper_buy_confirm: '{item}を {price}円で\nお買い上げですか？',
+    tshop_keeper_bought: 'まいど！\nそうびしましたよ',
+    tshop_keeper_cant_afford: 'お金が たりないみたい…\nもっと ぼうけんしてきてね',
+    tshop_keeper_max: 'それは もう\nさいだいまで きょうかずみだよ',
+    tshop_keeper_premium: 'それは とくべつな\nアイテムなの…\nいまは まだ てにはいらないよ',
     tshop_coin_master: 'コインマスター',
     tshop_coin_master_desc: 'コイン獲得量UP',
     tshop_toughness: 'タフネス',
@@ -2074,17 +2120,17 @@ var STAGE_SHOP_ITEMS = [
 
 var TITLE_SHOP_UPGRADES = [
     { id: 'coin_master', nameKey: 'tshop_coin_master', descKey: 'tshop_coin_master_desc',
-      icon: '\u{1F4B0}', maxLevel: 3, prices: [5000, 15000, 30000], effectDesc: ['+10%', '+20%', '+30%'] },
+      icon: '\u{1F4B0}', maxLevel: 3, prices: [5000, 15000, 30000], effectDesc: ['+10%', '+20%', '+30%'], premium: true },
     { id: 'toughness', nameKey: 'tshop_toughness', descKey: 'tshop_toughness_desc',
-      icon: '\u{1F496}', maxLevel: 3, prices: [8000, 20000, 40000], effectDesc: ['+1', '+2', '+3'] },
+      icon: '\u{1F496}', maxLevel: 3, prices: [200000, 500000, 1000000], effectDesc: ['+1', '+2', '+3'] },
     { id: 'stock_expand', nameKey: 'tshop_stock_expand', descKey: 'tshop_stock_expand_desc',
-      icon: '\u{1F392}', maxLevel: 2, prices: [10000, 25000], effectDesc: ['4枠', '5枠'] },
+      icon: '\u{1F392}', maxLevel: 2, prices: [300000, 700000], effectDesc: ['4枠', '5枠'] },
     { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
-      icon: '\u{1F9F2}', maxLevel: 2, prices: [6000, 18000], effectDesc: ['+50%', '+100%'] },
+      icon: '\u{1F9F2}', maxLevel: 2, prices: [200000, 500000], effectDesc: ['+50%', '+100%'] },
     { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
-      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [12000], effectDesc: ['1.5秒'] },
+      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [400000], effectDesc: ['1.5秒'] },
     { id: 'revival_feather', nameKey: 'tshop_revival_feather', descKey: 'tshop_revival_feather_desc',
-      icon: '\u{1FAB6}', maxLevel: 2, prices: [15000, 35000], effectDesc: ['1回/ラン', '2回/ラン'] }
+      icon: '\u{1FAB6}', maxLevel: 2, prices: [500000, 1000000], effectDesc: ['1回/ラン', '2回/ラン'] }
 ];
 
 // ─── デバッグモード ───
@@ -4478,11 +4524,185 @@ function depositScore() {
 }
 
 // ── タイトルショップ ──
+var tshopHighlightedItem = null;  // カーソル選択中のアイテムID
+var tshopConfirmingItem = null;   // 購入確認中のアイテムID
+var tshopConfirmCursor = null;    // はい/いいえカーソル: null | 'yes' | 'no'
+
+function formatTshopPrice(num) {
+    if (num >= 10000) {
+        var man = Math.floor(num / 10000);
+        var remainder = num % 10000;
+        return remainder > 0 ? man + '万' + remainder : man + '万';
+    }
+    return String(num);
+}
+
+function setTshopKeeperText(key, replacements) {
+    var txt = t(key);
+    if (replacements) {
+        for (var k in replacements) {
+            txt = txt.replace('{' + k + '}', replacements[k]);
+        }
+    }
+    var el = document.getElementById('tshopKeeperText');
+    if (el) el.textContent = txt;
+}
+
+function showTshopConfirm(show) {
+    var box = document.getElementById('tshopConfirmBox');
+    var keeperBox = document.getElementById('tshopKeeperBox');
+    var itemsList = document.getElementById('titleShopList');
+    tshopConfirmCursor = null;
+    if (box) box.style.display = show ? 'block' : 'none';
+    if (show) {
+        if (soundManager) soundManager.playConfirmSelect();
+        updateTshopConfirmCursor();
+    }
+    if (keeperBox) {
+        keeperBox.style.marginBottom = show ? '54px' : '3px';
+        keeperBox.style.zIndex = show ? '12' : '';
+    }
+    if (itemsList) itemsList.style.pointerEvents = show ? 'none' : '';
+}
+
+function updateTshopConfirmCursor() {
+    var yesEl = document.getElementById('tshopConfirmYes');
+    var noEl = document.getElementById('tshopConfirmNo');
+    if (yesEl) {
+        yesEl.textContent = (tshopConfirmCursor === 'yes' ? '▶ ' : '　 ') + t('shop_confirm_yes');
+        yesEl.style.background = tshopConfirmCursor === 'yes' ? 'rgba(255,255,255,0.15)' : '';
+    }
+    if (noEl) {
+        noEl.textContent = (tshopConfirmCursor === 'no' ? '▶ ' : '　 ') + t('shop_confirm_no');
+        noEl.style.background = tshopConfirmCursor === 'no' ? 'rgba(255,255,255,0.15)' : '';
+    }
+}
+
+function handleTshopConfirmYes() {
+    if (tshopConfirmCursor !== 'yes') {
+        tshopConfirmCursor = 'yes';
+        if (soundManager) soundManager.playCursorMove();
+        updateTshopConfirmCursor();
+        return;
+    }
+    tshopConfirmCursor = null;
+    if (soundManager) soundManager.playCursorMove();
+    confirmTshopBuy();
+}
+
+function handleTshopConfirmNo() {
+    if (tshopConfirmCursor !== 'no') {
+        tshopConfirmCursor = 'no';
+        if (soundManager) soundManager.playCursorMove();
+        updateTshopConfirmCursor();
+        return;
+    }
+    tshopConfirmCursor = null;
+    if (soundManager) soundManager.playCursorMove();
+    cancelTshopBuy();
+}
+
+function confirmTshopBuy() {
+    if (!tshopConfirmingItem) return;
+    var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === tshopConfirmingItem; });
+    if (!upgrade) return;
+    var currentLevel = (gameSettings.upgrades || {})[tshopConfirmingItem] || 0;
+    var price = upgrade.prices[currentLevel];
+    gameSettings.savings -= price;
+    if (!gameSettings.upgrades) gameSettings.upgrades = {};
+    gameSettings.upgrades[tshopConfirmingItem] = currentLevel + 1;
+    saveSettings();
+    if (soundManager) soundManager.playItem();
+    showTshopConfirm(false);
+    tshopConfirmingItem = null;
+    setTshopKeeperText('tshop_keeper_bought');
+    updateTitleShopUI();
+}
+
+function cancelTshopBuy() {
+    showTshopConfirm(false);
+    tshopConfirmingItem = null;
+    setTshopKeeperText('tshop_keeper_greet');
+    updateTitleShopUI();
+}
+
+function selectTshopItem(upgradeId) {
+    var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
+    if (!upgrade) return;
+    // 確認ダイアログ表示中は無視
+    if (tshopConfirmingItem) return;
+    var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
+    var isMax = currentLevel >= upgrade.maxLevel;
+    // 課金アイテム
+    if (upgrade.premium) {
+        if (soundManager) soundManager.playDamage();
+        tshopHighlightedItem = upgradeId;
+        setTshopKeeperText('tshop_keeper_premium');
+        updateTitleShopUI();
+        return;
+    }
+    // MAX到達
+    if (isMax) {
+        if (soundManager) soundManager.playDamage();
+        tshopHighlightedItem = upgradeId;
+        setTshopKeeperText('tshop_keeper_max');
+        updateTitleShopUI();
+        return;
+    }
+    var price = upgrade.prices[currentLevel];
+    // お金不足
+    if (gameSettings.savings < price) {
+        if (soundManager) soundManager.playDamage();
+        tshopHighlightedItem = upgradeId;
+        setTshopKeeperText('tshop_keeper_cant_afford');
+        updateTitleShopUI();
+        return;
+    }
+    // 1回目タップ：ハイライト＋説明表示
+    if (tshopHighlightedItem !== upgradeId) {
+        tshopHighlightedItem = upgradeId;
+        if (soundManager) soundManager.playCursorMove();
+        var desc = t(upgrade.descKey) + ' → ' + upgrade.effectDesc[currentLevel];
+        var el = document.getElementById('tshopKeeperText');
+        if (el) el.textContent = upgrade.icon + ' ' + t(upgrade.nameKey) + '\n' + desc;
+        updateTitleShopUI();
+        return;
+    }
+    // 2回目タップ：購入確認ダイアログ
+    tshopConfirmingItem = upgradeId;
+    if (soundManager) soundManager.playConfirmSelect();
+    setTshopKeeperText('tshop_keeper_buy_confirm', {
+        item: t(upgrade.nameKey),
+        price: formatTshopPrice(price)
+    });
+    showTshopConfirm(true);
+    updateTitleShopUI();
+}
+
+function previewTshopItem(upgradeId) {
+    if (tshopConfirmingItem) return;
+    var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
+    if (!upgrade) return;
+    tshopHighlightedItem = upgradeId;
+    var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
+    var isMax = currentLevel >= upgrade.maxLevel;
+    var desc = t(upgrade.descKey);
+    if (!isMax) desc += ' → ' + upgrade.effectDesc[currentLevel];
+    var el = document.getElementById('tshopKeeperText');
+    if (el) el.textContent = upgrade.icon + ' ' + t(upgrade.nameKey) + '\n' + desc;
+    updateTitleShopUI();
+}
+
 function showTitleShop() {
     var el = document.getElementById('titleShopScreen');
     el.classList.remove('hidden');
     el.style.display = 'flex';
     history.pushState({ screen: 'titleShop' }, '');
+    tshopHighlightedItem = null;
+    tshopConfirmingItem = null;
+    tshopConfirmCursor = null;
+    setTshopKeeperText('tshop_keeper_greet');
+    showTshopConfirm(false);
     updateTitleShopUI();
 }
 
@@ -4490,58 +4710,57 @@ function hideTitleShop() {
     var el = document.getElementById('titleShopScreen');
     el.classList.add('hidden');
     el.style.display = 'none';
+    tshopHighlightedItem = null;
+    tshopConfirmingItem = null;
 }
 
 function renderTitleShopItem(upgrade) {
     var currentLevel = (gameSettings.upgrades || {})[upgrade.id] || 0;
     var isMax = currentLevel >= upgrade.maxLevel;
+    var isPremium = !!upgrade.premium;
     var price = isMax ? 0 : upgrade.prices[currentLevel];
-    var canBuy = !isMax && gameSettings.savings >= price;
+    var canBuy = !isMax && !isPremium && gameSettings.savings >= price;
+    var isHighlighted = (tshopHighlightedItem === upgrade.id) || (tshopConfirmingItem === upgrade.id);
+    var cursor = isHighlighted ? '▶' : '　';
+    // レベルドット
     var levelDots = '';
     for (var i = 0; i < upgrade.maxLevel; i++) {
         levelDots += i < currentLevel ? '●' : '○';
     }
-    var borderColor = canBuy ? 'rgba(255,215,0,0.3)' : 'rgba(255,255,255,0.08)';
-    var bgColor = canBuy ? 'rgba(40,25,10,0.85)' : 'rgba(20,12,8,0.7)';
-    return '<div style="display:flex; align-items:center; justify-content:space-between;' +
-        'padding:5px 8px; background:' + bgColor + '; border-radius:6px;' +
-        'border:1px solid ' + borderColor + ';' +
-        (canBuy || isMax ? '' : 'opacity:0.55;') + '">' +
-        '<div style="display:flex; align-items:center; gap:6px; flex:1;">' +
-            '<span style="font-size:clamp(14px,3vw,20px); filter:' + (canBuy || isMax ? 'none' : 'grayscale(0.7)') + ';">' + upgrade.icon + '</span>' +
-            '<div>' +
-                '<div style="color:#ffe0a0; font-size:clamp(10px,2vw,14px); font-weight:700; font-family:DotGothic16,monospace;' +
-                    'text-shadow:0 1px 2px rgba(0,0,0,0.9);">' +
-                    escapeHtml(t(upgrade.nameKey)) +
-                    ' <span style="color:#ffd700; font-size:clamp(8px,1.6vw,12px);">' + levelDots + '</span>' +
-                '</div>' +
-                '<div style="color:rgba(255,220,180,0.5); font-size:clamp(8px,1.4vw,11px); font-family:DotGothic16,monospace;">' +
-                    escapeHtml(t(upgrade.descKey)) +
-                    (isMax ? '' : ' → ' + upgrade.effectDesc[currentLevel]) +
-                '</div>' +
-            '</div>' +
-        '</div>' +
-        '<div style="display:flex; align-items:center; gap:5px;">' +
-            (isMax
-                ? '<span style="color:#4CAF50; font-size:clamp(10px,2vw,14px); font-weight:800;' +
-                    'font-family:DotGothic16,monospace; text-shadow:0 0 6px rgba(76,175,80,0.4);">MAX</span>'
-                : '<span style="color:#ffd700; font-size:clamp(9px,1.8vw,13px); font-weight:700; font-family:DotGothic16,monospace;' +
-                    'text-shadow:0 0 6px rgba(255,215,0,0.3);">' + price + '</span>' +
-                  '<button class="game-button" onclick="buyTitleUpgrade(\'' + upgrade.id + '\')" ' +
-                    (canBuy ? '' : 'disabled') +
-                    ' style="min-width:auto; padding:4px 10px; font-size:clamp(9px,1.8vw,13px); min-height:28px;' +
-                    'background:linear-gradient(180deg,#6a4c2a,#4a3018);border:1px solid rgba(255,215,0,0.4);' +
-                    'color:#ffd700;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,0.8);' +
-                    (canBuy ? '' : 'opacity:0.4;pointer-events:none;') + '">' +
-                    escapeHtml(t('shop_buy')) +
-                  '</button>'
-            ) +
-        '</div>' +
+    // 価格テキスト
+    var priceText;
+    if (isMax) {
+        priceText = 'MAX';
+    } else if (isPremium) {
+        priceText = '課金';
+    } else {
+        priceText = formatTshopPrice(price) + '円';
+    }
+    var priceColor = isMax ? '#4CAF50' : (isPremium ? '#ff69b4' : '#ffd700');
+    var textColor = (canBuy || isMax) ? '#fff' : 'rgba(180,180,180,0.5)';
+    if (isPremium) textColor = 'rgba(255,105,180,0.6)';
+    return '<div data-tshop-id="' + upgrade.id + '" style="' +
+        'display:flex; align-items:center; gap:2px;' +
+        'padding:3px 3px; cursor:pointer;' +
+        (isHighlighted ? 'background:rgba(255,255,255,0.1);' : '') +
+        'border-bottom:1px solid rgba(255,255,255,0.06);' +
+        ((canBuy || isMax) ? '' : 'opacity:0.6;') + '">' +
+        '<span style="color:#fff; font-family:DotGothic16,monospace;' +
+            'font-size:clamp(9px,1.8vw,12px); width:0.9em; text-align:center; flex-shrink:0;' +
+            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
+        '<span style="font-size:clamp(10px,2.2vw,15px); flex-shrink:0;">' + upgrade.icon + '</span>' +
+        '<span style="color:' + textColor + '; font-size:clamp(9px,1.8vw,12px);' +
+            'font-weight:700; font-family:DotGothic16,monospace;' +
+            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(upgrade.nameKey)) +
+            ' <span style="font-size:clamp(7px,1.3vw,10px);color:#ffd700;">' + levelDots + '</span></span>' +
+        '<span style="color:' + priceColor + '; font-size:clamp(8px,1.5vw,11px); font-weight:700;' +
+            'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
+            'margin-left:auto; white-space:nowrap;">' + escapeHtml(priceText) + '</span>' +
     '</div>';
 }
 
 function updateTitleShopUI() {
-    document.getElementById('titleShopSavings').textContent = '🏦 ' + gameSettings.savings;
+    document.getElementById('titleShopSavings').textContent = '🏦 ' + formatTshopPrice(gameSettings.savings) + '円';
     var container = document.getElementById('titleShopList');
     var html = '';
     for (var i = 0; i < TITLE_SHOP_UPGRADES.length; i++) {
@@ -4553,6 +4772,7 @@ function updateTitleShopUI() {
 function buyTitleUpgrade(upgradeId) {
     var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
     if (!upgrade) return false;
+    if (upgrade.premium) return false;
     var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
     if (currentLevel >= upgrade.maxLevel) return false;
     var price = upgrade.prices[currentLevel];
@@ -7563,15 +7783,48 @@ function initialize() {
         showSettings();
     });
 
-    // ショップボタン（タイトル画面）— 現在は準備中のため無効化
-    // var shopBtn = document.getElementById('shopButton');
-    // shopBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showTitleShop(); });
-    // shopBtn.addEventListener('click', function(e) { e.stopPropagation(); showTitleShop(); });
+    // ショップボタン（タイトル画面）
+    var shopBtn = document.getElementById('shopButton');
+    shopBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showTitleShop(); });
+    shopBtn.addEventListener('click', function(e) { e.stopPropagation(); showTitleShop(); });
 
     // タイトルショップ戻るボタン
     var tShopBack = document.getElementById('titleShopBackBtn');
     tShopBack.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); hideTitleShop(); });
     tShopBack.addEventListener('click', function(e) { e.stopPropagation(); hideTitleShop(); });
+
+    // タイトルショップ：アイテム選択（DQ風イベント委譲）
+    var tshopList = document.getElementById('titleShopList');
+    tshopList.addEventListener('touchend', function(e) {
+        var itemEl = e.target.closest('[data-tshop-id]');
+        if (!itemEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectTshopItem(itemEl.getAttribute('data-tshop-id'));
+    });
+    tshopList.addEventListener('click', function(e) {
+        var itemEl = e.target.closest('[data-tshop-id]');
+        if (!itemEl) return;
+        selectTshopItem(itemEl.getAttribute('data-tshop-id'));
+    });
+    var tshopLastHovered = null;
+    tshopList.addEventListener('mouseover', function(e) {
+        var itemEl = e.target.closest('[data-tshop-id]');
+        var itemId = itemEl ? itemEl.getAttribute('data-tshop-id') : null;
+        if (itemId && itemId !== tshopLastHovered) {
+            tshopLastHovered = itemId;
+            previewTshopItem(itemId);
+        }
+    });
+    tshopList.addEventListener('mouseleave', function() { tshopLastHovered = null; });
+
+    // タイトルショップ はい/いいえ確認ボタン
+    var tcfYes = document.getElementById('tshopConfirmYes');
+    tcfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleTshopConfirmYes(); });
+    tcfYes.addEventListener('click', function(e) { e.stopPropagation(); handleTshopConfirmYes(); });
+    var tcfNo = document.getElementById('tshopConfirmNo');
+    tcfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleTshopConfirmNo(); });
+    tcfNo.addEventListener('click', function(e) { e.stopPropagation(); handleTshopConfirmNo(); });
 
     // ── ステージショップ：アイテム選択（イベント委譲 — タッチ・マウス両対応） ──
     var shopItemsContainer = document.getElementById('stageShopItems');
