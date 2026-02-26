@@ -2894,7 +2894,7 @@ function spawnFlyingEnemy() {
     return {
         x: gameState.camera.x + GAME_WIDTH + Math.random() * 300,
         y: 82 + Math.random() * 164,
-        width: 44, height: 40,
+        width: 60, height: 54,
         velX: -(2 + Math.random() * 2) * (1 + (gameRound - 1) * 0.3),
         velY: Math.sin(Math.random() * Math.PI * 2) * 0.5,
         type: 'flying_chick',
@@ -4738,7 +4738,7 @@ function spawnEdgeFlyingEnemy() {
     flyingEnemies.push({
         x: spawnX,
         y: 80 + Math.random() * 150,
-        width: 40, height: 36,
+        width: 56, height: 50,
         velX: dir * (1.0 + Math.random() * 0.5),
         type: 'flying_chick',
         animFrame: Math.floor(Math.random() * 100),
