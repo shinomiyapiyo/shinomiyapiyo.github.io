@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.171</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.172</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1688,7 +1688,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.171';
+const CURRENT_VERSION     = '1.172';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1917,6 +1917,44 @@ class SoundManager {
             if (bgms[i]) { bgms[i].pause(); bgms[i].currentTime = 0; }
         }
         this.currentBGM = null;
+    }
+
+    // ─── DQ風カーソル移動音（ピッ） ───
+    playCursorMove() {
+        if (!this.ctx || !gameSettings.soundEnabled) return;
+        var t = this.ctx.currentTime;
+        var o = this.ctx.createOscillator();
+        var g = this.ctx.createGain();
+        o.connect(g); g.connect(this.ctx.destination);
+        o.frequency.value = 1047; // C6
+        o.type = 'square';
+        g.gain.setValueAtTime(0.12, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
+        o.start(t); o.stop(t + 0.06);
+    }
+
+    // ─── DQ風決定音（ピロッ） ───
+    playConfirmSelect() {
+        if (!this.ctx || !gameSettings.soundEnabled) return;
+        var t = this.ctx.currentTime;
+        // 1音目
+        var o1 = this.ctx.createOscillator();
+        var g1 = this.ctx.createGain();
+        o1.connect(g1); g1.connect(this.ctx.destination);
+        o1.frequency.value = 523; // C5
+        o1.type = 'square';
+        g1.gain.setValueAtTime(0.15, t);
+        g1.gain.exponentialRampToValueAtTime(0.01, t + 0.07);
+        o1.start(t); o1.stop(t + 0.07);
+        // 2音目（少し高い）
+        var o2 = this.ctx.createOscillator();
+        var g2 = this.ctx.createGain();
+        o2.connect(g2); g2.connect(this.ctx.destination);
+        o2.frequency.value = 784; // G5
+        o2.type = 'square';
+        g2.gain.setValueAtTime(0.15, t + 0.07);
+        g2.gain.exponentialRampToValueAtTime(0.01, t + 0.17);
+        o2.start(t + 0.07); o2.stop(t + 0.17);
     }
 }
 
@@ -3814,6 +3852,7 @@ var shopHighlightedItem = null; // DQ風：カーソル選択中のアイテムI
 var shopMode = 'menu'; // 'menu' | 'buy' | 'sell'
 var shopSellingIndex = null; // 売却確認中のストックインデックス
 var shopSellHighlightIndex = null; // 売却モードでハイライト中のストックインデックス
+var shopConfirmCursor = null; // はい/いいえカーソル位置: null | 'yes' | 'no'
 
 function setKeeperText(key, replacements) {
     var txt = t(key);
@@ -3830,7 +3869,10 @@ function showShopConfirm(show) {
     var box = document.getElementById('shopConfirmBox');
     var keeperBox = document.getElementById('shopKeeperBox');
     var itemsList = document.getElementById('stageShopItems');
+    // カーソルリセット
+    shopConfirmCursor = null;
     if (box) box.style.display = show ? 'block' : 'none';
+    if (show) updateShopConfirmCursor();
     // 確認ボックス表示中はmarginを広げてアイテムリストとの重なりを防止
     if (keeperBox) {
         keeperBox.style.marginBottom = show ? '54px' : '3px';
@@ -3838,6 +3880,48 @@ function showShopConfirm(show) {
     }
     // 確認ダイアログ表示中はアイテムリストのタッチを無効化（タッチ奪取防止）
     if (itemsList) itemsList.style.pointerEvents = show ? 'none' : '';
+}
+
+// はい/いいえカーソル表示更新
+function updateShopConfirmCursor() {
+    var yesEl = document.getElementById('shopConfirmYes');
+    var noEl = document.getElementById('shopConfirmNo');
+    if (yesEl) {
+        yesEl.textContent = (shopConfirmCursor === 'yes' ? '▶ ' : '　 ') + t('shop_confirm_yes');
+        yesEl.style.background = shopConfirmCursor === 'yes' ? 'rgba(255,255,255,0.15)' : '';
+    }
+    if (noEl) {
+        noEl.textContent = (shopConfirmCursor === 'no' ? '▶ ' : '　 ') + t('shop_confirm_no');
+        noEl.style.background = shopConfirmCursor === 'no' ? 'rgba(255,255,255,0.15)' : '';
+    }
+}
+
+// はいボタンタップ処理（カーソル合わせ→決定の2ステップ）
+function handleConfirmYes() {
+    if (shopConfirmCursor !== 'yes') {
+        shopConfirmCursor = 'yes';
+        if (soundManager) soundManager.playCursorMove();
+        updateShopConfirmCursor();
+        return;
+    }
+    // カーソルが「はい」にある状態で再タップ → 決定
+    shopConfirmCursor = null;
+    if (soundManager) soundManager.playConfirmSelect();
+    confirmShopBuy();
+}
+
+// いいえボタンタップ処理（カーソル合わせ→決定の2ステップ）
+function handleConfirmNo() {
+    if (shopConfirmCursor !== 'no') {
+        shopConfirmCursor = 'no';
+        if (soundManager) soundManager.playCursorMove();
+        updateShopConfirmCursor();
+        return;
+    }
+    // カーソルが「いいえ」にある状態で再タップ → 決定
+    shopConfirmCursor = null;
+    if (soundManager) soundManager.playConfirmSelect();
+    cancelShopBuy();
 }
 
 function showStageShopScreen() {
@@ -4075,6 +4159,7 @@ function selectShopItem(itemId) {
     // ── メニューモード ──
     if (shopMode === 'menu') {
         if (itemId === '_menu_buy') {
+            if (soundManager) soundManager.playConfirmSelect();
             shopMode = 'buy';
             shopHighlightedItem = null;
             setKeeperText('shop_keeper_buy_greet');
@@ -4085,11 +4170,13 @@ function selectShopItem(itemId) {
                 if (soundManager) soundManager.playDamage();
                 return;
             }
+            if (soundManager) soundManager.playConfirmSelect();
             shopMode = 'sell';
             shopSellHighlightIndex = null;
             setKeeperText('shop_keeper_sell_greet');
             updateStageShopUI();
         } else if (itemId === '_menu_leave') {
+            if (soundManager) soundManager.playConfirmSelect();
             shopClosing = true;
             shopHighlightedItem = null;
             setKeeperText('shop_keeper_leave_confirm');
@@ -4108,6 +4195,7 @@ function selectShopItem(itemId) {
         if (!shopItem) return;
         // 1回目タップ：説明＋売値表示
         if (shopSellHighlightIndex !== sellIdx) {
+            if (soundManager) soundManager.playCursorMove();
             shopSellingIndex = null;
             showShopConfirm(false);
             shopSellHighlightIndex = sellIdx;
@@ -4118,6 +4206,7 @@ function selectShopItem(itemId) {
             return;
         }
         // 2回目タップ：売却確認ダイアログ
+        if (soundManager) soundManager.playConfirmSelect();
         shopSellHighlightIndex = null;
         var sellPrice2 = Math.floor(shopItem.price / 2);
         shopSellingIndex = sellIdx;
@@ -4133,6 +4222,7 @@ function selectShopItem(itemId) {
 
     // 1回目タップ：説明表示（まだハイライトされていない場合）
     if (shopHighlightedItem !== itemId) {
+        if (soundManager) soundManager.playCursorMove();
         shopConfirmingItem = null;
         showShopConfirm(false);
         shopHighlightedItem = itemId;
@@ -4143,6 +4233,7 @@ function selectShopItem(itemId) {
     }
 
     // 2回目タップ：購入チェック＆確認ダイアログ
+    if (soundManager) soundManager.playConfirmSelect();
     shopHighlightedItem = null;
     var bought = shopState.purchaseCounts[itemId] || 0;
     // 売り切れチェック
@@ -7444,13 +7535,13 @@ function initialize() {
     depBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); depositScore(); });
     depBtn.addEventListener('click', function(e) { e.stopPropagation(); depositScore(); });
 
-    // DQ風 はい/いいえ確認ボタン
+    // DQ風 はい/いいえ確認ボタン（カーソル合わせ→決定の2ステップ）
     var cfYes = document.getElementById('shopConfirmYes');
-    cfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); confirmShopBuy(); });
-    cfYes.addEventListener('click', function(e) { e.stopPropagation(); confirmShopBuy(); });
+    cfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleConfirmYes(); });
+    cfYes.addEventListener('click', function(e) { e.stopPropagation(); handleConfirmYes(); });
     var cfNo = document.getElementById('shopConfirmNo');
-    cfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); cancelShopBuy(); });
-    cfNo.addEventListener('click', function(e) { e.stopPropagation(); cancelShopBuy(); });
+    cfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleConfirmNo(); });
+    cfNo.addEventListener('click', function(e) { e.stopPropagation(); handleConfirmNo(); });
 
     // タイトル画面の背景タップでゲーム開始
     startScreen.addEventListener('click', function(e) {
