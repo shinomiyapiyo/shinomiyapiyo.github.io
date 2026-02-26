@@ -3293,9 +3293,18 @@ var WEATHER_MAX = 60;
 
 function updateWeatherParticles() {
     var biome = biomeState.current;
-    // パーティクル生成
+    // ボス戦中は蛍・流れ星を除去
+    if (bossState.active) {
+        for (var i = weatherParticles.length - 1; i >= 0; i--) {
+            if (weatherParticles[i].type === 'firefly' || weatherParticles[i].type === 'shootingstar') {
+                weatherParticles.splice(i, 1);
+            }
+        }
+    }
+    // パーティクル生成（ボス戦中は蛍を生成しない）
     var targetCount = biome === 0 ? 15 : WEATHER_MAX; // 草原は少なめ
     if (biome === 0 && Math.random() > 0.03) targetCount = weatherParticles.length; // 草原は低確率で追加
+    if (bossState.active && biome === 3) targetCount = 0; // ボス戦中の夜バイオームは生成しない
     while (weatherParticles.length < targetCount) {
         var wp = spawnWeatherParticle(biome, true);
         if (wp) weatherParticles.push(wp);
