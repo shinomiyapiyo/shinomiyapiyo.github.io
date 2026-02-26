@@ -603,7 +603,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.166</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.167</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1658,7 +1658,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.166';
+const CURRENT_VERSION     = '1.167';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2894,7 +2894,7 @@ function spawnFlyingEnemy() {
     return {
         x: gameState.camera.x + GAME_WIDTH + Math.random() * 300,
         y: 82 + Math.random() * 164,
-        width: 44, height: 40,
+        width: 60, height: 54,
         velX: -(2 + Math.random() * 2) * (1 + (gameRound - 1) * 0.3),
         velY: Math.sin(Math.random() * Math.PI * 2) * 0.5,
         type: 'flying_chick',
@@ -3293,9 +3293,18 @@ var WEATHER_MAX = 60;
 
 function updateWeatherParticles() {
     var biome = biomeState.current;
-    // パーティクル生成
+    // ボス戦中は蛍・流れ星を除去
+    if (bossState.active) {
+        for (var i = weatherParticles.length - 1; i >= 0; i--) {
+            if (weatherParticles[i].type === 'firefly' || weatherParticles[i].type === 'shootingstar') {
+                weatherParticles.splice(i, 1);
+            }
+        }
+    }
+    // パーティクル生成（ボス戦中は蛍を生成しない）
     var targetCount = biome === 0 ? 15 : WEATHER_MAX; // 草原は少なめ
     if (biome === 0 && Math.random() > 0.03) targetCount = weatherParticles.length; // 草原は低確率で追加
+    if (bossState.active && biome === 3) targetCount = 0; // ボス戦中の夜バイオームは生成しない
     while (weatherParticles.length < targetCount) {
         var wp = spawnWeatherParticle(biome, true);
         if (wp) weatherParticles.push(wp);
@@ -4729,7 +4738,7 @@ function spawnEdgeFlyingEnemy() {
     flyingEnemies.push({
         x: spawnX,
         y: 80 + Math.random() * 150,
-        width: 40, height: 36,
+        width: 56, height: 50,
         velX: dir * (1.0 + Math.random() * 0.5),
         type: 'flying_chick',
         animFrame: Math.floor(Math.random() * 100),
