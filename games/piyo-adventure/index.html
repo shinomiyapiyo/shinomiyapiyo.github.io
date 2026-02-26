@@ -1324,16 +1324,16 @@ ja: {
     shop_deposited: '✅ 預金済み',
     shop_stock_full: 'ストックがいっぱいです',
     shop_not_enough: '残金が足りません',
-    shop_item_heal: '回復薬',
-    shop_item_heal_desc: 'ライフ+2（上限10）',
-    shop_item_heal_stock: 'ストック回復薬',
-    shop_item_heal_stock_desc: 'ストック用：ライフ+2',
-    shop_item_barrier: 'バリア',
-    shop_item_barrier_desc: '10秒間完全無敵',
-    shop_item_lemon: 'レモンスペシャル',
-    shop_item_lemon_desc: 'ジャンプ強化20秒',
-    shop_item_fullcharge: 'フルチャージ',
-    shop_item_fullcharge_desc: '全パワーアップ15秒同時発動',
+    shop_item_heal: 'たちぐいそば',
+    shop_item_heal_desc: 'あったかいおそばで\nライフが 2かいふくする（上限10）',
+    shop_item_heal_stock: 'やくそう',
+    shop_item_heal_stock_desc: 'もっておけば いつでも\nライフを 2かいふくできる',
+    shop_item_barrier: 'まもりのたて',
+    shop_item_barrier_desc: '10びょうかん\nすべてのダメージを ふせぐ',
+    shop_item_lemon: 'ゼロレモン',
+    shop_item_lemon_desc: '20びょうかん\nジャンプりょくが アップする',
+    shop_item_fullcharge: 'ゆめみるのろい',
+    shop_item_fullcharge_desc: '15びょうかん\nぜんのうりょくが かくせいする',
     shop_keeper_greet: 'いらっしゃいませ！\nなにを お買い求めですか？',
     shop_keeper_buy_ok: 'ありがとうございます！\nがんばってくださいね♪',
     shop_keeper_no_money: 'お金が 足りないみたいです…',
@@ -1363,9 +1363,9 @@ ja: {
     tshop_revival_feather_desc: '死亡時にHP1で復活（1ランN回）',
     // ── 復活 ──
     revival_text: '✨ 復活！',
-    revival_potion_text: '💊 復活薬で復活！',
-    shop_item_revive: '復活薬',
-    shop_item_revive_desc: '死亡時にHP2で復活（1回）'
+    revival_potion_text: '💊 ふっかつやくで復活！',
+    shop_item_revive: 'ふっかつやく',
+    shop_item_revive_desc: 'たおれたとき\nライフ2で ふっかつする（1回）'
 },
 en: {
     splash_warning: '⚠️ Notice ⚠️',
@@ -1463,16 +1463,16 @@ en: {
     shop_deposited: '✅ Deposited',
     shop_stock_full: 'Stock is full',
     shop_not_enough: 'Not enough funds',
-    shop_item_heal: 'Healing Potion',
-    shop_item_heal_desc: 'Life +2 (max 10)',
-    shop_item_heal_stock: 'Stock Heal',
-    shop_item_heal_stock_desc: 'Stock: Life +2',
-    shop_item_barrier: 'Barrier',
-    shop_item_barrier_desc: '10s full invincibility',
-    shop_item_lemon: 'Lemon Special',
-    shop_item_lemon_desc: 'Jump boost for 20s',
-    shop_item_fullcharge: 'Full Charge',
-    shop_item_fullcharge_desc: 'All power-ups for 15s',
+    shop_item_heal: 'Standing Soba',
+    shop_item_heal_desc: 'A warm bowl of soba.\nRestores 2 life (max 10)',
+    shop_item_heal_stock: 'Medicinal Herb',
+    shop_item_heal_stock_desc: 'Keep it for later.\nRestores 2 life when used',
+    shop_item_barrier: 'Guardian Shield',
+    shop_item_barrier_desc: 'Blocks all damage\nfor 10 seconds',
+    shop_item_lemon: 'Zero Lemon',
+    shop_item_lemon_desc: 'Boosts jump power\nfor 20 seconds',
+    shop_item_fullcharge: 'Dream Curse',
+    shop_item_fullcharge_desc: 'Awakens all powers\nfor 15 seconds',
     shop_keeper_greet: 'Welcome!\nWhat can I get for you?',
     shop_keeper_buy_ok: 'Thank you!\nGood luck out there♪',
     shop_keeper_no_money: "You don't seem to\nhave enough money...",
@@ -1504,7 +1504,7 @@ en: {
     revival_text: '✨ Revived!',
     revival_potion_text: '💊 Revived by potion!',
     shop_item_revive: 'Revival Potion',
-    shop_item_revive_desc: 'Revive with 2HP on death (1 use)'
+    shop_item_revive_desc: 'Auto-revive with 2 life\nwhen defeated (1 use)'
 }
 };
 
@@ -3732,6 +3732,7 @@ function closeStageShop() {
     if (shopClosing) return;
     // 退店確認ダイアログ表示
     shopConfirmingItem = null;
+    shopHighlightedItem = null;
     shopClosing = true;
     setKeeperText('shop_keeper_leave_confirm');
     showShopConfirm(true);
@@ -3759,6 +3760,7 @@ function cancelCloseShop() {
 }
 
 var shopConfirmingItem = null;  // DQ風：確認中のアイテムID
+var shopHighlightedItem = null; // DQ風：カーソル選択中のアイテムID（説明表示用）
 
 function setKeeperText(key, replacements) {
     var txt = t(key);
@@ -3782,6 +3784,7 @@ function showShopConfirm(show) {
 function showStageShopScreen() {
     shopState.purchaseCounts = {};
     shopConfirmingItem = null;
+    shopHighlightedItem = null;
     setShopBg('shop01');
     var el = document.getElementById('stageShopScreen');
     el.classList.remove('hidden');
@@ -3867,13 +3870,16 @@ function renderStageShopItem(item, purchaseCount) {
     var hpFull = (item.id === 'heal' && gameState.lives >= 10);
     // DQ風メニュー項目：▶ アイテム名　　　価格
     var isConfirming = (shopConfirmingItem === item.id);
-    var cursor = isConfirming ? '▶' : '　';
+    var isHighlighted = (shopHighlightedItem === item.id);
+    var cursor = (isConfirming || isHighlighted) ? '▶' : '　';
+    var highlighted = isConfirming || isHighlighted;
     var textColor = canBuy ? '#fff' : 'rgba(180,180,180,0.5)';
     var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + '円');
-    return '<div onclick="selectShopItem(\'' + item.id + '\')" style="' +
+    return '<div onclick="selectShopItem(\'' + item.id + '\')"' +
+        ' onmouseenter="previewShopItem(\'' + item.id + '\')" style="' +
         'display:flex; align-items:center; gap:2px;' +
         'padding:2px 3px; cursor:pointer; flex-wrap:wrap;' +
-        (isConfirming ? 'background:rgba(255,255,255,0.1);' : '') +
+        (highlighted ? 'background:rgba(255,255,255,0.1);' : '') +
         'border-bottom:1px solid rgba(255,255,255,0.06);' +
         (canBuy ? '' : 'opacity:0.6;') + '">' +
         '<span style="color:#fff; font-family:DotGothic16,monospace;' +
@@ -3904,22 +3910,49 @@ function updateStageShopUI() {
     // 預金ボタンは常にグレーアウト（準備中）
 }
 
-// DQ風：アイテム選択 → 確認ダイアログ
+// DQ風：デスクトップ用ホバープレビュー（マウスオーバーで説明表示）
+function previewShopItem(itemId) {
+    if (shopConfirmingItem) return; // 確認中は上書きしない
+    var item = STAGE_SHOP_ITEMS.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    shopHighlightedItem = itemId;
+    var el = document.getElementById('shopKeeperText');
+    if (el) el.textContent = t(item.descKey);
+    updateStageShopUI();
+}
+
+// DQ風：アイテム選択 → 説明表示 → 確認ダイアログ
 function selectShopItem(itemId) {
     var item = STAGE_SHOP_ITEMS.find(function(i) { return i.id === itemId; });
     if (!item) return;
+
+    // 1回目タップ：説明表示（まだハイライトされていない場合）
+    if (shopHighlightedItem !== itemId) {
+        shopConfirmingItem = null;
+        showShopConfirm(false);
+        shopHighlightedItem = itemId;
+        var el = document.getElementById('shopKeeperText');
+        if (el) el.textContent = t(item.descKey);
+        updateStageShopUI();
+        return;
+    }
+
+    // 2回目タップ：購入チェック＆確認ダイアログ
+    shopHighlightedItem = null;
     var bought = shopState.purchaseCounts[itemId] || 0;
     // 売り切れチェック
     if (bought >= item.maxPerVisit) {
         setKeeperText('shop_keeper_sold_out');
         if (soundManager) soundManager.playDamage();
         setShopBg('shop04', 1200);
+        updateStageShopUI();
         return;
     }
     // ライフ上限チェック
     if (item.id === 'heal' && gameState.lives >= 10) {
         setKeeperText('shop_keeper_heal_maxhp');
         if (soundManager) soundManager.playDamage();
+        updateStageShopUI();
         return;
     }
     // 所持金チェック
@@ -3927,12 +3960,14 @@ function selectShopItem(itemId) {
         setKeeperText('shop_keeper_no_money');
         if (soundManager) soundManager.playDamage();
         setShopBg('shop04', 1200);
+        updateStageShopUI();
         return;
     }
     // ストック満杯チェック
     if (item.stockItem && stockState.items.length >= stockState.maxSlots) {
         setKeeperText('shop_keeper_stock_full');
         if (soundManager) soundManager.playDamage();
+        updateStageShopUI();
         return;
     }
     // 確認ダイアログ表示
@@ -3957,6 +3992,7 @@ function cancelShopBuy() {
     if (shopClosing) { cancelCloseShop(); return; }
     showShopConfirm(false);
     shopConfirmingItem = null;
+    shopHighlightedItem = null;
     setKeeperText('shop_keeper_greet');
     updateStageShopUI();
 }
