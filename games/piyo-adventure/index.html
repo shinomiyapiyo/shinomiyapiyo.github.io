@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.178</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.180</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -848,14 +848,21 @@
                     overflow-y: auto;
                     -webkit-overflow-scrolling: touch;
                     padding: 2px 0;"></div>
-                <!-- 預金（準備中）＋閉じるボタン -->
+                <!-- 貯金＋閉じるボタン -->
                 <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 3px; flex-shrink: 0;">
-                    <button id="depositBtn" class="game-button" disabled style="
+                    <button id="depositBtn" class="game-button" style="
                         width: 100%; padding: 2px 4px; font-size: clamp(8px, 1.5vw, 11px);
-                        background: #555; border: 1px solid #888; border-radius: 3px;
-                        color: #999; font-weight: 700; opacity: 0.5; pointer-events: none;
-                        font-family: 'DotGothic16', monospace;">🏦 預金口座 準備中</button>
-                    <div id="depositInfo" style="display:none;"></div>
+                        background: linear-gradient(180deg, #2a4a6a, #183048);
+                        border: 1px solid rgba(100,180,255,0.5); border-radius: 3px;
+                        color: #88ccff; font-weight: 700;
+                        font-family: 'DotGothic16', monospace;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.8);">🏦 貯金する</button>
+                    <div id="depositInfo" style="
+                        font-family: 'DotGothic16', monospace;
+                        font-size: clamp(7px, 1.3vw, 10px);
+                        color: rgba(136,204,255,0.7); text-align: center;
+                        padding: 1px 0;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.8);"></div>
                     <button id="stageShopCloseBtn" class="game-button" style="
                         width: 100%; padding: 4px 6px; font-size: clamp(10px, 2vw, 14px);
                         background: rgba(0,0,48,0.9);
@@ -1332,10 +1339,10 @@ ja: {
     shop_buy: '購入',
     shop_sold_out: '売切',
     shop_close: '▶ お店を出る',
-    shop_deposit_btn: '💰 預金する（スコアの50%）',
-    shop_deposit_amount: '預入額: {amount}円',
+    shop_deposit_btn: '貯金する',
+    shop_deposit_amount: '貯金額: {amount}円',
     shop_current_savings: '現在の貯金: {savings}',
-    shop_deposited: '✅ 預金済み',
+    shop_deposited: '✅ 貯金済み',
     shop_stock_full: 'ストックがいっぱいです',
     shop_not_enough: '残金が足りません',
     shop_item_heal: 'たちぐいそば',
@@ -1354,8 +1361,8 @@ ja: {
     shop_keeper_no_money: 'お金が 足りないみたいです…',
     shop_keeper_sold_out: 'ごめんなさい、売り切れです',
     shop_keeper_stock_full: 'ストックが いっぱいみたいです',
-    shop_keeper_deposit_ok: 'お預かりしますね！\n大切に 保管しておきます',
-    shop_keeper_deposit_zero: '預けるお金が ないみたいです…',
+    shop_keeper_deposit_ok: '{amount}円 お預かり！\n貯金合計 {total}円です',
+    shop_keeper_deposit_zero: '貯金するお金が\nないみたいです…',
     shop_keeper_leave_confirm: 'お買い物を\n終了しますか？',
     shop_keeper_close: 'お気をつけて！\nボスは 手ごわいですよ！',
     shop_keeper_heal_maxhp: 'もう十分\nお元気そうですよ！',
@@ -1479,7 +1486,7 @@ en: {
     shop_buy: 'Buy',
     shop_sold_out: 'Sold',
     shop_close: '▶ Leave',
-    shop_deposit_btn: '💰 Deposit (50% of score)',
+    shop_deposit_btn: 'Deposit',
     shop_deposit_amount: 'Deposit: {amount}',
     shop_current_savings: 'Savings: {savings}',
     shop_deposited: '✅ Deposited',
@@ -1501,8 +1508,8 @@ en: {
     shop_keeper_no_money: "You don't seem to\nhave enough money...",
     shop_keeper_sold_out: "Sorry, that's sold out",
     shop_keeper_stock_full: 'Your stock seems full...',
-    shop_keeper_deposit_ok: "I'll keep it safe!\nDon't worry about a thing",
-    shop_keeper_deposit_zero: "You don't have\nanything to deposit...",
+    shop_keeper_deposit_ok: "Saved {amount}!\nTotal: {total}",
+    shop_keeper_deposit_zero: "You don't have\nanything to save...",
     shop_keeper_leave_confirm: 'Done shopping?\nReady to go?',
     shop_keeper_close: 'Take care!\nThe boss is tough!',
     shop_keeper_heal_maxhp: "Oh, you're already\nin great shape!",
@@ -1688,7 +1695,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.178';
+const CURRENT_VERSION     = '1.180';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -4130,7 +4137,36 @@ function updateStageShopUI() {
     }
 
     container.innerHTML = html;
-    // 預金ボタンは常にグレーアウト（準備中）
+
+    // 貯金ボタン＆貯金額の更新
+    var depBtn = document.getElementById('depositBtn');
+    var depInfo = document.getElementById('depositInfo');
+    var depAmount = Math.floor(gameState.score * 0.5);
+    if (depBtn) {
+        if (shopState.deposited) {
+            depBtn.disabled = true;
+            depBtn.style.opacity = '0.4';
+            depBtn.style.pointerEvents = 'none';
+            depBtn.textContent = t('shop_deposited');
+        } else if (gameState.score <= 0) {
+            depBtn.disabled = true;
+            depBtn.style.opacity = '0.4';
+            depBtn.style.pointerEvents = 'none';
+            depBtn.textContent = '🏦 ' + t('shop_deposit_btn');
+        } else {
+            depBtn.disabled = false;
+            depBtn.style.opacity = '1';
+            depBtn.style.pointerEvents = 'auto';
+            depBtn.textContent = '🏦 ' + t('shop_deposit_btn') + '（' + depAmount + '円）';
+        }
+    }
+    if (depInfo) {
+        if (!shopState.deposited && gameState.score > 0) {
+            depInfo.textContent = '貯金: ' + gameSettings.savings + '円 → ' + (gameSettings.savings + depAmount) + '円 ／ 手持ち: ' + gameState.score + '円 → ' + (gameState.score - depAmount) + '円';
+        } else {
+            depInfo.textContent = t('shop_current_savings', { savings: gameSettings.savings + '円' });
+        }
+    }
 }
 
 // DQ風：デスクトップ用ホバープレビュー（マウスオーバーで説明表示）
@@ -4371,7 +4407,6 @@ function buyStageItem(itemId) {
 }
 
 function depositScore() {
-    return false; // 預金口座 準備中
     if (shopState.deposited) return false;
     if (gameState.score <= 0) {
         setKeeperText('shop_keeper_deposit_zero');
@@ -4384,7 +4419,7 @@ function depositScore() {
     shopState.deposited = true;
     saveSettings();
     if (soundManager) soundManager.playCoin();
-    setKeeperText('shop_keeper_deposit_ok');
+    setKeeperText('shop_keeper_deposit_ok', { amount: depositAmount, total: gameSettings.savings });
     setShopBg(getSuccessShopBg(), 1500);
     updateStageShopUI();
     return true;
@@ -7521,7 +7556,7 @@ function initialize() {
     ssClose.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeStageShop(); });
     ssClose.addEventListener('click', function(e) { e.stopPropagation(); closeStageShop(); });
 
-    // 預金ボタン
+    // 貯金ボタン
     var depBtn = document.getElementById('depositBtn');
     depBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); depositScore(); });
     depBtn.addEventListener('click', function(e) { e.stopPropagation(); depositScore(); });
