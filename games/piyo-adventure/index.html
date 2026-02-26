@@ -151,7 +151,7 @@
         /* --- タイトル画像 --- */
         #titleImage {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 55%; left: 50%;
             transform: translate(-50%, -50%);
             width: auto; height: auto;
             max-width: 85vw;
@@ -164,7 +164,7 @@
             display: block;
         }
         @media (min-width: 600px) {
-            #titleImage { max-width: 50vw; max-height: 70vh; left: 38%; }
+            #titleImage { max-width: 50vw; max-height: 70vh; left: 38%; top: 53%; }
             #titleLogo { left: 38% !important; }
         }
 
@@ -1324,14 +1324,16 @@ ja: {
     shop_deposited: '✅ 預金済み',
     shop_stock_full: 'ストックがいっぱいです',
     shop_not_enough: '残金が足りません',
-    shop_item_heal: '回復薬',
-    shop_item_heal_desc: 'ライフ+2（上限10）',
-    shop_item_barrier: 'バリア',
-    shop_item_barrier_desc: '10秒間完全無敵',
-    shop_item_lemon: 'レモンスペシャル',
-    shop_item_lemon_desc: 'ジャンプ強化20秒',
-    shop_item_fullcharge: 'フルチャージ',
-    shop_item_fullcharge_desc: '全パワーアップ15秒同時発動',
+    shop_item_heal: 'たちぐいそば',
+    shop_item_heal_desc: 'あったかいおそばで\nライフが 2かいふくする（上限10）',
+    shop_item_heal_stock: 'やくそう',
+    shop_item_heal_stock_desc: 'もっておけば いつでも\nライフを 2かいふくできる',
+    shop_item_barrier: 'まもりのたて',
+    shop_item_barrier_desc: '10びょうかん\nすべてのダメージを ふせぐ',
+    shop_item_lemon: 'ゼロレモン',
+    shop_item_lemon_desc: '20びょうかん\nジャンプりょくが アップする',
+    shop_item_fullcharge: 'ゆめみるのろい',
+    shop_item_fullcharge_desc: '15びょうかん\nぜんのうりょくが かくせいする',
     shop_keeper_greet: 'いらっしゃいませ！\nなにを お買い求めですか？',
     shop_keeper_buy_ok: 'ありがとうございます！\nがんばってくださいね♪',
     shop_keeper_no_money: 'お金が 足りないみたいです…',
@@ -1361,9 +1363,9 @@ ja: {
     tshop_revival_feather_desc: '死亡時にHP1で復活（1ランN回）',
     // ── 復活 ──
     revival_text: '✨ 復活！',
-    revival_potion_text: '💊 復活薬で復活！',
-    shop_item_revive: '復活薬',
-    shop_item_revive_desc: '死亡時にHP2で復活（1回）'
+    revival_potion_text: '💊 ふっかつやくで復活！',
+    shop_item_revive: 'ふっかつやく',
+    shop_item_revive_desc: 'たおれたとき\nライフ2で ふっかつする（1回）'
 },
 en: {
     splash_warning: '⚠️ Notice ⚠️',
@@ -1461,14 +1463,16 @@ en: {
     shop_deposited: '✅ Deposited',
     shop_stock_full: 'Stock is full',
     shop_not_enough: 'Not enough funds',
-    shop_item_heal: 'Healing Potion',
-    shop_item_heal_desc: 'Life +2 (max 10)',
-    shop_item_barrier: 'Barrier',
-    shop_item_barrier_desc: '10s full invincibility',
-    shop_item_lemon: 'Lemon Special',
-    shop_item_lemon_desc: 'Jump boost for 20s',
-    shop_item_fullcharge: 'Full Charge',
-    shop_item_fullcharge_desc: 'All power-ups for 15s',
+    shop_item_heal: 'Standing Soba',
+    shop_item_heal_desc: 'A warm bowl of soba.\nRestores 2 life (max 10)',
+    shop_item_heal_stock: 'Medicinal Herb',
+    shop_item_heal_stock_desc: 'Keep it for later.\nRestores 2 life when used',
+    shop_item_barrier: 'Guardian Shield',
+    shop_item_barrier_desc: 'Blocks all damage\nfor 10 seconds',
+    shop_item_lemon: 'Zero Lemon',
+    shop_item_lemon_desc: 'Boosts jump power\nfor 20 seconds',
+    shop_item_fullcharge: 'Dream Curse',
+    shop_item_fullcharge_desc: 'Awakens all powers\nfor 15 seconds',
     shop_keeper_greet: 'Welcome!\nWhat can I get for you?',
     shop_keeper_buy_ok: 'Thank you!\nGood luck out there♪',
     shop_keeper_no_money: "You don't seem to\nhave enough money...",
@@ -1500,7 +1504,7 @@ en: {
     revival_text: '✨ Revived!',
     revival_potion_text: '💊 Revived by potion!',
     shop_item_revive: 'Revival Potion',
-    shop_item_revive_desc: 'Revive with 2HP on death (1 use)'
+    shop_item_revive_desc: 'Auto-revive with 2 life\nwhen defeated (1 use)'
 }
 };
 
@@ -1890,6 +1894,11 @@ var soundManager = null;
 var finalGameStats = null;
 var currentRankingType = 'score';
 
+// ─── 画面遷移クールダウン（タップ貫通防止） ───
+var screenTransitionTime = 0;
+function markScreenTransition() { screenTransitionTime = Date.now(); }
+function isInTransitionCooldown() { return (Date.now() - screenTransitionTime) < 300; }
+
 // ─── ゲーム状態 ───
 var gameState = {
     score: 0, lives: 5,
@@ -1958,6 +1967,12 @@ var STAGE_SHOP_ITEMS = [
         effect: function() { gameState.lives = Math.min(gameState.lives + 2, 10); }
     },
     {
+        id: 'heal_stock', nameKey: 'shop_item_heal_stock', descKey: 'shop_item_heal_stock_desc',
+        icon: '\u{2764}\u{FE0F}', price: 12000, maxPerVisit: 1,
+        stockItem: true,
+        stockEffect: function() { gameState.lives = Math.min(gameState.lives + 2, 10); }
+    },
+    {
         id: 'barrier', nameKey: 'shop_item_barrier', descKey: 'shop_item_barrier_desc',
         icon: '\u{1F6E1}\u{FE0F}', price: 3000, maxPerVisit: 2,
         stockItem: true,
@@ -1986,7 +2001,7 @@ var STAGE_SHOP_ITEMS = [
     },
     {
         id: 'revive_potion', nameKey: 'shop_item_revive', descKey: 'shop_item_revive_desc',
-        icon: '\u{1F48A}', price: 8000, maxPerVisit: 1,
+        icon: '\u{1F48A}', price: 25000, maxPerVisit: 1,
         stockItem: true,
         stockEffect: function() {
             // ストックから手動使用した場合: HP2回復+バリア付与
@@ -2252,6 +2267,8 @@ function handleTitleScreenClick(e) {
 }
 
 function startGame() {
+    if (isInTransitionCooldown()) return;
+    markScreenTransition();
     try { playStageBGM(); } catch (_) {}
 
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) requestFullscreen();
@@ -2274,6 +2291,7 @@ function startGame() {
 }
 
 function showStartScreen() {
+    markScreenTransition();
     resetGame();
     var ss = document.getElementById('startScreen');
     ss.classList.remove('hidden');
@@ -2369,6 +2387,8 @@ function resetGame() {
 
 function pauseGame() {
     if (!gameState.gameStarted) return;
+    if (isInTransitionCooldown()) return;
+    markScreenTransition();
     gameState.gamePaused = !gameState.gamePaused;
 
     if (gameState.gamePaused) {
@@ -2385,6 +2405,8 @@ function pauseGame() {
 var rankingListenersAdded = false;
 
 function showRanking() {
+    if (isInTransitionCooldown()) return;
+    markScreenTransition();
     if (soundManager) soundManager.playBGM('ranking');
     history.pushState({ screen: 'ranking' }, '');
 
@@ -2457,6 +2479,7 @@ function updateRankingButtons(activeType) {
 }
 
 function hideRanking() {
+    markScreenTransition();
     if (soundManager) soundManager.playBGM('title');
     hideRankingDirect();
 }
@@ -2470,6 +2493,8 @@ function hideRankingDirect() {
 // ─── 設定画面 ───
 
 function showSettings() {
+    if (isInTransitionCooldown()) return;
+    markScreenTransition();
     var el = document.getElementById('settingsScreen');
     el.classList.remove('hidden');
     el.style.display = 'flex';
@@ -2478,6 +2503,7 @@ function showSettings() {
 }
 
 function hideSettings() {
+    markScreenTransition();
     var el = document.getElementById('settingsScreen');
     el.classList.add('hidden');
     el.style.display = 'none';
@@ -2680,6 +2706,7 @@ function skipSubmit() {
 }
 
 function showNameInput() {
+    markScreenTransition();
     gameState.gameStarted = false;
     gameState.gamePaused  = true;
     history.pushState({ screen: 'nameInput' }, '');
@@ -3705,6 +3732,7 @@ function closeStageShop() {
     if (shopClosing) return;
     // 退店確認ダイアログ表示
     shopConfirmingItem = null;
+    shopHighlightedItem = null;
     shopClosing = true;
     setKeeperText('shop_keeper_leave_confirm');
     showShopConfirm(true);
@@ -3732,6 +3760,7 @@ function cancelCloseShop() {
 }
 
 var shopConfirmingItem = null;  // DQ風：確認中のアイテムID
+var shopHighlightedItem = null; // DQ風：カーソル選択中のアイテムID（説明表示用）
 
 function setKeeperText(key, replacements) {
     var txt = t(key);
@@ -3755,6 +3784,7 @@ function showShopConfirm(show) {
 function showStageShopScreen() {
     shopState.purchaseCounts = {};
     shopConfirmingItem = null;
+    shopHighlightedItem = null;
     setShopBg('shop01');
     var el = document.getElementById('stageShopScreen');
     el.classList.remove('hidden');
@@ -3840,13 +3870,16 @@ function renderStageShopItem(item, purchaseCount) {
     var hpFull = (item.id === 'heal' && gameState.lives >= 10);
     // DQ風メニュー項目：▶ アイテム名　　　価格
     var isConfirming = (shopConfirmingItem === item.id);
-    var cursor = isConfirming ? '▶' : '　';
+    var isHighlighted = (shopHighlightedItem === item.id);
+    var cursor = (isConfirming || isHighlighted) ? '▶' : '　';
+    var highlighted = isConfirming || isHighlighted;
     var textColor = canBuy ? '#fff' : 'rgba(180,180,180,0.5)';
     var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + '円');
-    return '<div onclick="selectShopItem(\'' + item.id + '\')" style="' +
+    return '<div onclick="selectShopItem(\'' + item.id + '\')"' +
+        ' onmouseenter="previewShopItem(\'' + item.id + '\')" style="' +
         'display:flex; align-items:center; gap:2px;' +
         'padding:2px 3px; cursor:pointer; flex-wrap:wrap;' +
-        (isConfirming ? 'background:rgba(255,255,255,0.1);' : '') +
+        (highlighted ? 'background:rgba(255,255,255,0.1);' : '') +
         'border-bottom:1px solid rgba(255,255,255,0.06);' +
         (canBuy ? '' : 'opacity:0.6;') + '">' +
         '<span style="color:#fff; font-family:DotGothic16,monospace;' +
@@ -3877,22 +3910,49 @@ function updateStageShopUI() {
     // 預金ボタンは常にグレーアウト（準備中）
 }
 
-// DQ風：アイテム選択 → 確認ダイアログ
+// DQ風：デスクトップ用ホバープレビュー（マウスオーバーで説明表示）
+function previewShopItem(itemId) {
+    if (shopConfirmingItem) return; // 確認中は上書きしない
+    var item = STAGE_SHOP_ITEMS.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    shopHighlightedItem = itemId;
+    var el = document.getElementById('shopKeeperText');
+    if (el) el.textContent = t(item.descKey);
+    updateStageShopUI();
+}
+
+// DQ風：アイテム選択 → 説明表示 → 確認ダイアログ
 function selectShopItem(itemId) {
     var item = STAGE_SHOP_ITEMS.find(function(i) { return i.id === itemId; });
     if (!item) return;
+
+    // 1回目タップ：説明表示（まだハイライトされていない場合）
+    if (shopHighlightedItem !== itemId) {
+        shopConfirmingItem = null;
+        showShopConfirm(false);
+        shopHighlightedItem = itemId;
+        var el = document.getElementById('shopKeeperText');
+        if (el) el.textContent = t(item.descKey);
+        updateStageShopUI();
+        return;
+    }
+
+    // 2回目タップ：購入チェック＆確認ダイアログ
+    shopHighlightedItem = null;
     var bought = shopState.purchaseCounts[itemId] || 0;
     // 売り切れチェック
     if (bought >= item.maxPerVisit) {
         setKeeperText('shop_keeper_sold_out');
         if (soundManager) soundManager.playDamage();
         setShopBg('shop04', 1200);
+        updateStageShopUI();
         return;
     }
     // ライフ上限チェック
     if (item.id === 'heal' && gameState.lives >= 10) {
         setKeeperText('shop_keeper_heal_maxhp');
         if (soundManager) soundManager.playDamage();
+        updateStageShopUI();
         return;
     }
     // 所持金チェック
@@ -3900,12 +3960,14 @@ function selectShopItem(itemId) {
         setKeeperText('shop_keeper_no_money');
         if (soundManager) soundManager.playDamage();
         setShopBg('shop04', 1200);
+        updateStageShopUI();
         return;
     }
     // ストック満杯チェック
     if (item.stockItem && stockState.items.length >= stockState.maxSlots) {
         setKeeperText('shop_keeper_stock_full');
         if (soundManager) soundManager.playDamage();
+        updateStageShopUI();
         return;
     }
     // 確認ダイアログ表示
@@ -3930,6 +3992,7 @@ function cancelShopBuy() {
     if (shopClosing) { cancelCloseShop(); return; }
     showShopConfirm(false);
     shopConfirmingItem = null;
+    shopHighlightedItem = null;
     setKeeperText('shop_keeper_greet');
     updateStageShopUI();
 }
@@ -4203,11 +4266,13 @@ function setupBossArena() {
         type: 'cloud', special: 'normal', isBossArena: true
     });
     // ボスオブジェクト生成
+    var bossMaxHp = BOSS_MAX_HP + Math.max(0, gameRound - 3) * 3; // ROUND4以降+3ずつ
+    bossState.maxHp = bossMaxHp;
     bossState.boss = {
         x: gameState.camera.x + GAME_WIDTH + 50,
         y: GROUND_Y - BOSS_HEIGHT,
         width: BOSS_WIDTH, height: BOSS_HEIGHT,
-        hp: BOSS_MAX_HP,
+        hp: bossMaxHp,
         velX: 0, velY: 0,
         facing: 'left',
         animFrame: 0,
@@ -4220,6 +4285,8 @@ function setupBossArena() {
         isJumping: false,
         isFlaming: false,
         flameTimer: 0,
+        isCharging: false,
+        chargeTimer: 0,
         spriteFrame: 0,
         spriteResetTimer: 0,
         stompCooldown: 0
@@ -4227,6 +4294,9 @@ function setupBossArena() {
     bossState.phase = 2; // entering
     bossState.summonTimer = BOSS_SUMMON_INTERVAL;
     bossState.itemSpawnTimer = 480; // ボス戦アイテム初回出現まで8秒（ショップ導入で抑制）
+    bossState.flashAttackTimer = 0; // 閃光攻撃タイマー
+    bossState.edgeSpawnTimer = 180; // 画面外雑魚スポーンタイマー
+    bossState.flyingEdgeSpawnTimer = 240; // 画面外飛行敵スポーンタイマー
     bgCache = null; // ボス戦背景に切り替え
     if (soundManager) soundManager.playBossBGM();
 }
@@ -4259,6 +4329,32 @@ function updateBoss() {
         if (b.spriteResetTimer > 0) {
             b.spriteResetTimer--;
             if (b.spriteResetTimer <= 0) b.spriteFrame = BOSS_FRAME_IDLE;
+        }
+        // ── 閃光攻撃ダメージ判定 ──
+        if (bossState.flashAttackTimer > 0) {
+            bossState.flashAttackTimer--;
+            // 発動直後（残り28フレーム）にダメージ判定：地面近くにいたら被弾
+            if (bossState.flashAttackTimer === 27) {
+                if (!gameState.isInvincible && player.y + player.height >= GROUND_Y - 70) {
+                    takeDamage();
+                }
+            }
+        }
+        // ── ROUND2+: 画面外から雑魚敵スポーン ──
+        if (gameRound >= 2) {
+            bossState.edgeSpawnTimer--;
+            if (bossState.edgeSpawnTimer <= 0) {
+                spawnEdgeEnemy();
+                bossState.edgeSpawnTimer = Math.max(90, 180 - (gameRound - 2) * 20);
+            }
+        }
+        // ── ROUND3+: 飛行敵も画面外からスポーン ──
+        if (gameRound >= 3) {
+            bossState.flyingEdgeSpawnTimer--;
+            if (bossState.flyingEdgeSpawnTimer <= 0) {
+                spawnEdgeFlyingEnemy();
+                bossState.flyingEdgeSpawnTimer = Math.max(120, 240 - (gameRound - 3) * 20);
+            }
         }
         return;
 
@@ -4343,7 +4439,8 @@ var BOSS_FRAME_FLAME   = 6;
 
 function updateBossAI(b) {
     // フェーズ判定
-    var hpRatio = b.hp / BOSS_MAX_HP;
+    var maxHp = bossState.maxHp || BOSS_MAX_HP;
+    var hpRatio = b.hp / maxHp;
     var phase = hpRatio > 0.7 ? 1 : hpRatio > 0.3 ? 2 : 3;
 
     // 怒りモードカウントダウン
@@ -4414,6 +4511,23 @@ function updateBossAI(b) {
         return;
     }
 
+    // ── 閃光チャージ中（ROUND2+） ──
+    if (b.isCharging) {
+        b.chargeTimer--;
+        // チャージ中はその場で停止、プレイヤーの方を向く
+        b.facing = b.x + b.width / 2 > player.x + player.width / 2 ? 'left' : 'right';
+        b.spriteFrame = BOSS_FRAME_SUMMON; // チャージポーズ
+        if (b.chargeTimer <= 0) {
+            b.isCharging = false;
+            b.spriteFrame = BOSS_FRAME_FLAME;
+            b.spriteResetTimer = 30;
+            // 閃光発動！
+            bossState.flashAttackTimer = 30;
+            if (soundManager) soundManager.playDamage(); // 閃光音
+        }
+        return;
+    }
+
     // ── パトロール移動 ──
     var patrolSpeed = (phase === 1 ? 1.0 : phase === 2 ? 1.5 : 2.0) * speedMult;
     b.x += b.patrolDir * patrolSpeed;
@@ -4439,11 +4553,20 @@ function updateBossAI(b) {
 
     // ── 攻撃選択 ──
     var r = Math.random();
+    var canFlash = gameRound >= 2; // ROUND2以降で閃光攻撃解禁
     if (phase === 1) {
-        // Phase1: パトロール＋召喚のみ
+        // Phase1: パトロール＋召喚のみ（ROUND2+は閃光チャンス有り）
+        if (canFlash && r < 0.15) {
+            b.isCharging = true;
+            b.chargeTimer = 50; // チャージ時間
+        }
         b.attackTimer = 180;
     } else if (phase === 2) {
-        if (r < 0.3) {
+        if (canFlash && r < 0.15) {
+            // 閃光攻撃（チャージ開始）
+            b.isCharging = true;
+            b.chargeTimer = 45;
+        } else if (r < 0.35) {
             // 突進
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
@@ -4463,16 +4586,20 @@ function updateBossAI(b) {
             b.attackTimer = 90;
         }
     } else { // phase 3
-        if (r < 0.2) {
+        if (canFlash && r < 0.15) {
+            // 閃光攻撃（チャージ短い）
+            b.isCharging = true;
+            b.chargeTimer = 35;
+        } else if (r < 0.3) {
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
             b.spriteFrame = BOSS_FRAME_RUSH;
-        } else if (r < 0.4) {
+        } else if (r < 0.5) {
             spawnEggProjectiles(b, 4);
             b.spriteFrame = BOSS_FRAME_SUMMON;
             b.spriteResetTimer = 20;
             b.attackTimer = 90;
-        } else if (r < 0.6) {
+        } else if (r < 0.65) {
             // ジャンプ攻撃
             b.isJumping = true;
             b.velY = -14;
@@ -4511,6 +4638,7 @@ function updateBossCollision(b) {
         b.isRushing = false;
         b.isJumping = false;
         b.isFlaming = false;
+        b.isCharging = false;
         if (b.hp <= 0) {
             bossState.phase = 4;
             bossState.defeatedTimer = 0;
@@ -4542,6 +4670,16 @@ function spawnBossItem() {
 function updateBossItems() {
     // ボス戦中のアイテムスポーン管理
     if (!bossState.active || bossState.phase !== 3) return;
+    // ROUND3以降はアイテムドロップなし（寿命管理のみ実行）
+    if (gameRound >= 3) {
+        for (var j = powerUps.length - 1; j >= 0; j--) {
+            var pu2 = powerUps[j];
+            if (pu2.collected || pu2.lifetime === undefined) continue;
+            pu2.lifetime--;
+            if (pu2.lifetime <= 0) powerUps.splice(j, 1);
+        }
+        return;
+    }
     bossState.itemSpawnTimer--;
     if (bossState.itemSpawnTimer <= 0) {
         spawnBossItem();
@@ -4567,6 +4705,35 @@ function spawnBossChick(boss) {
         velX: dir * 1.5,
         type: 'chick',
         animFrame: Math.floor(Math.random() * 100)
+    });
+}
+
+function spawnEdgeEnemy() {
+    var fromLeft = Math.random() < 0.5;
+    var spawnX = fromLeft ? bossState.arenaLeft - 50 : bossState.arenaRight + 10;
+    var dir = fromLeft ? 1 : -1;
+    enemies.push({
+        x: spawnX,
+        y: GROUND_Y - 38,
+        width: 42, height: 38,
+        velX: dir * (1.2 + Math.random() * 0.8),
+        type: 'chick',
+        animFrame: Math.floor(Math.random() * 100)
+    });
+}
+
+function spawnEdgeFlyingEnemy() {
+    var fromLeft = Math.random() < 0.5;
+    var spawnX = fromLeft ? bossState.arenaLeft - 50 : bossState.arenaRight + 10;
+    var dir = fromLeft ? 1 : -1;
+    flyingEnemies.push({
+        x: spawnX,
+        y: 80 + Math.random() * 150,
+        width: 40, height: 36,
+        velX: dir * (1.0 + Math.random() * 0.5),
+        type: 'flying_chick',
+        animFrame: Math.floor(Math.random() * 100),
+        waveOffset: Math.random() * Math.PI * 2
     });
 }
 
@@ -4634,6 +4801,7 @@ function gameOver() {
 }
 
 function showGameOverScreen() {
+    markScreenTransition();
     var screen = document.getElementById('gameOverScreen');
     // スタッツ表示
     var statsEl = document.getElementById('gameOverStats');
@@ -4653,12 +4821,14 @@ function hideGameOverScreen() {
 }
 
 function retryGame() {
+    if (isInTransitionCooldown()) return;
     hideGameOverScreen();
     resetGame();
     startGame();
 }
 
 function goToTitle() {
+    if (isInTransitionCooldown()) return;
     hideGameOverScreen();
     showStartScreen();
 }
@@ -5844,6 +6014,46 @@ function drawBoss(b) {
         ctx.ellipse(acx, acy, arx, ary, 0, 0, Math.PI * 2);
         ctx.fill();
     }
+    // 閃光チャージエフェクト（白い光がボスに集まる）
+    if (b.isCharging) {
+        var ccx = b.x + b.width / 2;
+        var ccy = drawY + b.height * 0.4;
+        var chargeProgress = 1 - (b.chargeTimer / 50); // 0→1
+        var glowSize = 40 + chargeProgress * 80;
+        // 外側の白い光輪
+        ctx.globalAlpha = 0.3 + chargeProgress * 0.5;
+        var cgrd = ctx.createRadialGradient(ccx, ccy, 5, ccx, ccy, glowSize);
+        cgrd.addColorStop(0, 'rgba(255,255,200,0.9)');
+        cgrd.addColorStop(0.4, 'rgba(255,255,100,0.5)');
+        cgrd.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = cgrd;
+        ctx.beginPath();
+        ctx.arc(ccx, ccy, glowSize, 0, Math.PI * 2);
+        ctx.fill();
+        // 収束する光線パーティクル
+        ctx.globalAlpha = 0.6 + chargeProgress * 0.4;
+        for (var ci = 0; ci < 8; ci++) {
+            var cAngle = (ci / 8) * Math.PI * 2 + b.animFrame * 0.15;
+            var cDist = (1 - chargeProgress) * 80 + 15;
+            var cpx = ccx + Math.cos(cAngle) * cDist;
+            var cpy = ccy + Math.sin(cAngle) * cDist;
+            ctx.fillStyle = '#ffffcc';
+            ctx.beginPath();
+            ctx.arc(cpx, cpy, 2 + chargeProgress * 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        // 「！」警告マーク
+        if (chargeProgress > 0.3) {
+            ctx.globalAlpha = Math.min(1, (chargeProgress - 0.3) * 2);
+            ctx.font = "bold 28px 'M PLUS Rounded 1c', sans-serif";
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 10;
+            ctx.fillText('！', ccx, drawY - 15);
+            ctx.shadowBlur = 0;
+        }
+    }
     ctx.restore();
 }
 
@@ -6199,7 +6409,8 @@ function render() {
     // ボスHPバー
     if (bossState.active && bossState.boss && bossState.phase >= 3 && bossState.phase <= 4) {
         var bossB = bossState.boss;
-        var bhpRatio = Math.max(0, bossB.hp / BOSS_MAX_HP);
+        var bossMaxHp = bossState.maxHp || BOSS_MAX_HP;
+        var bhpRatio = Math.max(0, bossB.hp / bossMaxHp);
         var bHpW = 300, bHpH = 32;
         var bHpX = GAME_WIDTH / 2 - bHpW / 2;
         var bHpY = GAME_HEIGHT - 48;
@@ -6212,7 +6423,7 @@ function render() {
         // HPテキスト
         ctx.fillStyle = '#ff8888';
         ctx.textAlign = 'right';
-        ctx.fillText(Math.ceil(bossB.hp) + '/' + BOSS_MAX_HP, bHpX + bHpW - 12, bHpY + 10);
+        ctx.fillText(Math.ceil(bossB.hp) + '/' + bossMaxHp, bHpX + bHpW - 12, bHpY + 10);
         ctx.textAlign = 'left';
         // HPバー
         drawProgressBar(bHpX + 16, bHpY + 19, bHpW - 32, 8, bhpRatio, '#ff2222', '#ff6666');
@@ -6305,6 +6516,55 @@ function render() {
         ctx.shadowColor = 'rgba(150,150,255,0.6)'; ctx.shadowBlur = 10;
         ctx.fillText(t('hud_pause'), GAME_WIDTH / 2, ppy + ph / 2);
         ctx.shadowBlur = 0;
+    }
+
+    // ─── ボス閃光攻撃エフェクト ───
+    if (bossState.active && bossState.flashAttackTimer > 0) {
+        var fProgress = 1 - bossState.flashAttackTimer / 30; // 0→1
+        ctx.save();
+        if (fProgress < 0.15) {
+            // 最初の瞬間：画面全体が白くフラッシュ
+            var flashAlpha = (1 - fProgress / 0.15) * 0.85;
+            ctx.fillStyle = 'rgba(255,255,240,' + flashAlpha + ')';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        }
+        // 地面レベルを走る閃光ビーム
+        if (fProgress < 0.7) {
+            var beamAlpha = fProgress < 0.1 ? fProgress / 0.1 : (0.7 - fProgress) / 0.6;
+            beamAlpha = Math.max(0, beamAlpha) * 0.8;
+            var beamY = GROUND_Y - 35;
+            var beamH = 70;
+            // メインビーム（黄白い光）
+            var bgrd = ctx.createLinearGradient(0, beamY - beamH / 2, 0, beamY + beamH / 2);
+            bgrd.addColorStop(0, 'rgba(255,255,200,0)');
+            bgrd.addColorStop(0.3, 'rgba(255,255,150,' + beamAlpha * 0.6 + ')');
+            bgrd.addColorStop(0.5, 'rgba(255,255,255,' + beamAlpha + ')');
+            bgrd.addColorStop(0.7, 'rgba(255,255,150,' + beamAlpha * 0.6 + ')');
+            bgrd.addColorStop(1, 'rgba(255,255,200,0)');
+            ctx.fillStyle = bgrd;
+            ctx.fillRect(0, beamY - beamH / 2, GAME_WIDTH, beamH);
+            // ビーム中心の輝線
+            ctx.globalAlpha = beamAlpha;
+            ctx.strokeStyle = '#ffffee';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ffffaa';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.moveTo(0, beamY);
+            ctx.lineTo(GAME_WIDTH, beamY);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            // 光の粒子が飛び散る
+            for (var fi = 0; fi < 6; fi++) {
+                var fpx = Math.random() * GAME_WIDTH;
+                var fpy = beamY - beamH / 2 + Math.random() * beamH;
+                ctx.fillStyle = 'rgba(255,255,200,' + (beamAlpha * 0.7) + ')';
+                ctx.beginPath();
+                ctx.arc(fpx, fpy, 1.5 + Math.random() * 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
     }
 
     // ─── ボス WARNING オーバーレイ ───
@@ -6864,25 +7124,31 @@ function initialize() {
     var startScreen = document.getElementById('startScreen');
     var rankingBtn = document.getElementById('rankingButton');
 
-    // ボタンはtouchendで即反応（clickより先に発火）
+    // ボタンはtouchendで即反応（clickより先に発火）+ 二重発火防止
+    var rankingTouchFired = false;
     rankingBtn.addEventListener('touchend', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        rankingTouchFired = true;
         showRanking();
     });
     rankingBtn.addEventListener('click', function(e) {
         e.stopPropagation();
+        if (rankingTouchFired) { rankingTouchFired = false; return; }
         showRanking();
     });
 
     var settingsBtn = document.getElementById('settingsButton');
+    var settingsTouchFired = false;
     settingsBtn.addEventListener('touchend', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        settingsTouchFired = true;
         showSettings();
     });
     settingsBtn.addEventListener('click', function(e) {
         e.stopPropagation();
+        if (settingsTouchFired) { settingsTouchFired = false; return; }
         showSettings();
     });
 
