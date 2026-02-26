@@ -150,19 +150,22 @@
 
         /* --- タイトル画像 --- */
         #titleImage {
-            width: auto;
-            height: auto;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto; height: auto;
             max-width: 85vw;
-            max-height: 75vh;
+            max-height: 80vh;
             object-fit: contain;
             border: none;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 1;
             display: block;
         }
         @media (min-width: 600px) {
-            #titleImage { max-width: 50vw; max-height: 70vh; }
-            #titleCenter { left: 38% !important; }
+            #titleImage { max-width: 50vw; max-height: 70vh; left: 38%; }
+            #titleLogo { left: 38% !important; }
         }
 
         /* --- ボタン共通 --- */
@@ -575,17 +578,11 @@
 
         <!-- タイトル画面 -->
         <div id="startScreen" class="overlay hidden" style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
-            <!-- 中央列：ロゴ＋メイン画像＋開始ボタン（縦整列） -->
-            <div id="titleCenter" style="
-                position: absolute; top: 44%; left: 50%;
-                transform: translate(-50%, -50%);
-                display: flex; flex-direction: column; align-items: center;
-                gap: 0px; z-index: 10;
-                max-height: 92vh; box-sizing: border-box;">
-                <img src="images/logo.png" alt="ロゴ" style="
-                    width: 22vw; height: auto; flex-shrink: 0; margin-bottom: -2px;">
-                <img id="titleImage" src="" alt="ぴよ氏の冒険">
-            </div>
+            <img id="titleLogo" src="images/logo.png" alt="ロゴ" style="
+                position: absolute; top: 1%; left: 50%;
+                transform: translateX(-50%);
+                width: 25vw; height: auto; z-index: 10;">
+            <img id="titleImage" src="" alt="ぴよ氏の冒険">
 
             <div id="startMessage" class="tap-to-start" style="
                 position: absolute; bottom: 6px; left: 50%;
