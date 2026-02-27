@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.183</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.184</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -4205,33 +4205,40 @@ function updateStageShopUI() {
 
     container.innerHTML = html;
 
-    // 貯金ボタン＆貯金額の更新
+    // 貯金ボタン＆貯金額の更新（メニューモード以外では非表示）
     var depBtn = document.getElementById('depositBtn');
     var depInfo = document.getElementById('depositInfo');
     var depAmount = Math.floor(gameState.score * 0.5);
-    if (depBtn) {
-        if (shopState.deposited) {
-            depBtn.disabled = true;
-            depBtn.style.opacity = '0.4';
-            depBtn.style.pointerEvents = 'none';
-            depBtn.textContent = t('shop_deposited');
-        } else if (gameState.score <= 0) {
-            depBtn.disabled = true;
-            depBtn.style.opacity = '0.4';
-            depBtn.style.pointerEvents = 'none';
-            depBtn.textContent = '🏦 ' + t('shop_deposit_btn');
-        } else {
-            depBtn.disabled = false;
-            depBtn.style.opacity = '1';
-            depBtn.style.pointerEvents = 'auto';
-            depBtn.textContent = '🏦 ' + t('shop_deposit_btn') + '（' + depAmount + '円）';
+    if (shopMode !== 'menu') {
+        if (depBtn) { depBtn.style.display = 'none'; }
+        if (depInfo) { depInfo.style.display = 'none'; }
+    } else {
+        if (depBtn) {
+            depBtn.style.display = '';
+            if (shopState.deposited) {
+                depBtn.disabled = true;
+                depBtn.style.opacity = '0.4';
+                depBtn.style.pointerEvents = 'none';
+                depBtn.textContent = t('shop_deposited');
+            } else if (gameState.score <= 0) {
+                depBtn.disabled = true;
+                depBtn.style.opacity = '0.4';
+                depBtn.style.pointerEvents = 'none';
+                depBtn.textContent = '🏦 ' + t('shop_deposit_btn');
+            } else {
+                depBtn.disabled = false;
+                depBtn.style.opacity = '1';
+                depBtn.style.pointerEvents = 'auto';
+                depBtn.textContent = '🏦 ' + t('shop_deposit_btn') + '（' + depAmount + '円）';
+            }
         }
-    }
-    if (depInfo) {
-        if (!shopState.deposited && gameState.score > 0) {
-            depInfo.textContent = '貯金: ' + gameSettings.savings + '円 → ' + (gameSettings.savings + depAmount) + '円 ／ 手持ち: ' + gameState.score + '円 → ' + (gameState.score - depAmount) + '円';
-        } else {
-            depInfo.textContent = t('shop_current_savings', { savings: gameSettings.savings + '円' });
+        if (depInfo) {
+            depInfo.style.display = '';
+            if (!shopState.deposited && gameState.score > 0) {
+                depInfo.textContent = '貯金: ' + gameSettings.savings + '円 → ' + (gameSettings.savings + depAmount) + '円 ／ 手持ち: ' + gameState.score + '円 → ' + (gameState.score - depAmount) + '円';
+            } else {
+                depInfo.textContent = t('shop_current_savings', { savings: gameSettings.savings + '円' });
+            }
         }
     }
 }
