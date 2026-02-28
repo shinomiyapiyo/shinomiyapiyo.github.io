@@ -465,22 +465,7 @@
             #titleButtons .game-button { font-size: 2.5vw !important; padding: 8px 12px !important; }
         }
 
-        /* --- iPhone safe-area対応 --- */
-        @supports (-webkit-touch-callout: none) {
-            #startScreen {
-                padding-left: env(safe-area-inset-left);
-                padding-right: env(safe-area-inset-right);
-            }
-            #titleButtons { right: calc(8px + env(safe-area-inset-right)) !important; }
-            #startScreen img {
-                position: absolute;
-            }
-        }
-
-        @media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) {
-            #titleButtons { right: calc(15px + env(safe-area-inset-right)) !important; top: 42% !important; }
-            #titleButtons .game-button { max-width: 28vw !important; font-size: 2.8vw !important; }
-        }
+        /* --- iPhone safe-area対応（タイトル画面は#titleContentで処理済み） --- */
 
         /* --- 更新通知 --- */
         .update-notification {
@@ -589,58 +574,65 @@
         </div>
 
         <!-- タイトル画面 -->
-        <div id="startScreen" class="overlay hidden" style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
-            <img id="titleLogo" src="images/logo.png" alt="ロゴ" style="
-                position: absolute; top: 3%; left: 3%;
-                width: 34vw; height: auto; z-index: 10;
-                animation: logoFloat 3s ease-in-out infinite;
-                filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
-            <img id="titleImage" src="images/title.jpg" alt="ぴよ氏の冒険">
+        <div id="startScreen" class="overlay hidden" style="position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000;">
+            <!-- safe-area内側コンテナ：左右・上下の黒ベゼルを確保 -->
+            <div id="titleContent" style="
+                position: absolute;
+                top: var(--sat, 0px); left: var(--sal, 0px);
+                right: var(--sar, 0px); bottom: var(--sab, 0px);
+                overflow: hidden;">
+                <img id="titleImage" src="images/title.jpg" alt="ぴよ氏の冒険">
+                <img id="titleLogo" src="images/logo.png" alt="ロゴ" style="
+                    position: absolute; top: 2%; left: 2%;
+                    width: 30vw; height: auto; z-index: 10;
+                    animation: logoFloat 3s ease-in-out infinite;
+                    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
 
-            <div id="startMessage" class="tap-to-start" style="
-                position: absolute; bottom: 6px; left: 50%;
-                transform: translateX(-50%); z-index: 10;
-                font-size: 1.3vw; color: rgba(255,255,255,0.55);
-                font-family: 'M PLUS Rounded 1c', sans-serif;
-                font-weight: 600;
-                text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-                letter-spacing: 0.05em; white-space: nowrap;" data-i18n="start_tap">
-                ▶ 画面をタップで開始
-            </div>
+                <div id="startMessage" class="tap-to-start" style="
+                    position: absolute; bottom: 6px; left: 50%;
+                    transform: translateX(-50%); z-index: 10;
+                    font-size: clamp(8px, 1.3vw, 14px); color: rgba(255,255,255,0.55);
+                    font-family: 'M PLUS Rounded 1c', sans-serif;
+                    font-weight: 600;
+                    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+                    letter-spacing: 0.05em; white-space: nowrap;" data-i18n="start_tap">
+                    ▶ 画面をタップで開始
+                </div>
 
-            <!-- バージョン情報：左下 -->
-            <div style="
-                position: absolute; bottom: 15px; left: 15px;
-                z-index: 10;
-                display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
-                color: #fff; font-size: 1.2vw;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.196</span>
-                <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
-                   style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
-                   onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
-                   data-i18n="privacy_link">🔒 プライバシーポリシー
-                </a>
-            </div>
+                <!-- バージョン情報：左下 -->
+                <div style="
+                    position: absolute; bottom: 10px; left: 10px;
+                    z-index: 10;
+                    display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+                    color: #fff; font-size: clamp(7px, 1.2vw, 12px);
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+                    font-weight: bold;">
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.198</span>
+                    <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
+                       style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
+                       onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
+                       data-i18n="privacy_link">🔒 プライバシーポリシー
+                    </a>
+                </div>
 
-            <div id="titleButtons" style="
-                position: absolute; top: 50%; right: 15px;
-                transform: translateY(-50%);
-                display: flex; flex-direction: column; gap: 10px; z-index: 25;">
-                <button class="game-button" id="settingsButton">⚙️ SETTING</button>
-                <button class="game-button" id="rankingButton">🏆 RANKING</button>
-                <button class="game-button" id="shopButton">🛒 SHOP</button>
-            </div>
+                <div id="titleButtons" style="
+                    position: absolute; top: 50%; right: 10px;
+                    transform: translateY(-50%);
+                    display: flex; flex-direction: column; gap: 8px; z-index: 25;">
+                    <button class="game-button" id="settingsButton">⚙️ SETTING</button>
+                    <button class="game-button" id="rankingButton">🏆 RANKING</button>
+                    <button class="game-button" id="shopButton">🛒 SHOP</button>
+                </div>
 
-            <!-- クレジット：右下 -->
-            <div style="
-                position: absolute; bottom: 15px; right: 15px;
-                z-index: 10;
-                text-align: right; color: rgba(255,255,255,0.7);
-                font-size: 1.5vw; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-                line-height: 1.2;">
-                © 2026 ぴよ氏の冒険<br>Created by NullPo Works
+                <!-- クレジット：右下 -->
+                <div style="
+                    position: absolute; bottom: 10px; right: 10px;
+                    z-index: 10;
+                    text-align: right; color: rgba(255,255,255,0.7);
+                    font-size: clamp(7px, 1.5vw, 13px); text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+                    line-height: 1.2;">
+                    © 2026 ぴよ氏の冒険<br>Created by NullPo Works
+                </div>
             </div>
         </div>
 
@@ -1440,6 +1432,8 @@ ja: {
     tshop_combo_master_desc: 'コンボ受付時間を延長',
     tshop_revival_feather: 'ふっかつマシーン',
     tshop_revival_feather_desc: '死亡時にHP1で復活（1ランN回）',
+    tshop_swift_feet: 'はやあし',
+    tshop_swift_feet_desc: '横移動の速度が1.3倍になる',
     // ── 復活 ──
     revival_text: '✨ 復活！',
     revival_potion_text: '💊 ふっかつやくで復活！',
@@ -1588,6 +1582,8 @@ en: {
     tshop_combo_master_desc: 'Longer combo window',
     tshop_revival_feather: 'Revival Feather',
     tshop_revival_feather_desc: 'Revive with 1HP on death (N per run)',
+    tshop_swift_feet: 'Swift Feet',
+    tshop_swift_feet_desc: '1.3x horizontal move speed',
     // ── Revival ──
     revival_text: '✨ Revived!',
     revival_potion_text: '💊 Revived by potion!',
@@ -1746,7 +1742,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.196';
+const CURRENT_VERSION     = '1.198';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2153,11 +2149,13 @@ var TITLE_SHOP_UPGRADES = [
     { id: 'stock_expand', nameKey: 'tshop_stock_expand', descKey: 'tshop_stock_expand_desc',
       icon: '\u{1F392}', maxLevel: 2, prices: [300000, 700000], effectDesc: ['4枠', '5枠'] },
     { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
-      icon: '\u{1F9F2}', maxLevel: 2, prices: [200000, 500000], effectDesc: ['+50%', '+100%'] },
+      icon: '\u{1F9F2}', maxLevel: 2, prices: [100000, 250000], effectDesc: ['+50%', '+100%'] },
     { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
-      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [400000], effectDesc: ['1.5秒'] },
+      icon: '\u{23F1}\u{FE0F}', maxLevel: 1, prices: [200000], effectDesc: ['1.5秒'] },
+    { id: 'swift_feet', nameKey: 'tshop_swift_feet', descKey: 'tshop_swift_feet_desc',
+      icon: '\u{1F45F}', iconImg: 'images/icon_swift_feet.png', maxLevel: 1, prices: [50000], effectDesc: ['x1.3'], saleFrom: 100000 },
     { id: 'revival_feather', nameKey: 'tshop_revival_feather', descKey: 'tshop_revival_feather_desc',
-      icon: '\u{1FAB6}', maxLevel: 2, prices: [500000, 1000000], effectDesc: ['1回/ラン', '2回/ラン'] }
+      icon: '\u{1FAB6}', iconImg: 'images/icon_revival_machine.png', maxLevel: 2, prices: [500000, 1000000], effectDesc: ['1回/ラン', '2回/ラン'] }
 ];
 
 // ─── デバッグモード ───
@@ -3177,12 +3175,13 @@ function updatePlayer() {
     gameState.distance = Math.floor(gameState.camera.x / 10);
 
     // 入力（地形ギミック: 流砂=減速, 氷床=慣性増加）
-    var moveAccel = 1.2;
-    var moveMax = MOVE_SPEED;
+    var speedMul = gameState.speedMultiplier || 1.0;
+    var moveAccel = 1.2 * speedMul;
+    var moveMax = MOVE_SPEED * speedMul;
     var moveFriction = 0.85;
     if (player.onGround && player.groundType === 'quicksand') {
-        moveAccel = 0.6;
-        moveMax = MOVE_SPEED * 0.55;
+        moveAccel = 0.6 * speedMul;
+        moveMax = MOVE_SPEED * 0.55 * speedMul;
         moveFriction = 0.7;
     } else if (player.onGround && player.groundType === 'ice') {
         moveAccel = 0.4;
@@ -3691,7 +3690,7 @@ function updateCoins() {
 
         if (aabb(player, c)) {
             c.collected = true;
-            gameState.score += Math.floor(100 * (gameState.coinBonus || 1));
+            gameState.score += Math.floor(150 * (gameState.coinBonus || 1));
             if (soundManager) soundManager.playCoin();
         }
     }
@@ -3703,7 +3702,7 @@ function updatePowerUps() {
         if (pu.collected || !aabb(player, pu)) continue;
 
         pu.collected = true;
-        gameState.score += 500;
+        gameState.score += 100;
         if (soundManager) soundManager.playItem();
 
         if (pu.type === 'heart') {
@@ -4781,10 +4780,16 @@ function renderTitleShopItem(upgrade) {
     var levelDots = currentLevel + '/' + upgrade.maxLevel;
     // 価格テキスト
     var priceText;
+    var priceHtml = '';
     if (isMax) {
         priceText = 'MAX';
     } else if (isPremium) {
         priceText = '準備中';
+    } else if (upgrade.saleFrom && !isMax) {
+        priceHtml = '<span style="text-decoration:line-through; color:rgba(255,255,255,0.5); font-size:clamp(6px,1.1vw,9px);">' +
+            formatTshopPrice(upgrade.saleFrom) + '円</span> ' +
+            '<span style="color:#ff4444;">SALE </span>' + formatTshopPrice(price) + '円';
+        priceText = '';
     } else {
         priceText = formatTshopPrice(price) + '円';
     }
@@ -4799,14 +4804,16 @@ function renderTitleShopItem(upgrade) {
         '<span style="color:#fff; font-family:DotGothic16,monospace;' +
             'font-size:clamp(9px,1.8vw,12px); width:0.9em; text-align:center; flex-shrink:0;' +
             'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
-        '<span style="font-size:clamp(10px,2.2vw,15px); flex-shrink:0;">' + upgrade.icon + '</span>' +
+        (upgrade.iconImg
+            ? '<img src="' + upgrade.iconImg + '" width="18" height="18" style="flex-shrink:0; image-rendering:pixelated; vertical-align:middle;">'
+            : '<span style="font-size:clamp(10px,2.2vw,15px); flex-shrink:0;">' + upgrade.icon + '</span>') +
         '<span style="color:' + textColor + '; font-size:clamp(9px,1.8vw,12px);' +
             'font-weight:700; font-family:DotGothic16,monospace;' +
             'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(upgrade.nameKey)) +
             ' <span style="font-size:clamp(7px,1.3vw,10px);color:#ffd700;">' + levelDots + '</span></span>' +
         '<span style="color:' + priceColor + '; font-size:clamp(8px,1.5vw,11px); font-weight:700;' +
             'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
-            'margin-left:auto; white-space:nowrap;">' + escapeHtml(priceText) + '</span>' +
+            'margin-left:auto; white-space:nowrap;">' + (priceHtml || escapeHtml(priceText)) + '</span>' +
     '</div>';
 }
 
@@ -4849,6 +4856,9 @@ function applyUpgrades() {
     gameState.magnetRange = 200 * (1 + magnetLv * 0.5);
     var comboLv = ups.combo_master || 0;
     COMBO_TIMEOUT = 60 + comboLv * 30; // コンボマスター: 受付時間延長
+    // はやあし: 横移動速度1.3倍
+    var swiftLv = ups.swift_feet || 0;
+    gameState.speedMultiplier = swiftLv > 0 ? 1.3 : 1.0;
     // 復活の羽: Lv1=1回/ラン, Lv2=2回/ラン
     var revivalLv = ups.revival_feather || 0;
     gameState.revivesLeft = revivalLv;
@@ -4859,6 +4869,7 @@ function applyUpgrades() {
         if (coinLv > 0) icons.push('<img src="images/icon_coin_master.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="コインマスター Lv' + coinLv + '">');
         if (magnetLv > 0) icons.push('<img src="images/icon_magnet_boost.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="マグネット強化 Lv' + magnetLv + '">');
         if (comboLv > 0) icons.push('<img src="images/icon_combo_master.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="コンボマスター Lv' + comboLv + '">');
+        if (swiftLv > 0) icons.push('<img src="images/icon_swift_feet.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="はやあし">');
         if (icons.length > 0) {
             skillEl.innerHTML = icons.join(' ');
             skillEl.style.display = 'block';
