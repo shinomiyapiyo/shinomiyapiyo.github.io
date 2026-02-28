@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.208</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.209</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1814,7 +1814,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.208';
+const CURRENT_VERSION     = '1.209';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2653,7 +2653,7 @@ function showRankingByType(type) {
         var rankings = Object.values(data).sort(function(a, b) { return (b[type] || 0) - (a[type] || 0); });
         var titleKeys = { score: 'ranking_title_score', distance: 'ranking_title_distance', enemyKills: 'ranking_title_kills', speedLevel: 'ranking_title_level' };
         var unitKeys  = { score: 'ranking_unit_score', distance: 'ranking_unit_distance', enemyKills: 'ranking_unit_kills', speedLevel: 'ranking_unit_level' };
-        var html = '<div style="text-align:center;color:#ffd700;font-weight:bold;margin-bottom:8px;font-size:2.8vw;">' + escapeHtml(t(titleKeys[type])) + '</div>';
+        var html = '<div style="text-align:center;color:#ffd700;font-weight:bold;margin-bottom:8px;font-size:2.8vw;">' + t(titleKeys[type]) + '</div>';
         for (var i = 0; i < rankings.length; i++) {
             var rank = i + 1;
             var color = rank <= 3 ? '#ffd700' : '#fff';
