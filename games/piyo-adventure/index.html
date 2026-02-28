@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.201</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.202</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1804,7 +1804,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.201';
+const CURRENT_VERSION     = '1.202';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3975,6 +3975,7 @@ function cancelCloseShop() {
 var shopConfirmingItem = null;  // DQ風：確認中のアイテムID
 var shopHighlightedItem = null; // DQ風：カーソル選択中のアイテムID（説明表示用）
 var shopMode = 'menu'; // 'menu' | 'buy' | 'sell'
+var shopInputCooldown = 0; // タップ貫通防止用タイムスタンプ
 var shopSellingIndex = null; // 売却確認中のストックインデックス
 var shopSellHighlightIndex = null; // 売却モードでハイライト中のストックインデックス
 var shopConfirmCursor = null; // はい/いいえカーソル位置: null | 'yes' | 'no'
@@ -4059,6 +4060,7 @@ function showStageShopScreen() {
     shopMode = 'menu';
     shopSellingIndex = null;
     shopSellHighlightIndex = null;
+    shopInputCooldown = Date.now() + 350;
     setShopBg('shop01');
     var el = document.getElementById('stageShopScreen');
     el.classList.remove('hidden');
@@ -4086,6 +4088,7 @@ function returnToShopMenu() {
     shopDepositing = false;
     showShopConfirm(false);
     setKeeperText('shop_keeper_greet');
+    shopInputCooldown = Date.now() + 350;
     updateStageShopUI();
 }
 
@@ -4347,6 +4350,8 @@ function previewShopItem(itemId) {
 
 // DQ風：アイテム選択 → 説明表示 → 確認ダイアログ
 function selectShopItem(itemId) {
+    // タップ貫通防止：モード遷移直後の入力を無視
+    if (Date.now() < shopInputCooldown) return;
     // ── メニューモード ──
     if (shopMode === 'menu') {
         if (itemId === '_menu_buy') {
@@ -4354,6 +4359,7 @@ function selectShopItem(itemId) {
             shopMode = 'buy';
             shopHighlightedItem = null;
             setKeeperText('shop_keeper_buy_greet');
+            shopInputCooldown = Date.now() + 350;
             updateStageShopUI();
         } else if (itemId === '_menu_sell') {
             if (stockState.items.length === 0) {
@@ -4365,6 +4371,7 @@ function selectShopItem(itemId) {
             shopMode = 'sell';
             shopSellHighlightIndex = null;
             setKeeperText('shop_keeper_sell_greet');
+            shopInputCooldown = Date.now() + 350;
             updateStageShopUI();
         } else if (itemId === '_menu_deposit') {
             if (shopState.deposited) {
