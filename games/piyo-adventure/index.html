@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.206</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.207</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -987,7 +987,7 @@
                         color: #fff; font-weight: 800;
                         text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
                         font-family: 'DotGothic16', monospace;
-                        white-space: nowrap;">&gt; お店を出る</button>
+                        white-space: nowrap;" data-i18n="shop_close">&gt; お店を出る</button>
                 </div>
             </div>
             <!-- 右側：ショップ画像エリア -->
@@ -1470,6 +1470,7 @@ ja: {
     shop_sell_price_suffix: '\n（売値: {price}円）',
     tshop_savings_display: '貯金額 {amount}円',
     tshop_price_preparing: '準備中',
+    currency_unit: '円',
     game_subtitle: "Piyo's Adventure",
     rank_label_score: '金額',
     rank_label_distance: '距離',
@@ -1640,6 +1641,7 @@ en: {
     shop_sell_price_suffix: '\n(Sell: {price})',
     tshop_savings_display: 'Savings {amount}',
     tshop_price_preparing: 'N/A',
+    currency_unit: '',
     game_subtitle: "Piyo's Adventure",
     rank_label_score: 'Score',
     rank_label_distance: 'Distance',
@@ -1810,7 +1812,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.206';
+const CURRENT_VERSION     = '1.207';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -4176,7 +4178,7 @@ function renderStageShopItem(item, purchaseCount) {
     var cursor = (isConfirming || isHighlighted) ? '>' : '　';
     var highlighted = isConfirming || isHighlighted;
     var textColor = canBuy ? '#fff' : 'rgba(180,180,180,0.5)';
-    var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + '円');
+    var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + t('currency_unit'));
     return '<div data-item-id="' + item.id + '" style="' +
         'display:flex; align-items:center; gap:2px;' +
         'padding:2px 3px; cursor:pointer; flex-wrap:wrap;' +
@@ -4241,12 +4243,12 @@ function renderSellItem(stockIndex) {
             'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(shopItem.nameKey)) + '</span>' +
         '<span style="color:#ffd700; font-size:clamp(8px,1.5vw,11px); font-weight:700;' +
             'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
-            'margin-left:auto; white-space:nowrap;">' + sellPrice + '円</span>' +
+            'margin-left:auto; white-space:nowrap;">' + sellPrice + t('currency_unit') + '</span>' +
     '</div>';
 }
 
 function updateStageShopUI() {
-    document.getElementById('stageShopScore').innerHTML = _ic('icon_money.png', 'ui-icon-sm') + ' ' + gameState.score + '円';
+    document.getElementById('stageShopScore').innerHTML = _ic('icon_money.png', 'ui-icon-sm') + ' ' + gameState.score + t('currency_unit');
     var livesEl = document.getElementById('stageShopLives');
     if (livesEl) livesEl.innerHTML = _ic('icon_lives.png', 'ui-icon-sm') + ' ' + gameState.lives;
     var container = document.getElementById('stageShopItems');
@@ -4272,7 +4274,7 @@ function updateStageShopUI() {
                 t('shop_deposit_preview', { sf: gameSettings.savings, st: gameSettings.savings + depAmt, cf: gameState.score, ct: gameState.score - depAmt }) + '</div>';
         } else {
             html += '<div style="color:rgba(136,204,255,0.7); font-family:DotGothic16,monospace; font-size:clamp(7px,1.3vw,10px); text-align:center; padding:1px 6px; text-shadow:0 1px 2px rgba(0,0,0,0.8);">' +
-                t('shop_current_savings', { savings: gameSettings.savings + '円' }) + '</div>';
+                t('shop_current_savings', { savings: gameSettings.savings + t('currency_unit') }) + '</div>';
         }
         html += renderShopMenuItem('_menu_leave', _ic('icon_door.png'), t('shop_close').replace('&gt; ', '').replace('> ', ''));
         if (closeBtn) closeBtn.parentElement.style.display = 'none';
@@ -4336,7 +4338,7 @@ function updateStageShopUI() {
             if (!shopState.deposited && gameState.score > 0) {
                 depInfo.textContent = t('shop_deposit_preview', { sf: gameSettings.savings, st: gameSettings.savings + depAmount, cf: gameState.score, ct: gameState.score - depAmount });
             } else {
-                depInfo.textContent = t('shop_current_savings', { savings: gameSettings.savings + '円' });
+                depInfo.textContent = t('shop_current_savings', { savings: gameSettings.savings + t('currency_unit') });
             }
         }
     }
@@ -4868,11 +4870,11 @@ function renderTitleShopItem(upgrade) {
         priceText = t('tshop_price_preparing');
     } else if (upgrade.saleFrom && !isMax) {
         priceHtml = '<span style="text-decoration:line-through; color:rgba(255,255,255,0.5); font-size:clamp(6px,1.1vw,9px);">' +
-            formatTshopPrice(upgrade.saleFrom) + '円</span> ' +
-            '<span style="color:#ff4444;">SALE </span>' + formatTshopPrice(price) + '円';
+            formatTshopPrice(upgrade.saleFrom) + t('currency_unit') + '</span> ' +
+            '<span style="color:#ff4444;">SALE </span>' + formatTshopPrice(price) + t('currency_unit');
         priceText = '';
     } else {
-        priceText = formatTshopPrice(price) + '円';
+        priceText = formatTshopPrice(price) + t('currency_unit');
     }
     var priceColor = isMax ? '#4CAF50' : (isPremium ? '#ff69b4' : '#ffd700');
     var textColor = isPremium ? 'rgba(255,105,180,0.6)' : '#fff';
@@ -5595,8 +5597,8 @@ function showGameOverScreen() {
     var statsEl = document.getElementById('gameOverStats');
     statsEl.innerHTML =
         t('gameover_distance') + finalGameStats.distance + 'm<br>' +
-        t('gameover_score') + finalGameStats.score + (t('ranking_unit_score') || '円') + '<br>' +
-        t('gameover_kills') + finalGameStats.enemyKills + (t('ranking_unit_kills') || '体') + '<br>' +
+        t('gameover_score') + finalGameStats.score + t('ranking_unit_score') + '<br>' +
+        t('gameover_kills') + finalGameStats.enemyKills + t('ranking_unit_kills') + '<br>' +
         t('gameover_level') + finalGameStats.speedLevel;
     screen.classList.remove('hidden');
     screen.style.display = 'flex';
