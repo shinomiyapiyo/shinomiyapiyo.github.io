@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.209</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.210</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1443,7 +1443,7 @@ ja: {
     shop_confirm_no: 'いいえ',
     // ── タイトルショップ ──
     tshop_title: _ic('icon_cart.png') + ' ショップ',
-    tshop_keeper_greet: 'いらっしゃいませ\nここは貯金額で買い物できるお店なのだ！',
+    tshop_keeper_greet: 'いらっしゃいませなのだ！\nここのアイテムはずーっと使えるのだ\n貯金で買い物していくのだ！',
     tshop_keeper_buy_confirm: '{item}を {price}円で\nお買い上げなのだ？',
     tshop_keeper_bought: 'まいどなのだ\nしっかり装備したのだ！',
     tshop_keeper_cant_afford: 'ざんねん…\n貯金がたりないみたいなのだ',
@@ -1628,7 +1628,7 @@ en: {
     tshop_swift_feet: 'Swift Feet',
     tshop_swift_feet_desc: '1.3x horizontal move speed',
     // ── Title Shop Keeper ──
-    tshop_keeper_greet: 'Welcome!\nThis shop uses your savings!',
+    tshop_keeper_greet: 'Welcome!\nItems here are permanent upgrades!\nSpend your savings wisely!',
     tshop_keeper_buy_confirm: 'Buy {item} for {price}?\nShall I wrap it up?',
     tshop_keeper_bought: 'Thank you!\nYou\'re well-equipped now!',
     tshop_keeper_cant_afford: 'Sorry...\nNot enough savings',
@@ -1814,7 +1814,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.209';
+const CURRENT_VERSION     = '1.210';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2219,11 +2219,11 @@ var TITLE_SHOP_UPGRADES = [
     { id: 'toughness', nameKey: 'tshop_toughness', descKey: 'tshop_toughness_desc',
       icon: '', iconImg: 'images/icon_toughness.png', maxLevel: 3, prices: [200000, 500000, 1000000], effectDesc: ['+1', '+2', '+3'] },
     { id: 'stock_expand', nameKey: 'tshop_stock_expand', descKey: 'tshop_stock_expand_desc',
-      icon: '', iconImg: 'images/icon_stock_expand.png', maxLevel: 2, prices: [300000, 700000], effectDesc: ['4枠', '5枠'], effectDescEn: ['4 slots', '5 slots'] },
+      icon: '', iconImg: 'images/icon_stock_expand.png', maxLevel: 2, prices: [200000, 700000], effectDesc: ['4枠', '5枠'], effectDescEn: ['4 slots', '5 slots'] },
     { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
-      icon: '', iconImg: 'images/icon_magnet_boost.png', maxLevel: 2, prices: [100000, 250000], effectDesc: ['+50%', '+100%'] },
+      icon: '', iconImg: 'images/icon_magnet_boost.png', maxLevel: 2, prices: [50000, 125000], effectDesc: ['+50%', '+100%'] },
     { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
-      icon: '', iconImg: 'images/icon_combo_master.png', maxLevel: 1, prices: [200000], effectDesc: ['1.5秒'], effectDescEn: ['1.5s'] },
+      icon: '', iconImg: 'images/icon_combo_master.png', maxLevel: 1, prices: [50000], effectDesc: ['1.5秒'], effectDescEn: ['1.5s'] },
     { id: 'swift_feet', nameKey: 'tshop_swift_feet', descKey: 'tshop_swift_feet_desc',
       icon: '', iconImg: 'images/icon_swift_feet.png', maxLevel: 1, prices: [50000], effectDesc: ['x1.3'], saleFrom: 100000 },
     { id: 'revival_feather', nameKey: 'tshop_revival_feather', descKey: 'tshop_revival_feather_desc',
@@ -4775,9 +4775,13 @@ function selectTshopItem(upgradeId) {
     var isMax = currentLevel >= upgrade.maxLevel;
     // 課金アイテム
     if (upgrade.premium) {
-        if (soundManager) soundManager.playDamage();
+        if (soundManager) soundManager.playCursorMove();
         tshopHighlightedItem = upgradeId;
-        setTshopKeeperText('tshop_keeper_premium');
+        var premEl = document.getElementById('tshopKeeperText');
+        var premDesc = t(upgrade.descKey);
+        var premEffArr = (gameSettings.language === 'en' && upgrade.effectDescEn) ? upgrade.effectDescEn : upgrade.effectDesc;
+        if (currentLevel < upgrade.maxLevel) premDesc += ' → ' + premEffArr[currentLevel];
+        if (premEl) premEl.innerHTML = (upgrade.iconImg ? '<img src="' + upgrade.iconImg + '" class="ui-icon">' : '') + ' ' + escapeHtml(t(upgrade.nameKey)) + '\n' + escapeHtml(premDesc) + '\n<span style="color:#ff69b4;">' + escapeHtml(t('tshop_price_preparing')) + '</span>';
         updateTitleShopUI();
         return;
     }
