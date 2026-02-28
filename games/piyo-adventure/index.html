@@ -616,7 +616,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.192</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.193</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -810,7 +810,7 @@
                     flex-shrink: 0;
                     position: relative;">
                     <div style="display:flex; align-items:flex-start; gap:4px;">
-                        <span style="font-size:clamp(12px,2.8vw,18px); line-height:1; flex-shrink:0;">👧</span>
+                        <img src="images/keeper_stage.png" style="width:clamp(18px,3.5vw,26px); height:clamp(18px,3.5vw,26px); image-rendering:pixelated; flex-shrink:0;">
                         <span id="shopKeeperText" style="
                             color: #fff; font-family: 'DotGothic16', monospace;
                             font-size: clamp(10px, 2vw, 14px);
@@ -920,7 +920,7 @@
                     flex-shrink: 0;
                     position: relative;">
                     <div style="display:flex; align-items:flex-start; gap:4px;">
-                        <span style="font-size:clamp(12px,2.8vw,18px); line-height:1; flex-shrink:0;">🧙‍♀️</span>
+                        <img src="images/keeper_title.png" style="width:clamp(18px,3.5vw,26px); height:clamp(18px,3.5vw,26px); image-rendering:pixelated; flex-shrink:0;">
                         <span id="tshopKeeperText" style="
                             color: #fff; font-family: 'DotGothic16', monospace;
                             font-size: clamp(10px, 2vw, 14px);
@@ -1746,7 +1746,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.192';
+const CURRENT_VERSION     = '1.193';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -1881,6 +1881,30 @@ class SoundManager {
         g2.gain.exponentialRampToValueAtTime(0.01, start + dur);
         o1.start(start); o2.start(start);
         o1.stop(start + dur); o2.stop(start + dur);
+    }
+
+    playFlash() {
+        if (!this.ctx || !gameSettings.soundEnabled) return;
+        var t = this.ctx.currentTime;
+        // 高音のシュイーン系SE（閃光発動音）
+        var o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        o.connect(g); g.connect(this.ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(800, t);
+        o.frequency.exponentialRampToValueAtTime(2400, t + 0.15);
+        o.frequency.exponentialRampToValueAtTime(600, t + 0.4);
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+        o.start(t); o.stop(t + 0.4);
+        // ノイズ風の低音
+        var o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
+        o2.connect(g2); g2.connect(this.ctx.destination);
+        o2.type = 'sawtooth';
+        o2.frequency.setValueAtTime(150, t);
+        o2.frequency.exponentialRampToValueAtTime(80, t + 0.3);
+        g2.gain.setValueAtTime(0.1, t);
+        g2.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        o2.start(t); o2.stop(t + 0.3);
     }
 
     playLevelUp() {
@@ -5195,7 +5219,7 @@ function updateBossAI(b) {
             b.spriteResetTimer = 30;
             // 閃光発動！
             bossState.flashAttackTimer = 30;
-            if (soundManager) soundManager.playDamage(); // 閃光音
+            if (soundManager) soundManager.playFlash(); // 閃光音
         }
         return;
     }
