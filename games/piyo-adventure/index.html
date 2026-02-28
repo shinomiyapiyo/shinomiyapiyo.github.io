@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.200</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.201</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1804,7 +1804,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.200';
+const CURRENT_VERSION     = '1.201';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2819,7 +2819,7 @@ function submitScore() {
     if (!database) {
         showGameModal(t('submit_fail_connect'));
         btn.disabled = false;
-        btn.textContent = t('name_submit');
+        btn.innerHTML = t('name_submit');
         st.textContent = '';
         return;
     }
@@ -2840,7 +2840,7 @@ function submitScore() {
 
     newRef.set(scoreData).then(function() {
         btn.disabled = false;
-        btn.textContent = t('name_submit');
+        btn.innerHTML = t('name_submit');
         st.textContent = t('submit_rank_check');
         return fetchAllRanks(scoreData);
     }).then(function(ranks) {
@@ -2852,7 +2852,7 @@ function submitScore() {
         });
     }).catch(function(err) {
         btn.disabled = false;
-        btn.textContent = t('name_submit');
+        btn.innerHTML = t('name_submit');
         st.textContent = t('submit_fail_status');
         showGameModal(t('submit_fail_send'));
     });
@@ -2908,7 +2908,7 @@ function showNameInput() {
         t('gameover_score') + finalGameStats.score + t('ranking_unit_score') + ' | ' + t('gameover_distance') + finalGameStats.distance + 'm';
     
     document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = t('name_submit');
+    document.getElementById('submitBtn').innerHTML = t('name_submit');
     document.getElementById('submitStatus').textContent = '';
     
     var input = document.getElementById('playerNameInput');
@@ -4275,7 +4275,7 @@ function updateStageShopUI() {
             html += renderStageShopItem(item, count);
         }
         if (closeBtn) {
-            closeBtn.textContent = t('shop_back');
+            closeBtn.innerHTML = t('shop_back');
             closeBtn.parentElement.style.display = '';
         }
     } else if (shopMode === 'sell') {
@@ -4288,7 +4288,7 @@ function updateStageShopUI() {
             }
         }
         if (closeBtn) {
-            closeBtn.textContent = t('shop_back');
+            closeBtn.innerHTML = t('shop_back');
             closeBtn.parentElement.style.display = '';
         }
     }
