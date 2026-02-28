@@ -552,6 +552,7 @@
             <div>👹 <span id="enemyKills">0</span><span data-i18n="hud_kills_suffix">体撃破</span></div>
             <div>⚡ <span data-i18n="hud_level_prefix">レベル</span><span id="speedLevel">1</span> (<span id="speedPercent">100</span>%)</div>
             <div>📈 <span data-i18n="hud_next_prefix">次まで</span><span id="nextSpeedUp">300</span>m</div>
+            <div id="skillIcons" style="display:none; padding-top:2px;"></div>
             <div id="debugBossBtn" style="display:none; margin-top:4px; background:rgba(100,0,180,0.85); color:#ffcc00; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(180,100,255,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">⚔️ BOSS FIGHT</div>
             <div id="debugShopBtn" style="display:none; margin-top:4px; background:rgba(0,120,80,0.85); color:#88ffcc; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(100,255,180,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">🏪 SHOP WARP</div>
         </div>
@@ -615,7 +616,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.189</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.190</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1745,7 +1746,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.189';
+const CURRENT_VERSION     = '1.190';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -4827,6 +4828,20 @@ function applyUpgrades() {
     // 復活の羽: Lv1=1回/ラン, Lv2=2回/ラン
     var revivalLv = ups.revival_feather || 0;
     gameState.revivesLeft = revivalLv;
+    // HUDスキルアイコン表示（購入済みの非表示系スキル）
+    var skillEl = document.getElementById('skillIcons');
+    if (skillEl) {
+        var icons = [];
+        if (coinLv > 0) icons.push('<img src="images/icon_coin_master.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="コインマスター Lv' + coinLv + '">');
+        if (magnetLv > 0) icons.push('<img src="images/icon_magnet_boost.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="マグネット強化 Lv' + magnetLv + '">');
+        if (comboLv > 0) icons.push('<img src="images/icon_combo_master.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="コンボマスター Lv' + comboLv + '">');
+        if (icons.length > 0) {
+            skillEl.innerHTML = icons.join(' ');
+            skillEl.style.display = 'block';
+        } else {
+            skillEl.style.display = 'none';
+        }
+    }
 }
 
 // ── ストックシステム ──
