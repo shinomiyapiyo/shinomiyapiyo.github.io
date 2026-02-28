@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.29';
+var CACHE_NAME = 'piyo-adventure-v1.30';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -65,39 +65,7 @@ var STATIC_ASSETS = [
     './images/shop03.jpg',
     './images/shop04.jpg',
     './images/shop05.jpg',
-    './images/title_01.jpg',
-    './images/title_02.jpg',
-    './images/title_03.jpg',
-    './images/title_04.jpg',
-    './images/title_05.jpg',
-    './images/title_06.jpg',
-    './images/title_07.jpg',
-    './images/title_08.jpg',
-    './images/title_09.jpg',
-    './images/title_10.jpg',
-    './images/title_11.jpg',
-    './images/title_12.jpg',
-    './images/title_13.jpg',
-    './images/title_14.jpg',
-    './images/title_15.jpg',
-    './images/title_16.jpg',
-    './images/title_17.jpg',
-    './images/title_18.jpg',
-    './images/title_19.jpg',
-    './images/title_20.jpg',
-    './images/title_21.jpg',
-    './images/title_22.jpg',
-    './images/title_23.jpg',
-    './images/title_24.jpg',
-    './images/title_25.jpg',
-    './images/title_26.jpg',
-    './images/title_27.jpg',
-    './images/title_28.jpg',
-    './images/title_29.jpg',
-    './images/title_30.jpg',
-    './images/title_31.jpg',
-    './images/title_32.jpg',
-    './images/title_33.jpg'
+    './images/title.jpg'
 ];
 
 self.addEventListener('install', function(event) {

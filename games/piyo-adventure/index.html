@@ -148,24 +148,18 @@
         }
         .overlay.hidden { display: none; }
 
-        /* --- タイトル画像 --- */
+        /* --- タイトル背景画像 --- */
         #titleImage {
             position: absolute;
-            top: 55%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: auto; height: auto;
-            max-width: 85vw;
-            max-height: 80vh;
-            object-fit: contain;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center center;
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            z-index: 1;
+            border-radius: 0;
+            box-shadow: none;
+            z-index: 0;
             display: block;
-        }
-        @media (min-width: 600px) {
-            #titleImage { max-width: 50vw; max-height: 70vh; left: 38%; top: 53%; }
-            #titleLogo { left: 38% !important; }
         }
 
         /* --- ボタン共通 --- */
@@ -364,6 +358,12 @@
         }
         @media (min-width: 600px) { .last-update { font-size: 9px; } }
 
+        /* --- ロゴふわふわアニメーション --- */
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
         /* --- タップで開始アニメーション --- */
         @keyframes gentlePulse {
             0%, 100% { opacity: 0.3; transform: scale(1); }
@@ -390,7 +390,6 @@
         }
         @media (min-width: 600px) {
             .tap-to-start { font-size: 16px; }
-            #startMessage { left: 38% !important; }
         }
 
         /* --- ランキング画面 --- */
@@ -592,10 +591,11 @@
         <!-- タイトル画面 -->
         <div id="startScreen" class="overlay hidden" style="position: relative; width: 100vw; height: 100vh; overflow: hidden;">
             <img id="titleLogo" src="images/logo.png" alt="ロゴ" style="
-                position: absolute; top: 1%; left: 50%;
-                transform: translateX(-50%);
-                width: 25vw; height: auto; z-index: 10;">
-            <img id="titleImage" src="" alt="ぴよ氏の冒険">
+                position: absolute; top: 3%; left: 3%;
+                width: 34vw; height: auto; z-index: 10;
+                animation: logoFloat 3s ease-in-out infinite;
+                filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
+            <img id="titleImage" src="images/title.jpg" alt="ぴよ氏の冒険">
 
             <div id="startMessage" class="tap-to-start" style="
                 position: absolute; bottom: 6px; left: 50%;
@@ -616,7 +616,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.193</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.196</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1746,7 +1746,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.193';
+const CURRENT_VERSION     = '1.196';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -6633,7 +6633,8 @@ function drawFlyingEnemy(e) {
     var cy = e.y + bounce;
     var frameIdx = Math.floor(e.animFrame / 5) % 4;
 
-    spriteManager.draw(ctx, 'flying_chick_fly', frameIdx, e.x, cy, e.width, e.height, false);
+    var flipH = (e.velX < 0); // 左移動中なら反転して左向きに
+    spriteManager.draw(ctx, 'flying_chick_fly', frameIdx, e.x, cy, e.width, e.height, flipH);
     e.animFrame++;
 }
 
@@ -7442,54 +7443,8 @@ function checkOrientation() {
     }
 }
 
-// ─── タイトル画像 ───
-
-var TITLE_IMAGES = [
-    './images/title_01.jpg',
-    './images/title_02.jpg',
-    './images/title_03.jpg',
-    './images/title_04.jpg',
-    './images/title_05.jpg',
-    './images/title_06.jpg',
-    './images/title_07.jpg',
-    './images/title_08.jpg',
-    './images/title_09.jpg',
-    './images/title_10.jpg',
-    './images/title_11.jpg',
-    './images/title_12.jpg',
-    './images/title_13.jpg',
-    './images/title_14.jpg',
-    './images/title_15.jpg',
-    './images/title_16.jpg',
-    './images/title_17.jpg',
-    './images/title_18.jpg',
-    './images/title_19.jpg',
-    './images/title_20.jpg',
-    './images/title_21.jpg',
-    './images/title_22.jpg',
-    './images/title_23.jpg',
-    './images/title_24.jpg',
-    './images/title_25.jpg',
-    './images/title_26.jpg',
-    './images/title_27.jpg',
-    './images/title_28.jpg',
-    './images/title_29.jpg',
-    './images/piyo01.jpg',
-    './images/piyo02.jpg',
-    './images/title_30.jpg',
-    './images/title_31.jpg',
-    './images/title_32.jpg',
-    './images/title_33.jpg'
-];
-
-function setRandomTitleImage() {
-    var el = document.getElementById('titleImage');
-    if (!el) return;
-    var idx = Math.floor(Math.random() * TITLE_IMAGES.length);
-    el.onerror = function() { el.src = TITLE_IMAGES[0]; };
-    el.src = TITLE_IMAGES[idx];
-    el.style.display = 'block';
-}
+// ─── タイトル画像（固定1枚: title.jpg） ───
+// 旧: 33枚のランダムスライドショー → 新: 全画面背景1枚
 
 // ─── 入力 ───
 
@@ -7811,7 +7766,6 @@ function initialize() {
     spriteManager.init(function() {
         // 画像スプライト読み込み完了
     });
-    setRandomTitleImage();
     initTerrain();
     resizeCanvas();
     applyLanguage();
