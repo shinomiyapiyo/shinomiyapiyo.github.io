@@ -615,7 +615,7 @@
                 color: #fff; font-size: 1.2vw;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                 font-weight: bold;">
-                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.185</span>
+                <span style="background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 6px;">Ver.1.189</span>
                 <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                    style="color: #fff; font-size: 1.0vw; text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px;"
                    onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -966,7 +966,7 @@
                         color: #fff; font-weight: 800;
                         text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
                         font-family: 'DotGothic16', monospace;
-                        white-space: nowrap;">▶ もどる</button>
+                        white-space: nowrap;">▶ お店を出る</button>
                 </div>
             </div>
             <!-- 右側：ショップ画像エリア -->
@@ -1419,12 +1419,14 @@ ja: {
     shop_confirm_no: 'いいえ',
     // ── タイトルショップ ──
     tshop_title: '🛒 ショップ',
-    tshop_keeper_greet: 'いらっしゃい！\nなにか お探しですか？',
-    tshop_keeper_buy_confirm: '{item}を {price}円で\nお買い上げですか？',
-    tshop_keeper_bought: 'まいど！\nそうびしましたよ',
-    tshop_keeper_cant_afford: 'お金が たりないみたい…\nもっと ぼうけんしてきてね',
-    tshop_keeper_max: 'それは もう\nさいだいまで きょうかずみだよ',
-    tshop_keeper_premium: 'それは とくべつな\nアイテムなの…\nいまは まだ てにはいらないよ',
+    tshop_keeper_greet: 'いらっしゃいませ♡\nここは貯金額で買い物できるお店なのだ！',
+    tshop_keeper_buy_confirm: '{item}を {price}円で\nお買い上げなのだ？',
+    tshop_keeper_bought: 'まいどなのだ♡\nしっかり装備したのだ！',
+    tshop_keeper_cant_afford: 'ざんねん…\n貯金がたりないみたいなのだ',
+    tshop_keeper_max: 'それはもう最大まで\n強化ずみなのだ！',
+    tshop_keeper_premium: 'それはとくべつなアイテム…\nいまはまだ準備中なのだ',
+    tshop_keeper_leave_confirm: 'お店を出るのだ？',
+    tshop_keeper_leave_bye: 'またきてほしいのだ♡',
     tshop_coin_master: 'コインマスター',
     tshop_coin_master_desc: 'コイン獲得量UP',
     tshop_toughness: 'タフネス',
@@ -1435,7 +1437,7 @@ ja: {
     tshop_magnet_boost_desc: 'マグネットの吸引範囲UP',
     tshop_combo_master: 'コンボマスター',
     tshop_combo_master_desc: 'コンボ受付時間を延長',
-    tshop_revival_feather: '復活の羽',
+    tshop_revival_feather: 'ふっかつマシーン',
     tshop_revival_feather_desc: '死亡時にHP1で復活（1ランN回）',
     // ── 復活 ──
     revival_text: '✨ 復活！',
@@ -1743,7 +1745,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.182';
+const CURRENT_VERSION     = '1.189';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -4534,13 +4536,9 @@ function depositScore() {
 var tshopHighlightedItem = null;  // カーソル選択中のアイテムID
 var tshopConfirmingItem = null;   // 購入確認中のアイテムID
 var tshopConfirmCursor = null;    // はい/いいえカーソル: null | 'yes' | 'no'
+var tshopLeaving = false;         // 退店確認中フラグ
 
 function formatTshopPrice(num) {
-    if (num >= 10000) {
-        var man = Math.floor(num / 10000);
-        var remainder = num % 10000;
-        return remainder > 0 ? man + '万' + remainder : man + '万';
-    }
     return String(num);
 }
 
@@ -4609,12 +4607,36 @@ function handleTshopConfirmNo() {
     cancelTshopBuy();
 }
 
+function requestTshopLeave() {
+    if (tshopConfirmingItem || tshopLeaving) return;
+    tshopLeaving = true;
+    if (soundManager) soundManager.playCursorMove();
+    setTshopKeeperText('tshop_keeper_leave_confirm');
+    showTshopConfirm(true);
+}
+
 function confirmTshopBuy() {
+    if (tshopLeaving) {
+        showTshopConfirm(false);
+        tshopLeaving = false;
+        setTshopKeeperText('tshop_keeper_leave_bye');
+        setTimeout(function() { hideTitleShop(); }, 600);
+        return;
+    }
     if (!tshopConfirmingItem) return;
     var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === tshopConfirmingItem; });
     if (!upgrade) return;
     var currentLevel = (gameSettings.upgrades || {})[tshopConfirmingItem] || 0;
     var price = upgrade.prices[currentLevel];
+    // お金不足チェック
+    if (gameSettings.savings < price) {
+        if (soundManager) soundManager.playDamage();
+        showTshopConfirm(false);
+        tshopConfirmingItem = null;
+        setTshopKeeperText('tshop_keeper_cant_afford');
+        updateTitleShopUI();
+        return;
+    }
     gameSettings.savings -= price;
     if (!gameSettings.upgrades) gameSettings.upgrades = {};
     gameSettings.upgrades[tshopConfirmingItem] = currentLevel + 1;
@@ -4627,6 +4649,12 @@ function confirmTshopBuy() {
 }
 
 function cancelTshopBuy() {
+    if (tshopLeaving) {
+        showTshopConfirm(false);
+        tshopLeaving = false;
+        setTshopKeeperText('tshop_keeper_greet');
+        return;
+    }
     showTshopConfirm(false);
     tshopConfirmingItem = null;
     setTshopKeeperText('tshop_keeper_greet');
@@ -4657,14 +4685,6 @@ function selectTshopItem(upgradeId) {
         return;
     }
     var price = upgrade.prices[currentLevel];
-    // お金不足
-    if (gameSettings.savings < price) {
-        if (soundManager) soundManager.playDamage();
-        tshopHighlightedItem = upgradeId;
-        setTshopKeeperText('tshop_keeper_cant_afford');
-        updateTitleShopUI();
-        return;
-    }
     // 1回目タップ：ハイライト＋説明表示
     if (tshopHighlightedItem !== upgradeId) {
         tshopHighlightedItem = upgradeId;
@@ -4708,9 +4728,11 @@ function showTitleShop() {
     tshopHighlightedItem = null;
     tshopConfirmingItem = null;
     tshopConfirmCursor = null;
+    tshopLeaving = false;
     setTshopKeeperText('tshop_keeper_greet');
     showTshopConfirm(false);
     updateTitleShopUI();
+    if (soundManager) soundManager.playBGM('shop');
 }
 
 function hideTitleShop() {
@@ -4719,6 +4741,7 @@ function hideTitleShop() {
     el.style.display = 'none';
     tshopHighlightedItem = null;
     tshopConfirmingItem = null;
+    if (soundManager) soundManager.playBGM('title');
 }
 
 function renderTitleShopItem(upgrade) {
@@ -4729,29 +4752,25 @@ function renderTitleShopItem(upgrade) {
     var canBuy = !isMax && !isPremium && gameSettings.savings >= price;
     var isHighlighted = (tshopHighlightedItem === upgrade.id) || (tshopConfirmingItem === upgrade.id);
     var cursor = isHighlighted ? '▶' : '　';
-    // レベルドット
-    var levelDots = '';
-    for (var i = 0; i < upgrade.maxLevel; i++) {
-        levelDots += i < currentLevel ? '●' : '○';
-    }
+    // レベル表示
+    var levelDots = currentLevel + '/' + upgrade.maxLevel;
     // 価格テキスト
     var priceText;
     if (isMax) {
         priceText = 'MAX';
     } else if (isPremium) {
-        priceText = '課金';
+        priceText = '準備中';
     } else {
         priceText = formatTshopPrice(price) + '円';
     }
     var priceColor = isMax ? '#4CAF50' : (isPremium ? '#ff69b4' : '#ffd700');
-    var textColor = (canBuy || isMax) ? '#fff' : 'rgba(180,180,180,0.5)';
-    if (isPremium) textColor = 'rgba(255,105,180,0.6)';
+    var textColor = isPremium ? 'rgba(255,105,180,0.6)' : '#fff';
     return '<div data-tshop-id="' + upgrade.id + '" style="' +
         'display:flex; align-items:center; gap:2px;' +
         'padding:3px 3px; cursor:pointer;' +
         (isHighlighted ? 'background:rgba(255,255,255,0.1);' : '') +
         'border-bottom:1px solid rgba(255,255,255,0.06);' +
-        ((canBuy || isMax) ? '' : 'opacity:0.6;') + '">' +
+        (isPremium ? 'opacity:0.6;' : '') + '">' +
         '<span style="color:#fff; font-family:DotGothic16,monospace;' +
             'font-size:clamp(9px,1.8vw,12px); width:0.9em; text-align:center; flex-shrink:0;' +
             'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
@@ -4767,7 +4786,7 @@ function renderTitleShopItem(upgrade) {
 }
 
 function updateTitleShopUI() {
-    document.getElementById('titleShopSavings').textContent = '🏦 ' + formatTshopPrice(gameSettings.savings) + '円';
+    document.getElementById('titleShopSavings').textContent = '🏦 貯金額 ' + formatTshopPrice(gameSettings.savings) + '円';
     var container = document.getElementById('titleShopList');
     var html = '';
     for (var i = 0; i < TITLE_SHOP_UPGRADES.length; i++) {
@@ -7797,8 +7816,8 @@ function initialize() {
 
     // タイトルショップ戻るボタン
     var tShopBack = document.getElementById('titleShopBackBtn');
-    tShopBack.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); hideTitleShop(); });
-    tShopBack.addEventListener('click', function(e) { e.stopPropagation(); hideTitleShop(); });
+    tShopBack.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); requestTshopLeave(); });
+    tShopBack.addEventListener('click', function(e) { e.stopPropagation(); requestTshopLeave(); });
 
     // タイトルショップ：アイテム選択（DQ風イベント委譲）
     var tshopList = document.getElementById('titleShopList');
