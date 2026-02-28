@@ -56,7 +56,7 @@
         /* --- 縦画面警告 (修正済み) --- */
         @media screen and (orientation: portrait) {
             body::before {
-                content: "画面を横向きにしてください\A画面の自動回転がオフの場合は\Aロックを解除してください";
+                content: var(--orient-msg, "画面を横向きにしてください\A画面の自動回転がオフの場合は\Aロックを解除してください");
                 position: fixed;
                 top: 0; left: 0; right: 0; bottom: 0;
                 background: linear-gradient(135deg, #ffb6c1, #ffc0cb, #ff69b4);
@@ -569,7 +569,7 @@
             padding: 5vh 5vw; box-sizing: border-box;">
             <div style="color: rgba(255,255,255,0.8); font-size: 3vw; text-align: center; font-family: 'M PLUS Rounded 1c', sans-serif; margin-top: 3vh;
                 text-shadow: 0 0 8px rgba(255,105,180,0.3);">
-                注意<br>本作品にはゲーム内での軽い接触表現が含まれます
+                <span data-i18n="splash_warning">注意</span><br><span data-i18n="splash_warning_detail">本作品にはゲーム内での軽い接触表現が含まれます</span>
             </div>
             <div style="display: flex; flex-direction: column; align-items: center; gap: 1.5vh;">
                 <img id="splashLogo" src="./images/nullpo_works_white.png" alt="NullPo Works"
@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.207</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.208</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1684,6 +1684,8 @@ function applyLanguage() {
     // プライバシーポリシーリンクのURL切替
     var privacyLink = document.getElementById('privacyLink');
     if (privacyLink) privacyLink.href = t('privacy_url');
+    // 縦画面警告のCSS変数を更新
+    document.documentElement.style.setProperty('--orient-msg', '"' + t('orient_msg').replace(/\n/g, '\\A') + '"');
 }
 
 // ─── HTMLエスケープ ───
@@ -1812,7 +1814,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.207';
+const CURRENT_VERSION     = '1.208';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
