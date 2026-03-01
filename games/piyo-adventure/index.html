@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.215</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.216</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1381,6 +1381,7 @@ ja: {
     name_submit: _ic('icon_register.png') + ' 登録',
     name_skip: _ic('icon_skip.png') + ' スキップ',
     name_empty: 'お名前を入力してください！',
+    name_ng_word: '使用できない文字列が含まれています。\n別のお名前を入力してください。',
     // スコア送信
     submit_connecting: 'サーバーに接続中...',
     submit_sending: 'データを送信中...',
@@ -1577,6 +1578,7 @@ en: {
     name_submit: _ic('icon_register.png') + ' Submit',
     name_skip: _ic('icon_skip.png') + ' Skip',
     name_empty: 'Please enter your name!',
+    name_ng_word: 'That name contains inappropriate words.\nPlease choose a different name.',
     submit_connecting: 'Connecting...',
     submit_sending: 'Sending data...',
     submit_rank_check: 'Checking rank...',
@@ -1766,6 +1768,61 @@ function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// ─── NGワードフィルター ───
+var NG_WORDS = [
+    // ── 日本語：卑猥・下品 ──
+    'ちんこ','ちんぽ','ちんちん','まんこ','おまんこ','せっくす','セックス',
+    'おっぱい','ぼっき','ぶっかけ','えっち','エッチ','ふぇら','フェラ',
+    'おなにー','オナニー','ちんぽこ','きんたま','パイズリ','ぱいずり',
+    'やりまん','やりちん','ちつ','ペニス','ぺにす','ヴァギナ',
+    // ── 日本語：差別・ヘイト ──
+    'きちがい','キチガイ','ガイジ','がいじ','しょうがいしゃ',
+    'しね','シネ','ころす','コロス','ころしてやる',
+    'くたばれ','ちょん','チョン','にがー',
+    'かたわ','カタワ','めくら','つんぼ','おし',
+    'ぶらく','えた','ひにん',
+    // ── 日本語：暴言・侮辱（強度の高いもの） ──
+    'くそやろう','くそがき','きもい','キモい','しねよ','くず','カス',
+    'ばか','バカ','あほ','アホ','うんこ','ウンコ','うんち',
+    // ── 日本語：なりすまし ──
+    'うんえい','運営','かんりしゃ','管理者','こうしき','公式',
+    // ── 英語：卑猥 ──
+    'fuck','shit','dick','cock','pussy','penis','vagina','sex',
+    'porn','hentai','boob','cum','blowjob','handjob',
+    'dildo','orgasm','erotic','nude','naked',
+    // ── 英語：差別・ヘイト ──
+    'nigger','nigga','faggot','fag','retard','chink','spic',
+    'kike','cunt','whore','slut','bitch',
+    // ── 英語：暴力 ──
+    'kill you','die','murder',
+    // ── 英語：なりすまし ──
+    'admin','moderator','official','developer'
+];
+
+/**
+ * NGワードチェック
+ * - 入力文字列からスペース・記号を除去して部分一致検査
+ * - 大文字小文字・全角半角を正規化
+ * @param {string} name - チェック対象の名前
+ * @returns {boolean} true = NGワードを含む
+ */
+function containsNgWord(name) {
+    // 正規化：小文字化 → 全角英数→半角 → カタカナ→ひらがな → スペース・記号除去
+    var normalized = String(name).toLowerCase()
+        .replace(/[\uff21-\uff3a]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }) // Ａ→a
+        .replace(/[\uff41-\uff5a]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }) // ａ→a
+        .replace(/[\uff10-\uff19]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }) // ０→0
+        .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); })   // カタカナ→ひらがな
+        .replace(/[\s\u3000._\-!@#$%^&*=+~`|:;,\/\\'"?。、！？・\u200b\u00a0]/g, '');  // スペース・記号除去
+
+    for (var i = 0; i < NG_WORDS.length; i++) {
+        var ngNormalized = NG_WORDS[i].toLowerCase()
+            .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+        if (normalized.indexOf(ngNormalized) !== -1) return true;
+    }
+    return false;
+}
+
 // ─── ゲーム内モーダル ───
 function showGameModal(message) {
     return new Promise(function(resolve) {
@@ -1887,7 +1944,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.215';
+const CURRENT_VERSION     = '1.216';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2922,6 +2979,7 @@ function buildRankMessage(name, ranks) {
 function submitScore() {
     var name = document.getElementById('playerNameInput').value.trim().replace(/[<>&"']/g, '').substring(0, 10);
     if (!name) { showGameModal(t('name_empty')); return; }
+    if (containsNgWord(name)) { showGameModal(t('name_ng_word')); return; }
 
     var btn = document.getElementById('submitBtn');
     var st = document.getElementById('submitStatus');
