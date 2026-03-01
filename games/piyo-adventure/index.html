@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.214</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.215</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -777,6 +777,19 @@
                     </div>
                 </div>
 
+                <!-- 遊び方 -->
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                    <span data-i18n="settings_howtoplay" style="color: #fff; font-size: 3vw; font-weight: 700;">遊び方</span>
+                    <button id="howToPlayBtn" onclick="showGuide()" style="
+                        min-width: 70px; min-height: 44px; padding: 10px 16px; border-radius: 20px; border: none;
+                        font-size: 2.8vw; font-weight: 700; cursor: pointer;
+                        font-family: 'M PLUS Rounded 1c', sans-serif;
+                        background: linear-gradient(180deg, #44bb77, #228855);
+                        color: #fff; transition: background 0.15s ease;
+                        -webkit-tap-highlight-color: transparent;">▶</button>
+                </div>
+
                 <!-- 広告非表示（課金実装時に display:flex に戻す） -->
                 <div id="adFreeRow" style="display: none; justify-content: space-between; align-items: center;
                     padding: 12px 0;">
@@ -790,6 +803,37 @@
                 </div>
             </div>
             <button class="game-button" onclick="hideSettings()" data-i18n="btn_back" style="margin-top: 1vh; flex-shrink: 0; z-index: 31; font-size: 3vw; padding: 8px 20px;"></button>
+        </div>
+
+        <!-- 遊び方ガイド画面 -->
+        <div id="guideScreen" class="hidden" style="
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            box-sizing: border-box;
+            background: rgba(0,0,0,0.95);
+            display: none; flex-direction: column;
+            justify-content: flex-start; align-items: center;
+            z-index: 10000;
+            padding: calc(1vh + env(safe-area-inset-top, 0px)) calc(6px + env(safe-area-inset-right, 0px)) calc(0.5vh + env(safe-area-inset-bottom, 0px)) calc(6px + env(safe-area-inset-left, 0px));
+            overflow: hidden;">
+            <div data-i18n="guide_title" style="color: #ffd700; font-size: 3.5vw; font-weight: 800; margin-bottom: 0.5vh; flex-shrink: 0;
+                font-family: 'M PLUS Rounded 1c', sans-serif;
+                text-shadow: 0 0 12px rgba(255,215,0,0.4), 0 2px 6px rgba(0,0,0,0.8);
+                letter-spacing: 0.08em;">遊び方</div>
+            <div id="guideContent" style="
+                background: linear-gradient(180deg, rgba(15,5,30,0.9), rgba(5,0,15,0.95));
+                border: 2px solid rgba(255,105,180,0.4);
+                border-radius: 12px; padding: 12px 14px;
+                width: 100%; max-width: 520px; flex: 1; min-height: 0;
+                box-sizing: border-box;
+                overflow-y: auto; overflow-x: hidden;
+                color: #fff; font-size: 2vw; line-height: 1.6;
+                font-family: 'M PLUS Rounded 1c', sans-serif;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y; overscroll-behavior: contain;
+                box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">
+            </div>
+            <button class="game-button" onclick="hideGuide()" data-i18n="btn_back" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: 2vw; padding: 4px 14px;">戻る</button>
         </div>
 
         <!-- ステージショップ画面（RPG風） -->
@@ -1389,6 +1433,21 @@ ja: {
     settings_adfree_status: '準備中',
     settings_on: 'ON',
     settings_off: 'OFF',
+    settings_howtoplay: '遊び方',
+    // 遊び方ガイド
+    guide_title: _ic('icon_settings.png') + ' 遊び方',
+    guide_controls_title: '◆ 操作方法',
+    guide_controls_body: '・画面タップ … ジャンプ\n・空中でタップ … 二段ジャンプ\n・ダメージ中にタップ … 受け身（吹き飛び軽減）',
+    guide_items_title: '◆ アイテム',
+    guide_items_body: '・ハート … ライフを1回復\n・レモン缶 … 一定時間ジャンプ力アップ\n・エネルギー弾 … 一定時間自動で弾を撃つ\n・シールド … 一定時間ダメージ無効\n・マグネット … 一定時間コインを引き寄せる',
+    guide_shop_title: '◆ ステージショップ',
+    guide_shop_body: '・走っている途中でショップに立ち寄れます\n・集めたお金でアイテムを購入できます\n・アイテムはストックに保存され、好きな時に使えます',
+    guide_savings_title: '◆ 貯金システム',
+    guide_savings_body: '・ショップで手持ちのお金の半分を貯金できます\n・貯金はゲームオーバーになっても消えません\n・タイトルショップで貯金を使って永続アップグレードが買えます',
+    guide_boss_title: '◆ ボス戦',
+    guide_boss_body: '・一定距離を走るとボスが出現します\n・ボスを踏んでダメージを与えましょう\n・ボス戦中はアイテムがドロップします',
+    guide_tips_title: '◆ コツ',
+    guide_tips_body: '・コンボを繋げるとスコアが大幅にアップ！\n・ストックアイテムはボス戦前に温存すると有利\n・貯金をコツコツ貯めて永続強化を目指そう',
     // 縦画面
     orient_msg: '画面を横向きにしてください\n画面の自動回転がオフの場合は\nロックを解除してください',
     // エラー
@@ -1562,6 +1621,20 @@ en: {
     settings_adfree_status: 'Coming Soon',
     settings_on: 'ON',
     settings_off: 'OFF',
+    settings_howtoplay: 'How to Play',
+    guide_title: _ic('icon_settings.png') + ' How to Play',
+    guide_controls_title: '◆ Controls',
+    guide_controls_body: '・Tap screen … Jump\n・Tap in mid-air … Double jump\n・Tap while taking damage … Recovery (reduce knockback)',
+    guide_items_title: '◆ Items',
+    guide_items_body: '・Heart … Restore 1 life\n・Lemon Can … Boost jump power temporarily\n・Energy Orb … Auto-fire bullets temporarily\n・Shield … Block all damage temporarily\n・Magnet … Attract nearby coins temporarily',
+    guide_shop_title: '◆ Stage Shop',
+    guide_shop_body: '・You can visit the shop while running\n・Buy items with money you\'ve collected\n・Items are saved to stock for later use',
+    guide_savings_title: '◆ Savings System',
+    guide_savings_body: '・Deposit half your money at the shop\n・Savings are kept even after Game Over\n・Spend savings at the Title Shop for permanent upgrades',
+    guide_boss_title: '◆ Boss Battles',
+    guide_boss_body: '・A boss appears after running a certain distance\n・Stomp on the boss to deal damage\n・Items drop during boss fights',
+    guide_tips_title: '◆ Tips',
+    guide_tips_body: '・Chain combos for a big score boost!\n・Save stock items for boss battles\n・Keep saving up for permanent upgrades',
     orient_msg: 'Please rotate to landscape\nIf auto-rotate is off,\nplease unlock rotation',
     error_init: 'Failed to load game.\nPlease reload the page.',
     confirm_yes: 'Yes',
@@ -1814,7 +1887,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.214';
+const CURRENT_VERSION     = '1.215';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2706,6 +2779,39 @@ function showSettings() {
 function hideSettings() {
     markScreenTransition();
     var el = document.getElementById('settingsScreen');
+    el.classList.add('hidden');
+    el.style.display = 'none';
+}
+
+function showGuide() {
+    if (isInTransitionCooldown()) return;
+    markScreenTransition();
+    var el = document.getElementById('guideScreen');
+    el.classList.remove('hidden');
+    el.style.display = 'flex';
+    history.pushState({ screen: 'guide' }, '');
+    // ガイド内容を動的に生成（言語切替対応）
+    var sections = ['controls', 'items', 'shop', 'savings', 'boss', 'tips'];
+    var html = '';
+    for (var i = 0; i < sections.length; i++) {
+        var s = sections[i];
+        html += '<div style="margin-bottom:10px;">' +
+            '<div style="color:#ffd700;font-weight:bold;font-size:2.2vw;margin-bottom:3px;">' + t('guide_' + s + '_title') + '</div>' +
+            '<div style="color:#ddd;font-size:1.8vw;white-space:pre-line;line-height:1.5;">' + escapeHtml(t('guide_' + s + '_body')) + '</div>' +
+            '</div>';
+    }
+    document.getElementById('guideContent').innerHTML = html;
+}
+
+function hideGuide() {
+    markScreenTransition();
+    var el = document.getElementById('guideScreen');
+    el.classList.add('hidden');
+    el.style.display = 'none';
+}
+
+function hideGuideDirect() {
+    var el = document.getElementById('guideScreen');
     el.classList.add('hidden');
     el.style.display = 'none';
 }
@@ -3962,6 +4068,7 @@ function closeStageShop() {
 }
 
 function confirmCloseShop() {
+    if (soundManager) soundManager.playCursorMove();
     showShopConfirm(false);
     shopClosing = false;
     setKeeperText('shop_keeper_close');
@@ -3977,6 +4084,7 @@ function confirmCloseShop() {
 }
 
 function cancelCloseShop() {
+    if (soundManager) soundManager.playCursorMove();
     showShopConfirm(false);
     shopClosing = false;
     setKeeperText('shop_keeper_greet');
@@ -4090,6 +4198,7 @@ function showStageShopScreen() {
 }
 
 function returnToShopMenu() {
+    if (soundManager) soundManager.playCursorMove();
     shopMode = 'menu';
     shopConfirmingItem = null;
     shopHighlightedItem = null;
@@ -4544,6 +4653,7 @@ function confirmShopBuy() {
 }
 
 function cancelShopBuy() {
+    if (soundManager) soundManager.playCursorMove();
     // 退店確認中ならキャンセル
     if (shopClosing) { cancelCloseShop(); return; }
     // 貯金確認中ならキャンセル
@@ -4754,6 +4864,7 @@ function confirmTshopBuy() {
 }
 
 function cancelTshopBuy() {
+    if (soundManager) soundManager.playCursorMove();
     if (tshopLeaving) {
         showTshopConfirm(false);
         tshopLeaving = false;
@@ -5450,8 +5561,8 @@ function spawnBossItem() {
     var aL = bossState.arenaLeft;
     var aR = bossState.arenaRight;
     var r = Math.random();
-    // ボス戦アイテム: レモン缶70%/エネルギー弾15%/ハート15%
-    var t = r < 0.70 ? 'lemon_can' : r < 0.85 ? 'energy' : 'heart';
+    // ボス戦アイテム: エネルギー弾50%/ハート30%/シールド20%
+    var t = r < 0.50 ? 'energy' : r < 0.80 ? 'heart' : 'shield';
     powerUps.push({
         x: aL + 60 + Math.random() * (aR - aL - 120),
         y: 160 + Math.random() * 100,
@@ -8054,6 +8165,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 var titleShop = document.getElementById('titleShopScreen');
                 if (titleShop && titleShop.style.display !== 'none' && !titleShop.classList.contains('hidden')) {
                     hideTitleShop();
+                    return;
+                }
+
+                var guide = document.getElementById('guideScreen');
+                if (guide && !guide.classList.contains('hidden') && guide.style.display !== 'none') {
+                    hideGuide();
                     return;
                 }
 
