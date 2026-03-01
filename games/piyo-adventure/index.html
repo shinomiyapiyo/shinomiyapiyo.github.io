@@ -421,7 +421,7 @@
             justify-content: flex-start !important;
             align-items: center !important;
             z-index: 9999 !important;
-            padding: calc(1vh + var(--sat)) calc(6px + var(--sar)) calc(0.5vh + var(--sab)) calc(6px + var(--sal)) !important;
+            padding: calc(1vh + env(safe-area-inset-top, 0px)) calc(6px + env(safe-area-inset-right, 0px)) calc(0.5vh + env(safe-area-inset-bottom, 0px)) calc(6px + env(safe-area-inset-left, 0px)) !important;
             overflow: hidden !important;
         }
         #rankingScreen.hidden { display: none !important; }
@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.212</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.213</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -706,7 +706,7 @@
                 background: linear-gradient(180deg, rgba(15,5,30,0.9), rgba(5,0,15,0.95));
                 border: 2px solid rgba(255,105,180,0.4);
                 border-radius: 10px; padding: 6px 8px;
-                width: 95vw; flex: 1; min-height: 0;
+                width: 100%; max-width: 520px; box-sizing: border-box; flex: 1; min-height: 0;
                 overflow-y: auto; overflow-x: hidden;
                 color: #fff; font-size: 2.2vw;
                 font-family: 'M PLUS Rounded 1c', sans-serif;
@@ -1814,7 +1814,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.212';
+const CURRENT_VERSION     = '1.213';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2614,7 +2614,7 @@ function showRanking() {
 
     var el = document.getElementById('rankingScreen');
     document.body.appendChild(el);
-    el.style.cssText = 'position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.9)!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:center!important;z-index:999999!important;padding:calc(1vh + var(--sat)) calc(6px + var(--sar)) calc(0.5vh + var(--sab)) calc(6px + var(--sal))!important;overflow:hidden!important;';
+    el.style.cssText = 'position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.9)!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:center!important;z-index:999999!important;padding:calc(1vh + env(safe-area-inset-top,0px)) calc(6px + env(safe-area-inset-right,0px)) calc(0.5vh + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px))!important;overflow:hidden!important;';
     el.classList.remove('hidden');
     showRankingByType('score');
 
