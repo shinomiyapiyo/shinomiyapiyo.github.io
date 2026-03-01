@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.213</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.214</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1814,7 +1814,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.213';
+const CURRENT_VERSION     = '1.214';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -7914,14 +7914,19 @@ function initialize() {
 
     // タイトルショップ：アイテム選択（DQ風イベント委譲）
     var tshopList = document.getElementById('titleShopList');
+    var tshopItemTouchFired = false;
     tshopList.addEventListener('touchend', function(e) {
-        var itemEl = e.target.closest('[data-tshop-id]');
-        if (!itemEl) return;
         e.preventDefault();
         e.stopPropagation();
+        tshopItemTouchFired = true;
+        var touch = e.changedTouches[0];
+        var target = document.elementFromPoint(touch.clientX, touch.clientY);
+        var itemEl = target ? target.closest('[data-tshop-id]') : null;
+        if (!itemEl) return;
         selectTshopItem(itemEl.getAttribute('data-tshop-id'));
     });
     tshopList.addEventListener('click', function(e) {
+        if (tshopItemTouchFired) { tshopItemTouchFired = false; return; }
         var itemEl = e.target.closest('[data-tshop-id]');
         if (!itemEl) return;
         selectTshopItem(itemEl.getAttribute('data-tshop-id'));
@@ -7939,24 +7944,32 @@ function initialize() {
 
     // タイトルショップ はい/いいえ確認ボタン
     var tcfYes = document.getElementById('tshopConfirmYes');
-    tcfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleTshopConfirmYes(); });
-    tcfYes.addEventListener('click', function(e) { e.stopPropagation(); handleTshopConfirmYes(); });
+    var tcfYesTouchFired = false;
+    tcfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); tcfYesTouchFired = true; handleTshopConfirmYes(); });
+    tcfYes.addEventListener('click', function(e) { e.stopPropagation(); if (tcfYesTouchFired) { tcfYesTouchFired = false; return; } handleTshopConfirmYes(); });
     var tcfNo = document.getElementById('tshopConfirmNo');
-    tcfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleTshopConfirmNo(); });
-    tcfNo.addEventListener('click', function(e) { e.stopPropagation(); handleTshopConfirmNo(); });
+    var tcfNoTouchFired = false;
+    tcfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); tcfNoTouchFired = true; handleTshopConfirmNo(); });
+    tcfNo.addEventListener('click', function(e) { e.stopPropagation(); if (tcfNoTouchFired) { tcfNoTouchFired = false; return; } handleTshopConfirmNo(); });
 
     // ── ステージショップ：アイテム選択（イベント委譲 — タッチ・マウス両対応） ──
     var shopItemsContainer = document.getElementById('stageShopItems');
+    var shopItemTouchFired = false;
     // タッチ操作：touchend で即反応し、synthesized click を抑止
     shopItemsContainer.addEventListener('touchend', function(e) {
-        var itemEl = e.target.closest('[data-item-id]');
-        if (!itemEl) return;
         e.preventDefault();
         e.stopPropagation();
+        shopItemTouchFired = true;
+        // タッチ終了座標から実際の要素を取得（指ずれ対策）
+        var touch = e.changedTouches[0];
+        var target = document.elementFromPoint(touch.clientX, touch.clientY);
+        var itemEl = target ? target.closest('[data-item-id]') : null;
+        if (!itemEl) return;
         selectShopItem(itemEl.getAttribute('data-item-id'));
     });
     // マウス／トラックパッド操作
     shopItemsContainer.addEventListener('click', function(e) {
+        if (shopItemTouchFired) { shopItemTouchFired = false; return; }
         var itemEl = e.target.closest('[data-item-id]');
         if (!itemEl) return;
         selectShopItem(itemEl.getAttribute('data-item-id'));
@@ -7977,21 +7990,25 @@ function initialize() {
 
     // ステージショップ閉じるボタン
     var ssClose = document.getElementById('stageShopCloseBtn');
-    ssClose.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeStageShop(); });
-    ssClose.addEventListener('click', function(e) { e.stopPropagation(); closeStageShop(); });
+    var ssCloseTouchFired = false;
+    ssClose.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); ssCloseTouchFired = true; closeStageShop(); });
+    ssClose.addEventListener('click', function(e) { e.stopPropagation(); if (ssCloseTouchFired) { ssCloseTouchFired = false; return; } closeStageShop(); });
 
     // 貯金ボタン
     var depBtn = document.getElementById('depositBtn');
-    depBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); depositScore(); });
-    depBtn.addEventListener('click', function(e) { e.stopPropagation(); depositScore(); });
+    var depBtnTouchFired = false;
+    depBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); depBtnTouchFired = true; depositScore(); });
+    depBtn.addEventListener('click', function(e) { e.stopPropagation(); if (depBtnTouchFired) { depBtnTouchFired = false; return; } depositScore(); });
 
     // DQ風 はい/いいえ確認ボタン（カーソル合わせ→決定の2ステップ）
     var cfYes = document.getElementById('shopConfirmYes');
-    cfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleConfirmYes(); });
-    cfYes.addEventListener('click', function(e) { e.stopPropagation(); handleConfirmYes(); });
+    var cfYesTouchFired = false;
+    cfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); cfYesTouchFired = true; handleConfirmYes(); });
+    cfYes.addEventListener('click', function(e) { e.stopPropagation(); if (cfYesTouchFired) { cfYesTouchFired = false; return; } handleConfirmYes(); });
     var cfNo = document.getElementById('shopConfirmNo');
-    cfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); handleConfirmNo(); });
-    cfNo.addEventListener('click', function(e) { e.stopPropagation(); handleConfirmNo(); });
+    var cfNoTouchFired = false;
+    cfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); cfNoTouchFired = true; handleConfirmNo(); });
+    cfNo.addEventListener('click', function(e) { e.stopPropagation(); if (cfNoTouchFired) { cfNoTouchFired = false; return; } handleConfirmNo(); });
 
     // タイトル画面の背景タップでゲーム開始
     startScreen.addEventListener('click', function(e) {
