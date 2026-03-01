@@ -536,6 +536,12 @@
         #shopConfirmYes:active, #shopConfirmNo:active {
             background: rgba(255,255,255,0.3);
         }
+
+        /* ── リワード広告ボタン脈動アニメ ── */
+        @keyframes adRevivePulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(255,103,35,0.4); }
+            50% { box-shadow: 0 0 18px rgba(255,103,35,0.8), 0 0 30px rgba(255,165,0,0.3); }
+        }
     </style>
 
     <!-- Firebase CDN -->
@@ -635,7 +641,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.218</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.219</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1022,8 +1028,15 @@
                     overflow-y: auto;
                     -webkit-overflow-scrolling: touch;
                     padding: 2px 0;"></div>
-                <!-- 戻るボタン -->
-                <div style="margin-top: 3px; flex-shrink: 0;">
+                <!-- リワード広告ボタン＋戻るボタン -->
+                <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 3px; flex-shrink: 0;">
+                    <button id="tshopRewardAdBtn" class="game-button" data-i18n="reward_ad_tshop_savings" style="
+                        width: 100%; padding: 2px 4px; font-size: clamp(8px, 1.5vw, 11px);
+                        background: linear-gradient(180deg, #ffb347, #ff6723);
+                        border: 1px solid rgba(255,165,0,0.5); border-radius: 3px;
+                        color: #fff; font-weight: 700;
+                        font-family: 'DotGothic16', monospace;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.8);"><img src="images/icon_bank.png" class="ui-icon ui-icon-sm"> 広告を見てボーナス</button>
                     <button class="game-button" id="titleShopBackBtn" style="
                         width: 100%; padding: 4px 6px; font-size: clamp(10px, 2vw, 14px);
                         background: rgba(0,0,48,0.9);
@@ -1065,6 +1078,13 @@
                     background: rgba(255,255,255,0.06); padding: 8px 16px; border-radius: 10px;
                     border: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px;
                     line-height: 1.6;"></div>
+                <div id="adReviveContainer" style="display: none; margin-bottom: 8px;">
+                    <button class="game-button" id="adReviveBtn" data-i18n="gameover_ad_revive" style="min-width: auto; padding: 8px 20px; font-size: 2.8vw; min-height: 44px;
+                        background: linear-gradient(180deg, #ffb347 0%, #ff6723 50%, #cc4400 100%);
+                        border-bottom-color: rgba(0,0,0,0.4);
+                        -webkit-tap-highlight-color: transparent;
+                        animation: adRevivePulse 2s ease-in-out infinite;"><img src="images/icon_retry.png" class="ui-icon"> 広告を見て復活</button>
+                </div>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button class="game-button" id="retryBtn" data-i18n="gameover_retry" style="min-width: auto; padding: 8px 20px; font-size: 3vw; min-height: 44px;
                         -webkit-tap-highlight-color: transparent;"><img src="images/icon_retry.png" class="ui-icon"> もう一度</button>
@@ -1309,12 +1329,80 @@ var spriteManager = {
 };
 
 // ─── 広告ブリッジ (Capacitor/ネイティブ側で上書きする) ───
-// showAd(type) : 'interstitial'=インタースティシャル, 'reward'=リワード
+// showAd(type, callback) : 'interstitial'=インタースティシャル, 'reward'=リワード
+// callback(success) : リワード広告の視聴完了/キャンセルを通知
 // ネイティブ未接続時は何もしない。Capacitor導入時にこの関数をプラグイン呼び出しに差し替える。
-window.showAd = window.showAd || function(type) {
-    if (gameSettings.adFree) return;
+window.showAd = window.showAd || function(type, callback) {
+    if (gameSettings.adFree) { if (callback) callback(true); return; }
     // stub: ネイティブ広告SDK未接続
+    // リワード広告のstub: 常に成功扱い（テスト用）
+    if (type === 'reward' && callback) callback(true);
 };
+
+// ─── リワード広告の状態管理 ───
+var rewardAdState = {
+    reviveUsedThisRun: false,    // 今回のプレイで復活広告を使ったか（1プレイ1回）
+    shopAdUsedThisVisit: false,  // 今回のショップ訪問で広告ボーナスを使ったか
+    tshopAdCooldown: 0           // タイトルショップ広告のクールダウン（timestamp）
+};
+var REWARD_AD_REVIVE_LIVES = 3;        // 広告復活で回復するライフ数
+var REWARD_AD_SHOP_BONUS_RATE = 0.3;   // ステージショップ: 現在所持金の30%ボーナス（最低100）
+var REWARD_AD_SHOP_BONUS_MIN = 100;    // ステージショップ: 最低ボーナス額
+var REWARD_AD_TSHOP_BONUS = 50;        // タイトルショップ: 固定50円ボーナス
+var REWARD_AD_TSHOP_COOLDOWN = 180000; // タイトルショップ: クールダウン3分
+
+// ゲームオーバー時のリワード広告復活
+function adRevive() {
+    if (rewardAdState.reviveUsedThisRun) return;
+    showAd('reward', function(success) {
+        if (!success) return;
+        rewardAdState.reviveUsedThisRun = true;
+        // 復活処理
+        hideGameOverScreen();
+        gameState.lives = REWARD_AD_REVIVE_LIVES;
+        gameState.gameStarted = true;
+        gameState.gamePaused = false;
+        gameState.isInvincible = true;
+        gameState.invincibleTimer = 180; // 3秒間無敵
+        player.velY = -6;
+        if (soundManager) soundManager.playStageBGM(gameRound);
+        document.getElementById('ui').style.display = '';
+        document.getElementById('controlBar').style.display = '';
+        gameLoop();
+    });
+}
+
+// ステージショップでのリワード広告ボーナス
+function adShopBonus() {
+    if (rewardAdState.shopAdUsedThisVisit) return;
+    showAd('reward', function(success) {
+        if (!success) return;
+        rewardAdState.shopAdUsedThisVisit = true;
+        var bonus = Math.max(REWARD_AD_SHOP_BONUS_MIN, Math.floor(gameState.score * REWARD_AD_SHOP_BONUS_RATE));
+        gameState.score += bonus;
+        if (soundManager) soundManager.playItem();
+        setKeeperText('reward_ad_shop_money_ok', { amount: bonus });
+        updateStageShopUI();
+    });
+}
+
+// タイトルショップでのリワード広告ボーナス
+function adTshopBonus() {
+    if (Date.now() < rewardAdState.tshopAdCooldown) {
+        setTshopKeeperText('reward_ad_cooldown');
+        if (soundManager) soundManager.playDamage();
+        return;
+    }
+    showAd('reward', function(success) {
+        if (!success) return;
+        rewardAdState.tshopAdCooldown = Date.now() + REWARD_AD_TSHOP_COOLDOWN;
+        gameSettings.savings += REWARD_AD_TSHOP_BONUS;
+        saveSettings();
+        if (soundManager) soundManager.playItem();
+        setTshopKeeperText('reward_ad_tshop_savings_ok', { amount: REWARD_AD_TSHOP_BONUS });
+        updateTitleShopUI();
+    });
+}
 
 // ─── ゲーム設定 (localStorage永続化) ───
 var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {} };
@@ -1406,6 +1494,15 @@ ja: {
     boss_round: 'ROUND ',
     gameover_retry: _ic('icon_retry.png') + ' もう一度',
     gameover_totitle: _ic('icon_home.png') + ' タイトルへ',
+    gameover_ad_revive: _ic('icon_retry.png') + ' 広告を見て復活',
+    // リワード広告
+    reward_ad_shop_money: _ic('icon_money.png') + ' 広告を見てボーナス',
+    reward_ad_shop_money_keeper: '動画を見ると\nボーナスがもらえるのだ！',
+    reward_ad_shop_money_ok: 'ボーナス {amount}円\nゲットしたのだ！',
+    reward_ad_tshop_savings: _ic('icon_bank.png') + ' 広告を見てボーナス',
+    reward_ad_tshop_savings_keeper: '動画を見ると\n貯金ボーナスがもらえるのだ！',
+    reward_ad_tshop_savings_ok: '貯金ボーナス {amount}円\nゲットしたのだ！',
+    reward_ad_cooldown: '次の広告ボーナスまで\nしばらくお待ちください',
     // リタイア
     retire_confirm: 'タイトル画面に戻りますか？',
     // Canvas HUD
@@ -1601,6 +1698,14 @@ en: {
     boss_round: 'ROUND ',
     gameover_retry: _ic('icon_retry.png') + ' Retry',
     gameover_totitle: _ic('icon_home.png') + ' Title',
+    gameover_ad_revive: _ic('icon_retry.png') + ' Watch Ad to Revive',
+    reward_ad_shop_money: _ic('icon_money.png') + ' Watch Ad for Bonus',
+    reward_ad_shop_money_keeper: 'Watch a video\nfor a bonus reward!',
+    reward_ad_shop_money_ok: 'Got {amount} bonus!',
+    reward_ad_tshop_savings: _ic('icon_bank.png') + ' Watch Ad for Bonus',
+    reward_ad_tshop_savings_keeper: 'Watch a video\nfor a savings bonus!',
+    reward_ad_tshop_savings_ok: 'Got {amount} savings bonus!',
+    reward_ad_cooldown: 'Please wait a moment\nfor the next ad bonus',
     retire_confirm: 'Return to title?',
     hud_jump: 'Jump Boost',
     hud_shield: 'Shield',
@@ -1924,7 +2029,6 @@ function showConfirmModal(message) {
 function confirmRetire() {
     showConfirmModal(t('retire_confirm')).then(function(yes) {
         if (yes) {
-            showAd('interstitial');
             resetGame();
         }
     });
@@ -1977,7 +2081,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.218';
+const CURRENT_VERSION     = '1.219';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2715,6 +2819,10 @@ function resetGame() {
         defeatedTimer: 0, roundTextTimer: 0,
         bossTriggered: false, savedGameSpeed: 0,
         eggs: [], summonTimer: 0 };
+
+    // リワード広告リセット
+    rewardAdState.reviveUsedThisRun = false;
+    rewardAdState.shopAdUsedThisVisit = false;
 
     // ショップ・ストックリセット
     shopState = { active: false, visited: false, deposited: false, purchaseCounts: {}, savedGameSpeed: 0, buildingPlaced: false, buildingX: 0 };
@@ -4127,6 +4235,7 @@ function openStageShop() {
     shopState.active = true;
     shopState.visited = true;
     shopState.savedGameSpeed = gameState.gameSpeed;
+    rewardAdState.shopAdUsedThisVisit = false; // ショップ訪問ごとにリセット
     gameState.gameSpeed = 0;
     gameState.gamePaused = true;
     gameState.input.up = false;    // 入力消費（ジャンプ暴発防止）
@@ -4470,6 +4579,10 @@ function updateStageShopUI() {
             depLabel = depLabel + ' (' + depAmt + ')';
         }
         html += renderShopMenuItem('_menu_deposit', _ic('icon_bank.png'), depLabel);
+        // リワード広告ボーナス
+        if (!rewardAdState.shopAdUsedThisVisit && !gameSettings.adFree) {
+            html += renderShopMenuItem('_menu_reward_ad', _ic('icon_money.png'), t('reward_ad_shop_money'));
+        }
         // 貯金プレビュー情報
         if (!shopState.deposited && gameState.score > 0) {
             html += '<div style="color:rgba(136,204,255,0.7); font-family:DotGothic16,monospace; font-size:clamp(7px,1.3vw,10px); text-align:center; padding:1px 6px; text-shadow:0 1px 2px rgba(0,0,0,0.8);">' +
@@ -4598,6 +4711,13 @@ function selectShopItem(itemId) {
             shopDepositing = true;
             setKeeperText('shop_keeper_deposit_confirm', { amount: depAmt });
             showShopConfirm(true);
+        } else if (itemId === '_menu_reward_ad') {
+            if (rewardAdState.shopAdUsedThisVisit) {
+                if (soundManager) soundManager.playDamage();
+                return;
+            }
+            if (soundManager) soundManager.playCursorMove();
+            adShopBonus();
         } else if (itemId === '_menu_leave') {
             if (soundManager) soundManager.playCursorMove();
             shopClosing = true;
@@ -5046,6 +5166,11 @@ function showTitleShop() {
     tshopLeaving = false;
     setTshopKeeperText('tshop_keeper_greet');
     showTshopConfirm(false);
+    // リワード広告ボタンの表示制御
+    var tshopAdBtnEl = document.getElementById('tshopRewardAdBtn');
+    if (tshopAdBtnEl) {
+        tshopAdBtnEl.style.display = gameSettings.adFree ? 'none' : '';
+    }
     updateTitleShopUI();
     if (soundManager) soundManager.playBGM('shop');
 }
@@ -5808,6 +5933,11 @@ function showGameOverScreen() {
         t('gameover_score') + finalGameStats.score + t('ranking_unit_score') + '<br>' +
         t('gameover_kills') + finalGameStats.enemyKills + t('ranking_unit_kills') + '<br>' +
         t('gameover_level') + finalGameStats.speedLevel;
+    // リワード広告復活ボタンの表示制御（1プレイ1回、広告非表示設定時は非表示）
+    var adReviveContainer = document.getElementById('adReviveContainer');
+    if (adReviveContainer) {
+        adReviveContainer.style.display = (!rewardAdState.reviveUsedThisRun && !gameSettings.adFree) ? 'block' : 'none';
+    }
     screen.classList.remove('hidden');
     screen.style.display = 'flex';
     history.pushState({ screen: 'gameOver' }, '');
@@ -7926,6 +8056,20 @@ function checkOrientation() {
         goToTitle();
     });
 
+    // ─ リワード広告: 復活ボタン ─
+    var adReviveBtnEl = document.getElementById('adReviveBtn');
+    var adReviveTouchFired = false;
+    adReviveBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
+    adReviveBtnEl.addEventListener('touchend', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        adReviveTouchFired = true;
+        adRevive();
+    });
+    adReviveBtnEl.addEventListener('click', function(e) {
+        if (adReviveTouchFired) { adReviveTouchFired = false; return; }
+        adRevive();
+    });
+
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
         if (e.target === document.getElementById('pauseScreen')) pauseGame();
     });
@@ -8108,6 +8252,11 @@ function initialize() {
     var shopBtn = document.getElementById('shopButton');
     shopBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showTitleShop(); });
     shopBtn.addEventListener('click', function(e) { e.stopPropagation(); showTitleShop(); });
+
+    // タイトルショップ：リワード広告ボタン
+    var tshopAdBtn = document.getElementById('tshopRewardAdBtn');
+    tshopAdBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); adTshopBonus(); });
+    tshopAdBtn.addEventListener('click', function(e) { e.stopPropagation(); adTshopBonus(); });
 
     // タイトルショップ戻るボタン
     var tShopBack = document.getElementById('titleShopBackBtn');
