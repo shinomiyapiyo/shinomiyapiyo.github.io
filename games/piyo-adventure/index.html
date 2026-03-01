@@ -641,7 +641,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.219</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.220</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1346,10 +1346,11 @@ var rewardAdState = {
     tshopAdCooldown: 0           // タイトルショップ広告のクールダウン（timestamp）
 };
 var REWARD_AD_REVIVE_LIVES = 3;        // 広告復活で回復するライフ数
-var REWARD_AD_SHOP_BONUS_RATE = 0.3;   // ステージショップ: 現在所持金の30%ボーナス（最低100）
+var REWARD_AD_SHOP_BONUS_RATE = 0.3;   // ステージショップ: 現在所持金の30%ボーナス
 var REWARD_AD_SHOP_BONUS_MIN = 100;    // ステージショップ: 最低ボーナス額
-var REWARD_AD_TSHOP_BONUS = 50;        // タイトルショップ: 固定50円ボーナス
-var REWARD_AD_TSHOP_COOLDOWN = 180000; // タイトルショップ: クールダウン3分
+var REWARD_AD_SHOP_BONUS_MAX = 5000;   // ステージショップ: 上限ボーナス額
+var REWARD_AD_TSHOP_BONUS = 3000;      // タイトルショップ: 固定3,000円ボーナス
+var REWARD_AD_TSHOP_COOLDOWN = 14400000; // タイトルショップ: クールダウン4時間
 
 // ゲームオーバー時のリワード広告復活
 function adRevive() {
@@ -1378,7 +1379,7 @@ function adShopBonus() {
     showAd('reward', function(success) {
         if (!success) return;
         rewardAdState.shopAdUsedThisVisit = true;
-        var bonus = Math.max(REWARD_AD_SHOP_BONUS_MIN, Math.floor(gameState.score * REWARD_AD_SHOP_BONUS_RATE));
+        var bonus = Math.min(REWARD_AD_SHOP_BONUS_MAX, Math.max(REWARD_AD_SHOP_BONUS_MIN, Math.floor(gameState.score * REWARD_AD_SHOP_BONUS_RATE)));
         gameState.score += bonus;
         if (soundManager) soundManager.playItem();
         setKeeperText('reward_ad_shop_money_ok', { amount: bonus });
@@ -1404,8 +1405,111 @@ function adTshopBonus() {
     });
 }
 
+// ─── ログインボーナスシステム ───
+var LOGIN_BONUS_REWARDS = [1000, 2000, 3000, 5000, 7000, 10000, 15000]; // Day1〜Day7
+var loginBonusPending = null; // { day, amount } or null
+
+function getDateString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function checkLoginBonus() {
+    var today = getDateString();
+    if (gameSettings.lastLoginDate === today) return; // 今日はもう受け取り済み
+
+    // 前日かどうかを判定（連続ログイン判定）
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var yesterdayStr = yesterday.getFullYear() + '-' + String(yesterday.getMonth() + 1).padStart(2, '0') + '-' + String(yesterday.getDate()).padStart(2, '0');
+
+    if (gameSettings.lastLoginDate === yesterdayStr) {
+        // 連続ログイン：ストリーク継続（最大7でループ）
+        gameSettings.loginStreak = (gameSettings.loginStreak % 7) + 1;
+    } else {
+        // 連続途切れ or 初回：Day1にリセット
+        gameSettings.loginStreak = 1;
+    }
+
+    gameSettings.lastLoginDate = today;
+    var day = gameSettings.loginStreak;
+    var amount = LOGIN_BONUS_REWARDS[day - 1];
+    loginBonusPending = { day: day, amount: amount };
+    gameSettings.savings += amount;
+    saveSettings();
+}
+
+function showLoginBonusPopup() {
+    if (!loginBonusPending) return;
+    var day = loginBonusPending.day;
+    var amount = loginBonusPending.amount;
+    loginBonusPending = null;
+
+    var popup = document.createElement('div');
+    popup.id = 'loginBonusPopup';
+    popup.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh;' +
+        'background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);' +
+        'display:flex; flex-direction:column; justify-content:center; align-items:center;' +
+        'z-index:99998; padding:20px; box-sizing:border-box;';
+
+    // 7日分のドット表示を作成
+    var dotsHtml = '';
+    for (var i = 0; i < 7; i++) {
+        var dayNum = i + 1;
+        var reward = LOGIN_BONUS_REWARDS[i];
+        var isToday = (dayNum === day);
+        var isPast = (dayNum < day);
+        var bgColor = isToday ? '#ffd700' : (isPast ? 'rgba(255,215,0,0.3)' : 'rgba(255,255,255,0.1)');
+        var textColor = isToday ? '#1a0030' : (isPast ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.3)');
+        var border = isToday ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)';
+        var scale = isToday ? 'transform:scale(1.15);' : '';
+        dotsHtml += '<div style="display:flex; flex-direction:column; align-items:center; gap:1px;' +
+            'background:' + bgColor + '; border:' + border + '; border-radius:6px;' +
+            'padding:3px 5px; min-width:clamp(28px,5vw,40px);' + scale + '">' +
+            '<span style="font-size:clamp(6px,1.2vw,9px); font-weight:700; color:' + textColor + ';">Day' + dayNum + '</span>' +
+            '<span style="font-size:clamp(7px,1.3vw,10px); font-weight:800; color:' + textColor + ';">' + (reward >= 10000 ? Math.floor(reward/1000) + 'k' : reward) + '</span>' +
+            '</div>';
+    }
+
+    popup.innerHTML = '<div style="' +
+        'background:linear-gradient(160deg, rgba(30,15,50,0.97), rgba(15,5,30,0.97));' +
+        'border:2px solid rgba(255,215,0,0.5); border-radius:16px; padding:14px 20px;' +
+        'box-shadow:0 6px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.15);' +
+        'text-align:center; max-width:90vw; width:75vw;">' +
+        '<div style="color:#ffd700; font-size:clamp(14px,3.5vw,22px); font-weight:800;' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif;' +
+            'text-shadow:0 0 10px rgba(255,215,0,0.4); margin-bottom:6px;">' +
+            _ic('icon_celebrate.png') + ' ' + t('login_bonus_title') + '</div>' +
+        '<div style="display:flex; gap:3px; justify-content:center; flex-wrap:wrap; margin-bottom:8px;">' + dotsHtml + '</div>' +
+        '<div style="color:#fff; font-size:clamp(11px,2.5vw,16px); font-weight:700;' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:4px;">' +
+            t('login_bonus_day', { day: day }) + '</div>' +
+        '<div style="color:#ffd700; font-size:clamp(16px,4vw,26px); font-weight:800;' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif;' +
+            'text-shadow:0 0 15px rgba(255,215,0,0.5); margin-bottom:8px;' +
+            'animation:adRevivePulse 2s ease-in-out infinite;">' +
+            _ic('icon_bank.png') + ' +' + amount.toLocaleString() + t('currency_unit') + '</div>' +
+        '<div style="color:rgba(255,255,255,0.6); font-size:clamp(9px,1.8vw,12px);' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:10px;">' +
+            t('login_bonus_savings', { total: gameSettings.savings.toLocaleString() }) + '</div>' +
+        '<button class="game-button" id="loginBonusOkBtn" style="min-width:40vw; padding:8px 20px;' +
+            'font-size:clamp(12px,3vw,18px); -webkit-tap-highlight-color:transparent;">' +
+            t('login_bonus_ok') + '</button>' +
+    '</div>';
+
+    document.body.appendChild(popup);
+    if (soundManager) soundManager.playItem();
+
+    var okBtn = popup.querySelector('#loginBonusOkBtn');
+    function closePopup() {
+        if (popup.parentNode) popup.parentNode.removeChild(popup);
+    }
+    okBtn.addEventListener('touchend', function(e) { e.preventDefault(); closePopup(); });
+    okBtn.addEventListener('click', closePopup);
+}
+
 // ─── ゲーム設定 (localStorage永続化) ───
-var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {} };
+var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {}, loginStreak: 0, lastLoginDate: '' };
 (function loadSettings() {
     try {
         var saved = localStorage.getItem('piyo_settings');
@@ -1417,6 +1521,9 @@ var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings:
             // ── ショップ関連 ──
             if (typeof parsed.savings === 'number') gameSettings.savings = parsed.savings;
             if (parsed.upgrades && typeof parsed.upgrades === 'object') gameSettings.upgrades = parsed.upgrades;
+            // ── ログインボーナス ──
+            if (typeof parsed.loginStreak === 'number') gameSettings.loginStreak = parsed.loginStreak;
+            if (typeof parsed.lastLoginDate === 'string') gameSettings.lastLoginDate = parsed.lastLoginDate;
         }
     } catch (_) {}
 })();
@@ -1638,7 +1745,12 @@ ja: {
     revival_text: '復活！',
     revival_potion_text: 'ふっかつやくで復活！',
     shop_item_revive: 'ふっかつやく',
-    shop_item_revive_desc: 'たおれたとき\nライフ2で ふっかつする（1回）'
+    shop_item_revive_desc: 'たおれたとき\nライフ2で ふっかつする（1回）',
+    // ── ログインボーナス ──
+    login_bonus_title: 'ログインボーナス',
+    login_bonus_day: '{day}日目のボーナス！',
+    login_bonus_savings: '貯金残高: {total}円',
+    login_bonus_ok: _ic('icon_celebrate.png') + ' うけとる！'
 },
 en: {
     splash_warning: _ic('icon_warning.png') + ' Notice',
@@ -1832,7 +1944,12 @@ en: {
     revival_text: 'Revived!',
     revival_potion_text: 'Revived by potion!',
     shop_item_revive: 'Revival Potion',
-    shop_item_revive_desc: 'Auto-revive with 2 life\nwhen defeated (1 use)'
+    shop_item_revive_desc: 'Auto-revive with 2 life\nwhen defeated (1 use)',
+    // ── Login Bonus ──
+    login_bonus_title: 'Login Bonus',
+    login_bonus_day: 'Day {day} Bonus!',
+    login_bonus_savings: 'Savings: {total}',
+    login_bonus_ok: _ic('icon_celebrate.png') + ' Claim!'
 }
 };
 
@@ -2081,7 +2198,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.219';
+const CURRENT_VERSION     = '1.220';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2725,6 +2842,12 @@ function startApp() {
 
     if (soundManager) {
         try { soundManager.playBGM('title'); } catch (_) {}
+    }
+
+    // ログインボーナスチェック＆表示
+    checkLoginBonus();
+    if (loginBonusPending) {
+        setTimeout(function() { showLoginBonusPopup(); }, 400);
     }
 }
 
