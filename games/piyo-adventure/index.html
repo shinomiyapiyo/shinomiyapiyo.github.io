@@ -635,7 +635,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.216</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.217</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1796,7 +1796,22 @@ var NG_WORDS = [
     // ── 英語：暴力 ──
     'kill you','die','murder',
     // ── 英語：なりすまし ──
-    'admin','moderator','official','developer'
+    'admin','moderator','official','developer',
+    // ── 日本語：政治・思想・宗教 ──
+    'てんのう','天皇','こうしつ','皇室','そうり','総理',
+    'じみん','自民','みんしゅ','民主','きょうさん','共産','こうめい','公明',
+    'れいわ','維新','いしん','しゃみん','社民',
+    'ざいにち','在日','ねとうよ','ネトウヨ','ぱよく','パヨク',
+    'さよく','左翼','うよく','右翼','けんぽう','憲法',
+    'きょうさんしゅぎ','共産主義','ふぁしずむ','ファシズム','なちす','ナチス',
+    'そうかがっかい','創価学会','そうか','創価',
+    'とうげん','統一教会','とういつきょうかい',
+    'おうむ','オウム','あれふ','アレフ',
+    // ── 英語：政治・思想・宗教 ──
+    'nazi','hitler','stalin','communist','fascist','marxist',
+    'isis','alqaeda','taliban','terrorist','jihad',
+    'trump','biden','obama','putin','xi jinping',
+    'maga','antifa','qanon','kkk','supremacy'
 ];
 
 /**
@@ -1944,7 +1959,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.216';
+const CURRENT_VERSION     = '1.217';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
