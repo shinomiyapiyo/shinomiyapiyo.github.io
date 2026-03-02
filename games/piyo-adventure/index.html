@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.234";
+                content: "Ver.1.236";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.234</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.236</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1607,13 +1607,13 @@ function adTshopBonus() {
 // ─── ログインボーナスシステム ───
 // Day1〜Day7 報酬定義: { savings: 金額 } or { item: 'アイテムID', nameKey: '翻訳キー', iconImg: '画像パス' }
 var LOGIN_BONUS_REWARDS = [
-    { savings: 1000 },
-    { savings: 2000 },
     { savings: 3000 },
-    { item: 'heal_stock', nameKey: 'shop_item_heal_stock', iconImg: 'images/icon_heal_stock.png' },
     { savings: 5000 },
+    { item: 'heal_stock', nameKey: 'shop_item_heal_stock', iconImg: 'images/icon_heal_stock.png' },
     { savings: 7000 },
-    { savings: 10000 }
+    { item: 'heal_stock', nameKey: 'shop_item_heal_stock', iconImg: 'images/icon_heal_stock.png' },
+    { savings: 10000 },
+    { savings: 13000 }
 ];
 var loginBonusPending = null; // { day, amount } or null
 
@@ -1933,7 +1933,7 @@ ja: {
     guide_savings_title: '◆ 貯金システム',
     guide_savings_body: '・ステージショップで手持ちのお金の半分を貯金できます\n・貯金はゲームオーバーになっても消えません\n・貯金はタイトルショップで使う大切な資金です\n・コツコツ貯めて強力な永続アップグレードを手に入れましょう',
     guide_titleshop_title: '◆ タイトルショップ',
-    guide_titleshop_body: '・タイトル画面からアクセスできるショップです\n・貯金を使って永続的なアップグレードを購入できます\n・コインマスター（コイン獲得量UP）、タフネス（初期ライフ増加）、ストック拡張、はやあし など\n・一度購入したアップグレードはずっと有効です',
+    guide_titleshop_body: '・タイトル画面からアクセスできるショップです\n・貯金を使って永続的なアップグレードを購入できます\n・タフネス（初期ライフ増加）、ストック拡張、はやあし など\n・コインマスターは準備中です\n・一度購入したアップグレードはずっと有効です',
     guide_datasave_title: '◆ データの保存について',
     guide_datasave_body: '・タイトルショップで購入したアップグレードやスキルは、ゲームを閉じても保存されます\n・貯金もゲームを再起動しても引き継がれます\n・次回アクセス時もそのまま使い続けられます\n・※ブラウザのデータを消去するとセーブデータが消える場合があります',
     guide_boss_title: '◆ ボス戦',
@@ -2162,7 +2162,7 @@ en: {
     guide_savings_title: '◆ Savings System',
     guide_savings_body: '・Deposit half your cash at the Stage Shop\n・Savings are kept even after Game Over\n・Savings are your funds for the Title Shop\n・Save up steadily to unlock powerful permanent upgrades',
     guide_titleshop_title: '◆ Title Shop',
-    guide_titleshop_body: '・A shop accessible from the title screen\n・Spend your savings on permanent upgrades\n・Examples: Coin Master (more coins), Toughness (more starting HP), Stock Expand, Swift Feet, etc.\n・Once purchased, upgrades stay active forever',
+    guide_titleshop_body: '・A shop accessible from the title screen\n・Spend your savings on permanent upgrades\n・Examples: Toughness (more starting HP), Stock Expand, Swift Feet, etc.\n・Coin Master is in preparation\n・Once purchased, upgrades stay active forever',
     guide_datasave_title: '◆ Saving Your Data',
     guide_datasave_body: '・Upgrades and skills bought at the Title Shop are saved even after closing the game\n・Your savings carry over between sessions\n・Everything will be right where you left it next time you play\n・Note: Clearing your browser data may erase your save',
     guide_boss_title: '◆ Boss Battles',
@@ -2535,7 +2535,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.234';
+const CURRENT_VERSION     = '1.236';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
