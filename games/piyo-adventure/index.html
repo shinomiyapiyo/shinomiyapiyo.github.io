@@ -536,6 +536,12 @@
         #shopConfirmYes:active, #shopConfirmNo:active {
             background: rgba(255,255,255,0.3);
         }
+
+        /* ── リワード広告ボタン脈動アニメ ── */
+        @keyframes adRevivePulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(255,103,35,0.4); }
+            50% { box-shadow: 0 0 18px rgba(255,103,35,0.8), 0 0 30px rgba(255,165,0,0.3); }
+        }
     </style>
 
     <!-- Firebase CDN -->
@@ -635,7 +641,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.215</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.223</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -650,6 +656,11 @@
                     <button class="game-button" id="settingsButton"><img src="images/icon_settings.png" class="ui-icon"> SETTING</button>
                     <button class="game-button" id="rankingButton"><img src="images/icon_trophy.png" class="ui-icon"> RANKING</button>
                     <button class="game-button" id="shopButton"><img src="images/icon_cart.png" class="ui-icon"> SHOP</button>
+                    <!-- 課金ストアボタン（課金実装完了時に display:'' に戻す） -->
+                    <button class="game-button" id="storeButton" style="
+                        display: none;
+                        background: linear-gradient(180deg, #ffb347 0%, #ff6723 50%, #cc4400 100%);
+                        border-bottom-color: rgba(0,0,0,0.4);"><img src="images/icon_money.png" class="ui-icon"> STORE</button>
                 </div>
 
                 <!-- クレジット：右下 -->
@@ -1022,8 +1033,15 @@
                     overflow-y: auto;
                     -webkit-overflow-scrolling: touch;
                     padding: 2px 0;"></div>
-                <!-- 戻るボタン -->
-                <div style="margin-top: 3px; flex-shrink: 0;">
+                <!-- リワード広告ボタン＋戻るボタン -->
+                <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 3px; flex-shrink: 0;">
+                    <button id="tshopRewardAdBtn" class="game-button" data-i18n="reward_ad_tshop_savings" style="
+                        width: 100%; padding: 2px 4px; font-size: clamp(8px, 1.5vw, 11px);
+                        background: linear-gradient(180deg, #ffb347, #ff6723);
+                        border: 1px solid rgba(255,165,0,0.5); border-radius: 3px;
+                        color: #fff; font-weight: 700;
+                        font-family: 'DotGothic16', monospace;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.8);"><img src="images/icon_bank.png" class="ui-icon ui-icon-sm"> 広告を見てボーナス</button>
                     <button class="game-button" id="titleShopBackBtn" style="
                         width: 100%; padding: 4px 6px; font-size: clamp(10px, 2vw, 14px);
                         background: rgba(0,0,48,0.9);
@@ -1046,6 +1064,47 @@
             </div>
         </div>
 
+        <!-- 課金ストア画面 -->
+        <div id="storeScreen" style="
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 99997; padding: 10px; box-sizing: border-box;">
+            <div style="
+                background: linear-gradient(160deg, rgba(30,15,50,0.97), rgba(15,5,30,0.97));
+                border: 2px solid rgba(255,165,0,0.4);
+                border-radius: 16px; padding: 10px 14px;
+                box-shadow: 0 6px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,165,0,0.1);
+                max-width: 95vw; width: 80vw; max-height: 85vh;
+                display: flex; flex-direction: column; overflow: hidden;">
+                <!-- タイトル行 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-shrink:0;">
+                    <span style="color: #ffd700; font-size: clamp(12px,3vw,20px); font-weight: 800;
+                        font-family: 'M PLUS Rounded 1c', sans-serif;
+                        text-shadow: 0 0 10px rgba(255,215,0,0.4);" data-i18n="iap_store_title"><img src="images/icon_money.png" class="ui-icon"> ストア</span>
+                    <span id="storeSavingsDisplay" style="color: #fff; font-size: clamp(9px,1.8vw,13px);
+                        font-family: 'M PLUS Rounded 1c', sans-serif;
+                        background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 6px;
+                        border: 1px solid rgba(255,255,255,0.1);"></span>
+                </div>
+                <!-- 商品リスト -->
+                <div id="storeItemList" style="
+                    flex: 1 1 0%; overflow-y: auto; -webkit-overflow-scrolling: touch;
+                    padding-right: 4px;"></div>
+                <!-- 閉じるボタン -->
+                <div style="margin-top: 6px; flex-shrink: 0; text-align: center;">
+                    <button class="game-button" id="storeCloseBtn" style="
+                        min-width: 50%; padding: 6px 16px;
+                        font-size: clamp(10px,2.5vw,16px);
+                        background: linear-gradient(180deg, #888, #555);
+                        -webkit-tap-highlight-color: transparent;" data-i18n="btn_back"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ゲームオーバー画面 -->
         <div id="gameOverScreen" class="hidden" style="
             position: absolute; top: 0; left: 0;
@@ -1065,6 +1124,13 @@
                     background: rgba(255,255,255,0.06); padding: 8px 16px; border-radius: 10px;
                     border: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px;
                     line-height: 1.6;"></div>
+                <div id="adReviveContainer" style="display: none; margin-bottom: 8px;">
+                    <button class="game-button" id="adReviveBtn" data-i18n="gameover_ad_revive" style="min-width: auto; padding: 8px 20px; font-size: 2.8vw; min-height: 44px;
+                        background: linear-gradient(180deg, #ffb347 0%, #ff6723 50%, #cc4400 100%);
+                        border-bottom-color: rgba(0,0,0,0.4);
+                        -webkit-tap-highlight-color: transparent;
+                        animation: adRevivePulse 2s ease-in-out infinite;"><img src="images/icon_retry.png" class="ui-icon"> 広告を見て復活</button>
+                </div>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button class="game-button" id="retryBtn" data-i18n="gameover_retry" style="min-width: auto; padding: 8px 20px; font-size: 3vw; min-height: 44px;
                         -webkit-tap-highlight-color: transparent;"><img src="images/icon_retry.png" class="ui-icon"> もう一度</button>
@@ -1309,15 +1375,311 @@ var spriteManager = {
 };
 
 // ─── 広告ブリッジ (Capacitor/ネイティブ側で上書きする) ───
-// showAd(type) : 'interstitial'=インタースティシャル, 'reward'=リワード
+// showAd(type, callback) : 'interstitial'=インタースティシャル, 'reward'=リワード
+// callback(success) : リワード広告の視聴完了/キャンセルを通知
 // ネイティブ未接続時は何もしない。Capacitor導入時にこの関数をプラグイン呼び出しに差し替える。
-window.showAd = window.showAd || function(type) {
-    if (gameSettings.adFree) return;
+window.showAd = window.showAd || function(type, callback) {
+    if (gameSettings.adFree) { if (callback) callback(true); return; }
     // stub: ネイティブ広告SDK未接続
+    // リワード広告のstub: 常に成功扱い（テスト用）
+    if (type === 'reward' && callback) callback(true);
 };
 
+// ─── 課金ブリッジ (Capacitor/ネイティブ側で上書きする) ───
+// purchaseItem(productId, callback) : アプリ内課金を実行
+// callback(success) : 購入成功/キャンセルを通知
+// ネイティブ未接続時はstub（常に成功）。Capacitor導入時にIAPプラグインに差し替える。
+window.purchaseItem = window.purchaseItem || function(productId, callback) {
+    // stub: テスト用に常に成功
+    if (callback) callback(true);
+};
+
+// ─── 課金商品定義 ───
+var IAP_PRODUCTS = [
+    { id: 'starter_pack', type: 'once', price: 480, labelKey: 'iap_starter_pack', descKey: 'iap_starter_pack_desc', iconImg: 'images/icon_celebrate.png', tag: 'iap_tag_best' },
+    { id: 'ad_free',      type: 'once', price: 160, labelKey: 'iap_ad_free',      descKey: 'iap_ad_free_desc',      iconImg: 'images/icon_settings.png' },
+    { id: 'login_pass',   type: 'duration', price: 320, labelKey: 'iap_login_pass',  descKey: 'iap_login_pass_desc',  iconImg: 'images/icon_level.png' },
+    { id: 'savings_50k',  type: 'consumable', price: 160, labelKey: 'iap_savings_50k',  descKey: 'iap_savings_50k_desc',  iconImg: 'images/icon_money.png', savingsAmount: 50000 },
+    { id: 'savings_200k', type: 'consumable', price: 480, labelKey: 'iap_savings_200k', descKey: 'iap_savings_200k_desc', iconImg: 'images/icon_money.png', savingsAmount: 200000, tag: 'iap_tag_popular' },
+    { id: 'savings_500k', type: 'consumable', price: 960, labelKey: 'iap_savings_500k', descKey: 'iap_savings_500k_desc', iconImg: 'images/icon_money.png', savingsAmount: 500000 },
+    { id: 'savings_1200k',type: 'consumable', price: 1840, labelKey: 'iap_savings_1200k',descKey: 'iap_savings_1200k_desc',iconImg: 'images/icon_money.png', savingsAmount: 1200000, tag: 'iap_tag_best_value' }
+];
+// スキンは将来追加: { id: 'skin_xxx', type: 'once', price: 160, ... }
+
+// ─── 課金購入ロジック ───
+function executePurchase(productId) {
+    var product = IAP_PRODUCTS.find(function(p) { return p.id === productId; });
+    if (!product) return;
+    // 買い切り済みチェック
+    if (product.type === 'once' && gameSettings.purchased[productId]) return;
+
+    purchaseItem(productId, function(success) {
+        if (!success) return;
+
+        if (product.id === 'ad_free') {
+            gameSettings.purchased['ad_free'] = true;
+            gameSettings.adFree = true;
+        } else if (product.id === 'starter_pack') {
+            gameSettings.purchased['starter_pack'] = true;
+            gameSettings.adFree = true;
+            gameSettings.savings += 100000;
+            // premiumアイテム(coin_master)を解放: Lv0 → 購入可能にする（premium flagはコードで判定変更）
+        } else if (product.id === 'login_pass') {
+            gameSettings.loginPassExpiry = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30日
+        } else if (product.savingsAmount) {
+            gameSettings.savings += product.savingsAmount;
+        }
+        saveSettings();
+        if (soundManager) soundManager.playItem();
+        updateStoreUI();
+    });
+}
+
+function isLoginPassActive() {
+    return gameSettings.loginPassExpiry > Date.now();
+}
+
+// ─── 課金ストアUI ───
+function showStore() {
+    var el = document.getElementById('storeScreen');
+    el.style.display = 'flex';
+    history.pushState({ screen: 'store' }, '');
+    updateStoreUI();
+}
+
+function hideStore() {
+    var el = document.getElementById('storeScreen');
+    el.style.display = 'none';
+}
+
+function updateStoreUI() {
+    var list = document.getElementById('storeItemList');
+    var savingsEl = document.getElementById('storeSavingsDisplay');
+    if (savingsEl) savingsEl.innerHTML = _ic('icon_bank.png', 'ui-icon-sm') + ' ' + t('tshop_savings_display', { amount: gameSettings.savings.toLocaleString() });
+    var html = '';
+    for (var i = 0; i < IAP_PRODUCTS.length; i++) {
+        var p = IAP_PRODUCTS[i];
+        var purchased = (p.type === 'once' && gameSettings.purchased[p.id]);
+        // ログインパス: activeなら「有効中」
+        var isActive = (p.id === 'login_pass' && isLoginPassActive());
+        // スターターパックに含まれる広告非表示を個別購入済みの場合もチェック
+        var statusText = '';
+        if (purchased) {
+            statusText = t('iap_purchased');
+        } else if (isActive) {
+            var days = Math.ceil((gameSettings.loginPassExpiry - Date.now()) / (24*60*60*1000));
+            statusText = t('iap_active', { days: days });
+        }
+        var tagHtml = '';
+        if (p.tag && !purchased && !isActive) {
+            tagHtml = '<span style="position:absolute; top:-6px; right:-4px; background:#ff4466; color:#fff; font-size:clamp(6px,1.1vw,9px); font-weight:800; padding:1px 5px; border-radius:8px; font-family:\'M PLUS Rounded 1c\',sans-serif;">' + t(p.tag) + '</span>';
+        }
+        var disabled = purchased || isActive;
+        html += '<div data-iap-id="' + p.id + '" style="' +
+            'display:flex; align-items:center; gap:6px; padding:6px 8px; cursor:' + (disabled ? 'default' : 'pointer') + ';' +
+            'background:' + (disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)') + ';' +
+            'border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:4px;' +
+            'position:relative; opacity:' + (disabled ? '0.5' : '1') + ';' +
+            'transition:background 0.15s;">' +
+            tagHtml +
+            '<img src="' + p.iconImg + '" width="22" height="22" style="flex-shrink:0; image-rendering:pixelated;">' +
+            '<div style="flex:1; min-width:0;">' +
+                '<div style="color:#fff; font-size:clamp(9px,1.8vw,13px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif;">' + t(p.labelKey) + '</div>' +
+                '<div style="color:rgba(255,255,255,0.6); font-size:clamp(7px,1.3vw,10px); font-family:\'M PLUS Rounded 1c\',sans-serif; white-space:pre-line;">' + t(p.descKey) + '</div>' +
+            '</div>' +
+            '<div style="flex-shrink:0; text-align:right;">' +
+                (statusText
+                    ? '<span style="color:#4CAF50; font-size:clamp(8px,1.5vw,11px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif;">' + statusText + '</span>'
+                    : '<span style="color:#ffd700; font-size:clamp(10px,2vw,14px); font-weight:800; font-family:\'M PLUS Rounded 1c\',sans-serif;">¥' + p.price + '</span>') +
+            '</div>' +
+        '</div>';
+    }
+    list.innerHTML = html;
+}
+
+// ─── リワード広告の状態管理 ───
+var rewardAdState = {
+    reviveUsedThisRun: false,    // 今回のプレイで復活広告を使ったか（1プレイ1回）
+    shopAdUsedThisVisit: false,  // 今回のショップ訪問で広告ボーナスを使ったか
+    tshopAdCooldown: 0           // タイトルショップ広告のクールダウン（timestamp）
+};
+var REWARD_AD_REVIVE_LIVES = 3;        // 広告復活で回復するライフ数
+var REWARD_AD_SHOP_BONUS_RATE = 0.3;   // ステージショップ: 現在所持金の30%ボーナス
+var REWARD_AD_SHOP_BONUS_MIN = 100;    // ステージショップ: 最低ボーナス額
+var REWARD_AD_SHOP_BONUS_MAX = 5000;   // ステージショップ: 上限ボーナス額
+var REWARD_AD_TSHOP_BONUS = 3000;      // タイトルショップ: 固定3,000円ボーナス
+var REWARD_AD_TSHOP_COOLDOWN = 14400000; // タイトルショップ: クールダウン4時間
+
+// ゲームオーバー時のリワード広告復活
+function adRevive() {
+    if (rewardAdState.reviveUsedThisRun) return;
+    showAd('reward', function(success) {
+        if (!success) return;
+        rewardAdState.reviveUsedThisRun = true;
+        // 復活処理
+        hideGameOverScreen();
+        gameState.lives = REWARD_AD_REVIVE_LIVES;
+        gameState.gameStarted = true;
+        gameState.gamePaused = false;
+        gameState.isInvincible = true;
+        gameState.invincibleTimer = 180; // 3秒間無敵
+        player.velY = -6;
+        if (soundManager) soundManager.playStageBGM(gameRound);
+        document.getElementById('ui').style.display = '';
+        document.getElementById('controlBar').style.display = '';
+        gameLoop();
+    });
+}
+
+// ステージショップでのリワード広告ボーナス
+function adShopBonus() {
+    if (rewardAdState.shopAdUsedThisVisit) return;
+    showAd('reward', function(success) {
+        if (!success) return;
+        rewardAdState.shopAdUsedThisVisit = true;
+        var bonus = Math.min(REWARD_AD_SHOP_BONUS_MAX, Math.max(REWARD_AD_SHOP_BONUS_MIN, Math.floor(gameState.score * REWARD_AD_SHOP_BONUS_RATE)));
+        gameState.score += bonus;
+        if (soundManager) soundManager.playItem();
+        setKeeperText('reward_ad_shop_money_ok', { amount: bonus });
+        updateStageShopUI();
+    });
+}
+
+// タイトルショップでのリワード広告ボーナス
+function adTshopBonus() {
+    if (Date.now() < rewardAdState.tshopAdCooldown) {
+        setTshopKeeperText('reward_ad_cooldown');
+        if (soundManager) soundManager.playDamage();
+        return;
+    }
+    showAd('reward', function(success) {
+        if (!success) return;
+        rewardAdState.tshopAdCooldown = Date.now() + REWARD_AD_TSHOP_COOLDOWN;
+        gameSettings.savings += REWARD_AD_TSHOP_BONUS;
+        saveSettings();
+        if (soundManager) soundManager.playItem();
+        setTshopKeeperText('reward_ad_tshop_savings_ok', { amount: REWARD_AD_TSHOP_BONUS });
+        updateTitleShopUI();
+    });
+}
+
+// ─── ログインボーナスシステム ───
+var LOGIN_BONUS_REWARDS = [1000, 2000, 3000, 5000, 7000, 9000, 12000]; // Day1〜Day7
+var loginBonusPending = null; // { day, amount } or null
+
+function getDateString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function checkLoginBonus() {
+    var today = getDateString();
+    if (gameSettings.lastLoginDate === today) return; // 今日はもう受け取り済み
+
+    // 前日かどうかを判定（連続ログイン判定）
+    var yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    var yesterdayStr = yesterday.getFullYear() + '-' + String(yesterday.getMonth() + 1).padStart(2, '0') + '-' + String(yesterday.getDate()).padStart(2, '0');
+
+    if (gameSettings.lastLoginDate === yesterdayStr) {
+        // 連続ログイン：ストリーク継続（最大7でループ）
+        gameSettings.loginStreak = (gameSettings.loginStreak % 7) + 1;
+    } else {
+        // 連続途切れ or 初回：Day1にリセット
+        gameSettings.loginStreak = 1;
+    }
+
+    gameSettings.lastLoginDate = today;
+    var day = gameSettings.loginStreak;
+    var amount = LOGIN_BONUS_REWARDS[day - 1];
+    var passActive = isLoginPassActive();
+    if (passActive) amount *= 2; // ログボ強化パスで2倍
+    loginBonusPending = { day: day, amount: amount, passActive: passActive };
+    gameSettings.savings += amount;
+    saveSettings();
+}
+
+function showLoginBonusPopup() {
+    if (!loginBonusPending) return;
+    var day = loginBonusPending.day;
+    var amount = loginBonusPending.amount;
+    var passActive = loginBonusPending.passActive;
+    loginBonusPending = null;
+
+    var popup = document.createElement('div');
+    popup.id = 'loginBonusPopup';
+    popup.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh;' +
+        'background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);' +
+        'display:flex; flex-direction:column; justify-content:center; align-items:center;' +
+        'z-index:99998; padding:20px; box-sizing:border-box;';
+
+    // 7日分のドット表示を作成
+    var dotsHtml = '';
+    for (var i = 0; i < 7; i++) {
+        var dayNum = i + 1;
+        var reward = LOGIN_BONUS_REWARDS[i];
+        var isToday = (dayNum === day);
+        var isPast = (dayNum < day);
+        var bgColor = isToday ? '#ffd700' : (isPast ? 'rgba(255,215,0,0.3)' : 'rgba(255,255,255,0.1)');
+        var textColor = isToday ? '#1a0030' : (isPast ? 'rgba(255,215,0,0.6)' : 'rgba(255,255,255,0.3)');
+        var border = isToday ? '2px solid #fff' : '1px solid rgba(255,255,255,0.15)';
+        var scale = isToday ? 'transform:scale(1.15);' : '';
+        dotsHtml += '<div style="display:flex; flex-direction:column; align-items:center; gap:1px;' +
+            'background:' + bgColor + '; border:' + border + '; border-radius:6px;' +
+            'padding:3px 5px; min-width:clamp(28px,5vw,40px);' + scale + '">' +
+            '<span style="font-size:clamp(6px,1.2vw,9px); font-weight:700; color:' + textColor + ';">Day' + dayNum + '</span>' +
+            '<span style="font-size:clamp(7px,1.3vw,10px); font-weight:800; color:' + textColor + ';">' + (reward >= 10000 ? Math.floor(reward/1000) + 'k' : reward) + '</span>' +
+            '</div>';
+    }
+
+    popup.innerHTML = '<div style="' +
+        'background:linear-gradient(160deg, rgba(30,15,50,0.97), rgba(15,5,30,0.97));' +
+        'border:2px solid rgba(255,215,0,0.5); border-radius:16px; padding:14px 20px;' +
+        'box-shadow:0 6px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.15);' +
+        'text-align:center; max-width:90vw; width:75vw;">' +
+        '<div style="color:#ffd700; font-size:clamp(14px,3.5vw,22px); font-weight:800;' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif;' +
+            'text-shadow:0 0 10px rgba(255,215,0,0.4); margin-bottom:6px;">' +
+            _ic('icon_celebrate.png') + ' ' + t('login_bonus_title') + '</div>' +
+        '<div style="display:flex; gap:3px; justify-content:center; flex-wrap:wrap; margin-bottom:8px;">' + dotsHtml + '</div>' +
+        '<div style="color:#fff; font-size:clamp(11px,2.5vw,16px); font-weight:700;' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:4px;">' +
+            t('login_bonus_day', { day: day }) + '</div>' +
+        '<div style="color:#ffd700; font-size:clamp(16px,4vw,26px); font-weight:800;' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif;' +
+            'text-shadow:0 0 15px rgba(255,215,0,0.5); margin-bottom:8px;' +
+            'animation:adRevivePulse 2s ease-in-out infinite;">' +
+            _ic('icon_bank.png') + ' +' + amount.toLocaleString() + t('currency_unit') +
+            (passActive ? ' <span style="background:#ff4466; color:#fff; font-size:clamp(10px,2.5vw,16px); padding:1px 6px; border-radius:6px; margin-left:4px;">x2</span>' : '') + '</div>' +
+        '<div style="color:rgba(255,255,255,0.6); font-size:clamp(9px,1.8vw,12px);' +
+            'font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:10px;">' +
+            t('login_bonus_savings', { total: gameSettings.savings.toLocaleString() }) + '</div>' +
+        '<button class="game-button" id="loginBonusOkBtn" style="min-width:40vw; padding:8px 20px;' +
+            'font-size:clamp(12px,3vw,18px); -webkit-tap-highlight-color:transparent;">' +
+            t('login_bonus_ok') + '</button>' +
+    '</div>';
+
+    document.body.appendChild(popup);
+    if (soundManager) soundManager.playItem();
+
+    var okBtn = popup.querySelector('#loginBonusOkBtn');
+    function closePopup() {
+        if (popup.parentNode) popup.parentNode.removeChild(popup);
+    }
+    okBtn.addEventListener('touchend', function(e) { e.preventDefault(); closePopup(); });
+    okBtn.addEventListener('click', closePopup);
+}
+
 // ─── ゲーム設定 (localStorage永続化) ───
-var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {} };
+var gameSettings = {
+    soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {},
+    loginStreak: 0, lastLoginDate: '',
+    // ── 課金関連 ──
+    purchased: {},         // { productId: true } 買い切り商品
+    loginPassExpiry: 0,    // ログボ強化パスの有効期限(timestamp)
+    ownedSkins: [],        // 所持スキン一覧
+    activeSkin: ''         // 装備中スキン
+};
 (function loadSettings() {
     try {
         var saved = localStorage.getItem('piyo_settings');
@@ -1329,6 +1691,16 @@ var gameSettings = { soundEnabled: true, language: 'ja', adFree: false, savings:
             // ── ショップ関連 ──
             if (typeof parsed.savings === 'number') gameSettings.savings = parsed.savings;
             if (parsed.upgrades && typeof parsed.upgrades === 'object') gameSettings.upgrades = parsed.upgrades;
+            // ── ログインボーナス ──
+            if (typeof parsed.loginStreak === 'number') gameSettings.loginStreak = parsed.loginStreak;
+            if (typeof parsed.lastLoginDate === 'string') gameSettings.lastLoginDate = parsed.lastLoginDate;
+            // ── 課金関連 ──
+            if (parsed.purchased && typeof parsed.purchased === 'object') gameSettings.purchased = parsed.purchased;
+            if (typeof parsed.loginPassExpiry === 'number') gameSettings.loginPassExpiry = parsed.loginPassExpiry;
+            if (Array.isArray(parsed.ownedSkins)) gameSettings.ownedSkins = parsed.ownedSkins;
+            if (typeof parsed.activeSkin === 'string') gameSettings.activeSkin = parsed.activeSkin;
+            // adFree復元: 購入済みなら常にtrue
+            if (gameSettings.purchased['ad_free'] || gameSettings.purchased['starter_pack']) gameSettings.adFree = true;
         }
     } catch (_) {}
 })();
@@ -1381,6 +1753,7 @@ ja: {
     name_submit: _ic('icon_register.png') + ' 登録',
     name_skip: _ic('icon_skip.png') + ' スキップ',
     name_empty: 'お名前を入力してください！',
+    name_ng_word: '使用できない文字列が含まれています。\n別のお名前を入力してください。',
     // スコア送信
     submit_connecting: 'サーバーに接続中...',
     submit_sending: 'データを送信中...',
@@ -1405,6 +1778,15 @@ ja: {
     boss_round: 'ROUND ',
     gameover_retry: _ic('icon_retry.png') + ' もう一度',
     gameover_totitle: _ic('icon_home.png') + ' タイトルへ',
+    gameover_ad_revive: _ic('icon_retry.png') + ' 広告を見て復活',
+    // リワード広告
+    reward_ad_shop_money: _ic('icon_money.png') + ' 広告を見てボーナス',
+    reward_ad_shop_money_keeper: '動画を見ると\nボーナスがもらえるのだ！',
+    reward_ad_shop_money_ok: 'ボーナス {amount}円\nゲットしたのだ！',
+    reward_ad_tshop_savings: _ic('icon_bank.png') + ' 広告を見てボーナス',
+    reward_ad_tshop_savings_keeper: '動画を見ると\n貯金ボーナスがもらえるのだ！',
+    reward_ad_tshop_savings_ok: '貯金ボーナス {amount}円\nゲットしたのだ！',
+    reward_ad_cooldown: '次の広告ボーナスまで\nしばらくお待ちください',
     // リタイア
     retire_confirm: 'タイトル画面に戻りますか？',
     // Canvas HUD
@@ -1540,7 +1922,33 @@ ja: {
     revival_text: '復活！',
     revival_potion_text: 'ふっかつやくで復活！',
     shop_item_revive: 'ふっかつやく',
-    shop_item_revive_desc: 'たおれたとき\nライフ2で ふっかつする（1回）'
+    shop_item_revive_desc: 'たおれたとき\nライフ2で ふっかつする（1回）',
+    // ── ログインボーナス ──
+    login_bonus_title: 'ログインボーナス',
+    login_bonus_day: '{day}日目のボーナス！',
+    login_bonus_savings: '貯金残高: {total}円',
+    login_bonus_ok: _ic('icon_celebrate.png') + ' うけとる！',
+    // ── 課金ストア ──
+    iap_store_title: _ic('icon_money.png') + ' ストア',
+    iap_starter_pack: 'スターターパック',
+    iap_starter_pack_desc: '広告非表示＋貯金100,000円＋限定アイテム解放',
+    iap_ad_free: '広告を非表示にする',
+    iap_ad_free_desc: 'すべての広告を永久に消す\nリワード報酬はそのまま貰える',
+    iap_login_pass: 'ログボ強化パス（30日間）',
+    iap_login_pass_desc: 'ログインボーナスが2倍になる',
+    iap_savings_50k: 'ちょっと貯金',
+    iap_savings_50k_desc: '貯金 +50,000円',
+    iap_savings_200k: 'しっかり貯金',
+    iap_savings_200k_desc: '貯金 +200,000円',
+    iap_savings_500k: 'がっつり貯金',
+    iap_savings_500k_desc: '貯金 +500,000円',
+    iap_savings_1200k: 'ぴよ長者パック',
+    iap_savings_1200k_desc: '貯金 +1,200,000円',
+    iap_purchased: '購入済み',
+    iap_active: '有効中（残り{days}日）',
+    iap_tag_best: '初回おすすめ',
+    iap_tag_popular: '人気',
+    iap_tag_best_value: '最高効率'
 },
 en: {
     splash_warning: _ic('icon_warning.png') + ' Notice',
@@ -1577,6 +1985,7 @@ en: {
     name_submit: _ic('icon_register.png') + ' Submit',
     name_skip: _ic('icon_skip.png') + ' Skip',
     name_empty: 'Please enter your name!',
+    name_ng_word: 'That name contains inappropriate words.\nPlease choose a different name.',
     submit_connecting: 'Connecting...',
     submit_sending: 'Sending data...',
     submit_rank_check: 'Checking rank...',
@@ -1599,6 +2008,14 @@ en: {
     boss_round: 'ROUND ',
     gameover_retry: _ic('icon_retry.png') + ' Retry',
     gameover_totitle: _ic('icon_home.png') + ' Title',
+    gameover_ad_revive: _ic('icon_retry.png') + ' Watch Ad to Revive',
+    reward_ad_shop_money: _ic('icon_money.png') + ' Watch Ad for Bonus',
+    reward_ad_shop_money_keeper: 'Watch a video\nfor a bonus reward!',
+    reward_ad_shop_money_ok: 'Got {amount} bonus!',
+    reward_ad_tshop_savings: _ic('icon_bank.png') + ' Watch Ad for Bonus',
+    reward_ad_tshop_savings_keeper: 'Watch a video\nfor a savings bonus!',
+    reward_ad_tshop_savings_ok: 'Got {amount} savings bonus!',
+    reward_ad_cooldown: 'Please wait a moment\nfor the next ad bonus',
     retire_confirm: 'Return to title?',
     hud_jump: 'Jump Boost',
     hud_shield: 'Shield',
@@ -1725,7 +2142,33 @@ en: {
     revival_text: 'Revived!',
     revival_potion_text: 'Revived by potion!',
     shop_item_revive: 'Revival Potion',
-    shop_item_revive_desc: 'Auto-revive with 2 life\nwhen defeated (1 use)'
+    shop_item_revive_desc: 'Auto-revive with 2 life\nwhen defeated (1 use)',
+    // ── Login Bonus ──
+    login_bonus_title: 'Login Bonus',
+    login_bonus_day: 'Day {day} Bonus!',
+    login_bonus_savings: 'Savings: {total}',
+    login_bonus_ok: _ic('icon_celebrate.png') + ' Claim!',
+    // ── Store ──
+    iap_store_title: _ic('icon_money.png') + ' Store',
+    iap_starter_pack: 'Starter Pack',
+    iap_starter_pack_desc: 'Ad-free + 100,000 savings + Exclusive item unlock',
+    iap_ad_free: 'Remove Ads',
+    iap_ad_free_desc: 'Remove all ads permanently\nReward bonuses still available',
+    iap_login_pass: 'Login Boost Pass (30 days)',
+    iap_login_pass_desc: 'Double login bonus rewards',
+    iap_savings_50k: 'Small Savings',
+    iap_savings_50k_desc: 'Savings +50,000',
+    iap_savings_200k: 'Medium Savings',
+    iap_savings_200k_desc: 'Savings +200,000',
+    iap_savings_500k: 'Large Savings',
+    iap_savings_500k_desc: 'Savings +500,000',
+    iap_savings_1200k: 'Piyo Millionaire',
+    iap_savings_1200k_desc: 'Savings +1,200,000',
+    iap_purchased: 'Purchased',
+    iap_active: 'Active ({days}d left)',
+    iap_tag_best: 'Best Deal',
+    iap_tag_popular: 'Popular',
+    iap_tag_best_value: 'Best Value'
 }
 };
 
@@ -1764,6 +2207,94 @@ function applyLanguage() {
 // ─── HTMLエスケープ ───
 function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ─── NGワードフィルター ───
+var NG_WORDS = [
+    // ── 日本語：卑猥・下品 ──
+    'ちんこ','ちんぽ','ちんちん','まんこ','おまんこ','せっくす','セックス',
+    'おっぱい','ぼっき','ぶっかけ','えっち','エッチ','ふぇら','フェラ',
+    'おなにー','オナニー','ちんぽこ','きんたま','パイズリ','ぱいずり',
+    'やりまん','やりちん','ちつ','ペニス','ぺにす','ヴァギナ',
+    // ── 日本語：差別・ヘイト ──
+    'きちがい','キチガイ','ガイジ','がいじ','しょうがいしゃ',
+    'しね','シネ','ころす','コロス','ころしてやる',
+    'くたばれ','ちょん','チョン','にがー',
+    'かたわ','カタワ','めくら','つんぼ','おし',
+    'ぶらく','えた','ひにん',
+    // ── 日本語：暴言・侮辱（強度の高いもの） ──
+    'くそやろう','くそがき','きもい','キモい','しねよ','くず','カス',
+    'ばか','バカ','あほ','アホ','うんこ','ウンコ','うんち',
+    // ── 日本語：なりすまし ──
+    'うんえい','運営','かんりしゃ','管理者','こうしき','公式',
+    // ── 英語：卑猥 ──
+    'fuck','shit','dick','cock','pussy','penis','vagina','sex',
+    'porn','hentai','boob','cum','blowjob','handjob',
+    'dildo','orgasm','erotic','nude','naked',
+    // ── 英語：差別・ヘイト ──
+    'nigger','nigga','faggot','fag','retard','chink','spic',
+    'kike','cunt','whore','slut','bitch',
+    // ── 英語：暴力 ──
+    'kill you','die','murder',
+    // ── 英語：なりすまし ──
+    'admin','moderator','official','developer',
+    // ── 日本語：政治・思想・宗教 ──
+    'てんのう','天皇','こうしつ','皇室','そうり','総理',
+    'じみん','自民','みんしゅ','民主','きょうさん','共産','こうめい','公明',
+    'れいわ','維新','いしん','しゃみん','社民',
+    'ざいにち','在日','ねとうよ','ネトウヨ','ぱよく','パヨク',
+    'さよく','左翼','うよく','右翼','けんぽう','憲法',
+    'きょうさんしゅぎ','共産主義','ふぁしずむ','ファシズム','なちす','ナチス',
+    'そうかがっかい','創価学会','そうか','創価',
+    'とうげん','統一教会','とういつきょうかい',
+    'おうむ','オウム','あれふ','アレフ',
+    // ── 英語：政治・思想・宗教 ──
+    'nazi','hitler','stalin','communist','fascist','marxist',
+    'isis','alqaeda','taliban','terrorist','jihad',
+    'trump','biden','obama','putin','xi jinping',
+    'maga','antifa','qanon','kkk','supremacy',
+    // ── 日本語：陰謀論 ──
+    'いんぼう','陰謀','いるみなてぃ','イルミナティ',
+    'ふりーめいそん','フリーメイソン','ふりーめーそん','フリーメーソン',
+    'でぃーぷすてーと','ディープステート',
+    'ちきゅうへいめん','地球平面','ふらっとあーす','フラットアース',
+    'はんわくちん','反ワクチン','わくちんいんぼう','ワクチン陰謀',
+    'まいくろちっぷ','マイクロチップ埋',
+    'けむとれいる','ケムトレイル',
+    'れぷてぃりあん','レプティリアン',
+    'きゅーあのん','Qアノン',
+    'にほんかいぎ','日本会議',
+    'でぃーえす','DS支配',
+    // ── 英語：陰謀論 ──
+    'illuminati','freemason','deep state','deepstate',
+    'flat earth','flatearth','antivaxx','anti-vax','antivax',
+    'chemtrail','reptilian','nwo','new world order',
+    'pizzagate','truther','plandemic','great reset',
+    'adrenochrome','crisis actor','false flag','globalist'
+];
+
+/**
+ * NGワードチェック
+ * - 入力文字列からスペース・記号を除去して部分一致検査
+ * - 大文字小文字・全角半角を正規化
+ * @param {string} name - チェック対象の名前
+ * @returns {boolean} true = NGワードを含む
+ */
+function containsNgWord(name) {
+    // 正規化：小文字化 → 全角英数→半角 → カタカナ→ひらがな → スペース・記号除去
+    var normalized = String(name).toLowerCase()
+        .replace(/[\uff21-\uff3a]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }) // Ａ→a
+        .replace(/[\uff41-\uff5a]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }) // ａ→a
+        .replace(/[\uff10-\uff19]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0xfee0); }) // ０→0
+        .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); })   // カタカナ→ひらがな
+        .replace(/[\s\u3000._\-!@#$%^&*=+~`|:;,\/\\'"?。、！？・\u200b\u00a0]/g, '');  // スペース・記号除去
+
+    for (var i = 0; i < NG_WORDS.length; i++) {
+        var ngNormalized = NG_WORDS[i].toLowerCase()
+            .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+        if (normalized.indexOf(ngNormalized) !== -1) return true;
+    }
+    return false;
 }
 
 // ─── ゲーム内モーダル ───
@@ -1834,7 +2365,6 @@ function showConfirmModal(message) {
 function confirmRetire() {
     showConfirmModal(t('retire_confirm')).then(function(yes) {
         if (yes) {
-            showAd('interstitial');
             resetGame();
         }
     });
@@ -1887,7 +2417,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.215';
+const CURRENT_VERSION     = '1.223';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -2532,6 +3062,12 @@ function startApp() {
     if (soundManager) {
         try { soundManager.playBGM('title'); } catch (_) {}
     }
+
+    // ログインボーナスチェック＆表示
+    checkLoginBonus();
+    if (loginBonusPending) {
+        setTimeout(function() { showLoginBonusPopup(); }, 400);
+    }
 }
 
 function handleTitleScreenClick(e) {
@@ -2625,6 +3161,10 @@ function resetGame() {
         defeatedTimer: 0, roundTextTimer: 0,
         bossTriggered: false, savedGameSpeed: 0,
         eggs: [], summonTimer: 0 };
+
+    // リワード広告リセット
+    rewardAdState.reviveUsedThisRun = false;
+    rewardAdState.shopAdUsedThisVisit = false;
 
     // ショップ・ストックリセット
     shopState = { active: false, visited: false, deposited: false, purchaseCounts: {}, savedGameSpeed: 0, buildingPlaced: false, buildingX: 0 };
@@ -2922,6 +3462,7 @@ function buildRankMessage(name, ranks) {
 function submitScore() {
     var name = document.getElementById('playerNameInput').value.trim().replace(/[<>&"']/g, '').substring(0, 10);
     if (!name) { showGameModal(t('name_empty')); return; }
+    if (containsNgWord(name)) { showGameModal(t('name_ng_word')); return; }
 
     var btn = document.getElementById('submitBtn');
     var st = document.getElementById('submitStatus');
@@ -4036,6 +4577,7 @@ function openStageShop() {
     shopState.active = true;
     shopState.visited = true;
     shopState.savedGameSpeed = gameState.gameSpeed;
+    rewardAdState.shopAdUsedThisVisit = false; // ショップ訪問ごとにリセット
     gameState.gameSpeed = 0;
     gameState.gamePaused = true;
     gameState.input.up = false;    // 入力消費（ジャンプ暴発防止）
@@ -4379,6 +4921,10 @@ function updateStageShopUI() {
             depLabel = depLabel + ' (' + depAmt + ')';
         }
         html += renderShopMenuItem('_menu_deposit', _ic('icon_bank.png'), depLabel);
+        // リワード広告ボーナス
+        if (!rewardAdState.shopAdUsedThisVisit && !gameSettings.adFree) {
+            html += renderShopMenuItem('_menu_reward_ad', _ic('icon_money.png'), t('reward_ad_shop_money'));
+        }
         // 貯金プレビュー情報
         if (!shopState.deposited && gameState.score > 0) {
             html += '<div style="color:rgba(136,204,255,0.7); font-family:DotGothic16,monospace; font-size:clamp(7px,1.3vw,10px); text-align:center; padding:1px 6px; text-shadow:0 1px 2px rgba(0,0,0,0.8);">' +
@@ -4507,6 +5053,13 @@ function selectShopItem(itemId) {
             shopDepositing = true;
             setKeeperText('shop_keeper_deposit_confirm', { amount: depAmt });
             showShopConfirm(true);
+        } else if (itemId === '_menu_reward_ad') {
+            if (rewardAdState.shopAdUsedThisVisit) {
+                if (soundManager) soundManager.playDamage();
+                return;
+            }
+            if (soundManager) soundManager.playCursorMove();
+            adShopBonus();
         } else if (itemId === '_menu_leave') {
             if (soundManager) soundManager.playCursorMove();
             shopClosing = true;
@@ -4884,8 +5437,8 @@ function selectTshopItem(upgradeId) {
     if (tshopConfirmingItem) return;
     var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
     var isMax = currentLevel >= upgrade.maxLevel;
-    // 課金アイテム
-    if (upgrade.premium) {
+    // 課金アイテム（スターターパック購入済みなら解放）
+    if (upgrade.premium && !gameSettings.purchased['starter_pack']) {
         if (soundManager) soundManager.playCursorMove();
         tshopHighlightedItem = upgradeId;
         var premEl = document.getElementById('tshopKeeperText');
@@ -4955,6 +5508,11 @@ function showTitleShop() {
     tshopLeaving = false;
     setTshopKeeperText('tshop_keeper_greet');
     showTshopConfirm(false);
+    // リワード広告ボタンの表示制御
+    var tshopAdBtnEl = document.getElementById('tshopRewardAdBtn');
+    if (tshopAdBtnEl) {
+        tshopAdBtnEl.style.display = gameSettings.adFree ? 'none' : '';
+    }
     updateTitleShopUI();
     if (soundManager) soundManager.playBGM('shop');
 }
@@ -4971,7 +5529,7 @@ function hideTitleShop() {
 function renderTitleShopItem(upgrade) {
     var currentLevel = (gameSettings.upgrades || {})[upgrade.id] || 0;
     var isMax = currentLevel >= upgrade.maxLevel;
-    var isPremium = !!upgrade.premium;
+    var isPremium = !!upgrade.premium && !gameSettings.purchased['starter_pack'];
     var price = isMax ? 0 : upgrade.prices[currentLevel];
     var canBuy = !isMax && !isPremium && gameSettings.savings >= price;
     var isHighlighted = (tshopHighlightedItem === upgrade.id) || (tshopConfirmingItem === upgrade.id);
@@ -5030,7 +5588,7 @@ function updateTitleShopUI() {
 function buyTitleUpgrade(upgradeId) {
     var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
     if (!upgrade) return false;
-    if (upgrade.premium) return false;
+    if (upgrade.premium && !gameSettings.purchased['starter_pack']) return false;
     var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
     if (currentLevel >= upgrade.maxLevel) return false;
     var price = upgrade.prices[currentLevel];
@@ -5717,6 +6275,11 @@ function showGameOverScreen() {
         t('gameover_score') + finalGameStats.score + t('ranking_unit_score') + '<br>' +
         t('gameover_kills') + finalGameStats.enemyKills + t('ranking_unit_kills') + '<br>' +
         t('gameover_level') + finalGameStats.speedLevel;
+    // リワード広告復活ボタンの表示制御（1プレイ1回、広告非表示設定時は非表示）
+    var adReviveContainer = document.getElementById('adReviveContainer');
+    if (adReviveContainer) {
+        adReviveContainer.style.display = (!rewardAdState.reviveUsedThisRun && !gameSettings.adFree) ? 'block' : 'none';
+    }
     screen.classList.remove('hidden');
     screen.style.display = 'flex';
     history.pushState({ screen: 'gameOver' }, '');
@@ -7835,6 +8398,20 @@ function checkOrientation() {
         goToTitle();
     });
 
+    // ─ リワード広告: 復活ボタン ─
+    var adReviveBtnEl = document.getElementById('adReviveBtn');
+    var adReviveTouchFired = false;
+    adReviveBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
+    adReviveBtnEl.addEventListener('touchend', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        adReviveTouchFired = true;
+        adRevive();
+    });
+    adReviveBtnEl.addEventListener('click', function(e) {
+        if (adReviveTouchFired) { adReviveTouchFired = false; return; }
+        adRevive();
+    });
+
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
         if (e.target === document.getElementById('pauseScreen')) pauseGame();
     });
@@ -8018,6 +8595,32 @@ function initialize() {
     shopBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showTitleShop(); });
     shopBtn.addEventListener('click', function(e) { e.stopPropagation(); showTitleShop(); });
 
+    // ストアボタン（タイトル画面）
+    var storeBtn = document.getElementById('storeButton');
+    storeBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showStore(); });
+    storeBtn.addEventListener('click', function(e) { e.stopPropagation(); showStore(); });
+
+    // ストア閉じるボタン
+    var storeCloseBtn = document.getElementById('storeCloseBtn');
+    storeCloseBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); hideStore(); });
+    storeCloseBtn.addEventListener('click', function(e) { e.stopPropagation(); hideStore(); });
+
+    // ストア商品クリック（イベント委譲）
+    var storeList = document.getElementById('storeItemList');
+    storeList.addEventListener('click', function(e) {
+        var el = e.target.closest('[data-iap-id]');
+        if (el) executePurchase(el.getAttribute('data-iap-id'));
+    });
+    storeList.addEventListener('touchend', function(e) {
+        var el = e.target.closest('[data-iap-id]');
+        if (el) { e.preventDefault(); executePurchase(el.getAttribute('data-iap-id')); }
+    });
+
+    // タイトルショップ：リワード広告ボタン
+    var tshopAdBtn = document.getElementById('tshopRewardAdBtn');
+    tshopAdBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); adTshopBonus(); });
+    tshopAdBtn.addEventListener('click', function(e) { e.stopPropagation(); adTshopBonus(); });
+
     // タイトルショップ戻るボタン
     var tShopBack = document.getElementById('titleShopBackBtn');
     tShopBack.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); requestTshopLeave(); });
@@ -8160,6 +8763,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ショップ画面の閉じ処理
                 if (shopState.active) {
                     closeStageShop();
+                    return;
+                }
+                var storeEl = document.getElementById('storeScreen');
+                if (storeEl && storeEl.style.display !== 'none') {
+                    hideStore();
                     return;
                 }
                 var titleShop = document.getElementById('titleShopScreen');
