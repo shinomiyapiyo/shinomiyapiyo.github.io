@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="screen-orientation" content="landscape">
     <meta name="x5-orientation" content="landscape">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -74,6 +74,16 @@
                 align-items: center;
                 justify-content: center;
                 box-sizing: border-box;
+            }
+            body::after {
+                content: "Ver.1.229";
+                position: fixed;
+                bottom: 8px; right: 10px;
+                color: rgba(255,255,255,0.5);
+                font-size: 2.5vw;
+                font-weight: 600;
+                z-index: 10000;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
             }
             #gameContainer { display: none; }
         }
@@ -641,7 +651,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.227</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.229</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -727,7 +737,7 @@
                 box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">
                 <div style="text-align: center; color: rgba(255,255,255,0.6);">読み込み中...</div>
             </div>
-            <button class="game-button" data-i18n="btn_back" onclick="history.back()" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: 2vw; padding: 4px 14px;"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
+            <button class="game-button" data-i18n="btn_back" onclick="closeRanking()" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: 2vw; padding: 4px 14px;"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
         </div>
 
         <!-- 更新履歴画面 -->
@@ -813,7 +823,7 @@
                         color: rgba(255,255,255,0.4);" data-i18n="settings_adfree_status">準備中</span>
                 </div>
             </div>
-            <button class="game-button" onclick="history.back()" data-i18n="btn_back" style="margin-top: 1vh; flex-shrink: 0; z-index: 31; font-size: 3vw; padding: 8px 20px;"></button>
+            <button class="game-button" onclick="closeSettings()" data-i18n="btn_back" style="margin-top: 1vh; flex-shrink: 0; z-index: 31; font-size: 3vw; padding: 8px 20px;"></button>
         </div>
 
         <!-- 遊び方ガイド画面 -->
@@ -844,7 +854,7 @@
                 touch-action: pan-y; overscroll-behavior: contain;
                 box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">
             </div>
-            <button class="game-button" onclick="history.back()" data-i18n="btn_back" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: 2vw; padding: 4px 14px;">戻る</button>
+            <button class="game-button" onclick="closeGuide()" data-i18n="btn_back" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: 2vw; padding: 4px 14px;">戻る</button>
         </div>
 
         <!-- ステージショップ画面（RPG風） -->
@@ -1450,6 +1460,11 @@ function showStore() {
 function hideStore() {
     var el = document.getElementById('storeScreen');
     el.style.display = 'none';
+}
+
+function closeStore() {
+    hideStore();
+    history.back();
 }
 
 function updateStoreUI() {
@@ -2482,7 +2497,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.227';
+const CURRENT_VERSION     = '1.229';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3373,6 +3388,11 @@ function hideRanking() {
     hideRankingDirect();
 }
 
+function closeRanking() {
+    hideRanking();
+    history.back();
+}
+
 function hideRankingDirect() {
     var el = document.getElementById('rankingScreen');
     el.classList.add('hidden');
@@ -3396,6 +3416,11 @@ function hideSettings() {
     var el = document.getElementById('settingsScreen');
     el.classList.add('hidden');
     el.style.display = 'none';
+}
+
+function closeSettings() {
+    hideSettings();
+    history.back();
 }
 
 function showGuide() {
@@ -3423,6 +3448,12 @@ function hideGuide() {
     var el = document.getElementById('guideScreen');
     el.classList.add('hidden');
     el.style.display = 'none';
+}
+
+// ボタンから閉じる：先に非表示→history.back()で履歴整合
+function closeGuide() {
+    hideGuide();
+    history.back();
 }
 
 function hideGuideDirect() {
@@ -5463,7 +5494,7 @@ function confirmTshopBuy() {
         showTshopConfirm(false);
         tshopLeaving = false;
         setTshopKeeperText('tshop_keeper_leave_bye');
-        setTimeout(function() { history.back(); }, 600);
+        setTimeout(function() { closeTitleShop(); }, 600);
         return;
     }
     if (!tshopConfirmingItem) return;
@@ -5599,6 +5630,11 @@ function hideTitleShop() {
     tshopHighlightedItem = null;
     tshopConfirmingItem = null;
     if (soundManager) soundManager.playBGM('title');
+}
+
+function closeTitleShop() {
+    hideTitleShop();
+    history.back();
 }
 
 function renderTitleShopItem(upgrade) {
@@ -8677,8 +8713,8 @@ function initialize() {
 
     // ストア閉じるボタン
     var storeCloseBtn = document.getElementById('storeCloseBtn');
-    storeCloseBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); history.back(); });
-    storeCloseBtn.addEventListener('click', function(e) { e.stopPropagation(); history.back(); });
+    storeCloseBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeStore(); });
+    storeCloseBtn.addEventListener('click', function(e) { e.stopPropagation(); closeStore(); });
 
     // ストア商品クリック（イベント委譲）
     var storeList = document.getElementById('storeItemList');
