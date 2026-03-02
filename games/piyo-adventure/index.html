@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.232";
+                content: "Ver.1.233";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -552,6 +552,15 @@
             0%, 100% { box-shadow: 0 0 8px rgba(255,103,35,0.4); }
             50% { box-shadow: 0 0 18px rgba(255,103,35,0.8), 0 0 30px rgba(255,165,0,0.3); }
         }
+        @keyframes guideScrollBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        /* ガイド画面スクロールバー */
+        #guideContent::-webkit-scrollbar { width: 6px; }
+        #guideContent::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        #guideContent::-webkit-scrollbar-thumb { background: rgba(255,105,180,0.5); border-radius: 3px; }
+        #guideContent::-webkit-scrollbar-thumb:hover { background: rgba(255,105,180,0.7); }
     </style>
 
     <!-- Firebase CDN -->
@@ -651,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.232</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.233</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -841,18 +850,35 @@
                 font-family: 'M PLUS Rounded 1c', sans-serif;
                 text-shadow: 0 0 12px rgba(255,215,0,0.4), 0 2px 6px rgba(0,0,0,0.8);
                 letter-spacing: 0.08em;">遊び方</div>
-            <div id="guideContent" style="
-                background: linear-gradient(180deg, rgba(15,5,30,0.9), rgba(5,0,15,0.95));
-                border: 2px solid rgba(255,105,180,0.4);
-                border-radius: 12px; padding: 12px 14px;
+            <div id="guideContentWrap" style="
+                position: relative;
                 width: 100%; max-width: 520px; flex: 1; min-height: 0;
-                box-sizing: border-box;
-                overflow-y: auto; overflow-x: hidden;
-                color: #fff; font-size: 2vw; line-height: 1.6;
-                font-family: 'M PLUS Rounded 1c', sans-serif;
-                -webkit-overflow-scrolling: touch;
-                touch-action: pan-y; overscroll-behavior: contain;
-                box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">
+                box-sizing: border-box;">
+                <div id="guideContent" style="
+                    background: linear-gradient(180deg, rgba(15,5,30,0.9), rgba(5,0,15,0.95));
+                    border: 2px solid rgba(255,105,180,0.4);
+                    border-radius: 12px; padding: 12px 14px;
+                    width: 100%; height: 100%;
+                    box-sizing: border-box;
+                    overflow-y: auto; overflow-x: hidden;
+                    color: #fff; font-size: 2vw; line-height: 1.6;
+                    font-family: 'M PLUS Rounded 1c', sans-serif;
+                    -webkit-overflow-scrolling: touch;
+                    touch-action: pan-y; overscroll-behavior: contain;
+                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">
+                </div>
+                <div id="guideScrollHint" style="
+                    position: absolute; bottom: 0; left: 0; right: 0;
+                    height: 36px;
+                    background: linear-gradient(transparent, rgba(5,0,15,0.95));
+                    border-radius: 0 0 12px 12px;
+                    display: flex; justify-content: center; align-items: flex-end;
+                    padding-bottom: 4px;
+                    pointer-events: none;
+                    transition: opacity 0.3s;">
+                    <span style="color: rgba(255,215,0,0.8); font-size: 1.6vw; font-family: 'M PLUS Rounded 1c', sans-serif;
+                        animation: guideScrollBounce 1.5s ease-in-out infinite;">▼ スクロール</span>
+                </div>
             </div>
             <button class="game-button" onclick="closeGuide()" data-i18n="btn_back" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: 2vw; padding: 4px 14px;">戻る</button>
         </div>
@@ -2509,7 +2535,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.232';
+const CURRENT_VERSION     = '1.233';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3452,7 +3478,18 @@ function showGuide() {
             '<div style="color:#ddd;font-size:1.8vw;white-space:pre-line;line-height:1.5;">' + escapeHtml(t('guide_' + s + '_body')) + '</div>' +
             '</div>';
     }
-    document.getElementById('guideContent').innerHTML = html;
+    var contentEl = document.getElementById('guideContent');
+    contentEl.innerHTML = html;
+    contentEl.scrollTop = 0;
+    // スクロールヒント表示制御
+    var hint = document.getElementById('guideScrollHint');
+    if (hint) {
+        hint.style.opacity = '1';
+        contentEl.onscroll = function() {
+            var atBottom = contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - 10;
+            hint.style.opacity = atBottom ? '0' : '1';
+        };
+    }
 }
 
 function hideGuide() {
@@ -3462,9 +3499,9 @@ function hideGuide() {
     el.style.display = 'none';
 }
 
-// ボタンから閉じる：先に非表示→history.back()で履歴整合
+// ボタンから閉じる：history.back()でpopstateハンドラに処理を委任
 function closeGuide() {
-    hideGuide();
+    if (isInTransitionCooldown()) return;
     history.back();
 }
 
