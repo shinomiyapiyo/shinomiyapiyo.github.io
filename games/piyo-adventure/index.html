@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.229";
+                content: "Ver.1.230";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -651,7 +651,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.229</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.230</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1900,10 +1900,16 @@ ja: {
     guide_controls_body: '・画面タップ … ジャンプ\n・空中でタップ … 二段ジャンプ\n・ダメージ中にタップ … 受け身（吹き飛び軽減）',
     guide_items_title: '◆ アイテム',
     guide_items_body: '・ハート … ライフを1回復\n・レモン缶 … 一定時間ジャンプ力アップ\n・エネルギー弾 … 一定時間自動で弾を撃つ\n・シールド … 一定時間ダメージ無効\n・マグネット … 一定時間コインを引き寄せる',
+    guide_money_title: '◆ お金について',
+    guide_money_body: '・ステージ上のコインを集めるとお金が手に入ります\n・敵を倒したり、コンボを繋げても稼げます\n・お金はショップでの買い物や貯金に使えます\n・ゲームオーバーになると手持ちのお金は失われますが、貯金したお金は残ります',
     guide_shop_title: '◆ ステージショップ',
-    guide_shop_body: '・走っている途中でショップに立ち寄れます\n・集めたお金でアイテムを購入できます\n・アイテムはストックに保存され、好きな時に使えます',
+    guide_shop_body: '・走っている途中でショップに立ち寄れます\n・集めたお金でアイテムを購入できます\n・購入したアイテムはストックに保存され、好きな時に使えます\n・不要なアイテムを売ることもできます\n・ショップで貯金もできます（所持金の半分）',
     guide_savings_title: '◆ 貯金システム',
-    guide_savings_body: '・ショップで手持ちのお金の半分を貯金できます\n・貯金はゲームオーバーになっても消えません\n・タイトルショップで貯金を使って永続アップグレードが買えます',
+    guide_savings_body: '・ステージショップで手持ちのお金の半分を貯金できます\n・貯金はゲームオーバーになっても消えません\n・貯金はタイトルショップで使う大切な資金です\n・コツコツ貯めて強力な永続アップグレードを手に入れましょう',
+    guide_titleshop_title: '◆ タイトルショップ',
+    guide_titleshop_body: '・タイトル画面からアクセスできるショップです\n・貯金を使って永続的なアップグレードを購入できます\n・コインマスター（コイン獲得量UP）、タフネス（初期ライフ増加）、ストック拡張、はやあし など\n・一度購入したアップグレードはずっと有効です',
+    guide_datasave_title: '◆ データの保存について',
+    guide_datasave_body: '・タイトルショップで購入したアップグレードやスキルは、ゲームを閉じても保存されます\n・貯金もゲームを再起動しても引き継がれます\n・次回アクセス時もそのまま使い続けられます\n・※ブラウザのデータを消去するとセーブデータが消える場合があります',
     guide_boss_title: '◆ ボス戦',
     guide_boss_body: '・一定距離を走るとボスが出現します\n・ボスを踏んでダメージを与えましょう\n・ボス戦中はアイテムがドロップします',
     guide_tips_title: '◆ コツ',
@@ -2123,10 +2129,16 @@ en: {
     guide_controls_body: '・Tap screen … Jump\n・Tap in mid-air … Double jump\n・Tap while taking damage … Recovery (reduce knockback)',
     guide_items_title: '◆ Items',
     guide_items_body: '・Heart … Restore 1 life\n・Lemon Can … Boost jump power temporarily\n・Energy Orb … Auto-fire bullets temporarily\n・Shield … Block all damage temporarily\n・Magnet … Attract nearby coins temporarily',
+    guide_money_title: '◆ About Money',
+    guide_money_body: '・Collect coins on stages to earn money\n・You also earn money by defeating enemies and chaining combos\n・Money can be used for shopping or saving\n・You lose your cash on Game Over, but savings are kept safe',
     guide_shop_title: '◆ Stage Shop',
-    guide_shop_body: '・You can visit the shop while running\n・Buy items with money you\'ve collected\n・Items are saved to stock for later use',
+    guide_shop_body: '・You can visit the shop while running a stage\n・Buy items with the money you\'ve collected\n・Purchased items are saved to your stock for later use\n・You can also sell unwanted items\n・You can deposit savings here (half your cash)',
     guide_savings_title: '◆ Savings System',
-    guide_savings_body: '・Deposit half your money at the shop\n・Savings are kept even after Game Over\n・Spend savings at the Title Shop for permanent upgrades',
+    guide_savings_body: '・Deposit half your cash at the Stage Shop\n・Savings are kept even after Game Over\n・Savings are your funds for the Title Shop\n・Save up steadily to unlock powerful permanent upgrades',
+    guide_titleshop_title: '◆ Title Shop',
+    guide_titleshop_body: '・A shop accessible from the title screen\n・Spend your savings on permanent upgrades\n・Examples: Coin Master (more coins), Toughness (more starting HP), Stock Expand, Swift Feet, etc.\n・Once purchased, upgrades stay active forever',
+    guide_datasave_title: '◆ Saving Your Data',
+    guide_datasave_body: '・Upgrades and skills bought at the Title Shop are saved even after closing the game\n・Your savings carry over between sessions\n・Everything will be right where you left it next time you play\n・Note: Clearing your browser data may erase your save',
     guide_boss_title: '◆ Boss Battles',
     guide_boss_body: '・A boss appears after running a certain distance\n・Stomp on the boss to deal damage\n・Items drop during boss fights',
     guide_tips_title: '◆ Tips',
@@ -2497,7 +2509,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.229';
+const CURRENT_VERSION     = '1.230';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
@@ -3431,7 +3443,7 @@ function showGuide() {
     el.style.display = 'flex';
     history.pushState({ screen: 'guide' }, '');
     // ガイド内容を動的に生成（言語切替対応）
-    var sections = ['controls', 'items', 'shop', 'savings', 'boss', 'tips'];
+    var sections = ['controls', 'items', 'boss', 'money', 'shop', 'savings', 'titleshop', 'datasave', 'tips'];
     var html = '';
     for (var i = 0; i < sections.length; i++) {
         var s = sections[i];
