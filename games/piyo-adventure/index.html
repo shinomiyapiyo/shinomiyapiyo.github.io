@@ -641,7 +641,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.224</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.225</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1582,8 +1582,19 @@ function getDateString() {
 }
 
 function checkLoginBonus() {
+    var now = Date.now();
     var today = getDateString();
     if (gameSettings.lastLoginDate === today) return; // 今日はもう受け取り済み
+
+    // ── 不正対策1: 時計の巻き戻し検知 ──
+    // 前回受取時刻より現在時刻が過去なら、時計が戻されたと判断して無視
+    if (gameSettings.lastLoginTimestamp && now < gameSettings.lastLoginTimestamp) return;
+
+    // ── 不正対策2: 短期間の大量受取防止 ──
+    // 直近7日間（実時間）で受取回数が7回以上なら拒否（正常なら最大7回/週）
+    var sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+    var recentHistory = (gameSettings.loginBonusHistory || []).filter(function(ts) { return ts > sevenDaysAgo; });
+    if (recentHistory.length >= 7) return;
 
     // 前日かどうかを判定（連続ログイン判定）
     var yesterday = new Date();
@@ -1599,6 +1610,11 @@ function checkLoginBonus() {
     }
 
     gameSettings.lastLoginDate = today;
+    gameSettings.lastLoginTimestamp = now;
+    // ── 不正対策3: 受取履歴の記録（直近7日分のみ保持） ──
+    recentHistory.push(now);
+    gameSettings.loginBonusHistory = recentHistory;
+
     var day = gameSettings.loginStreak;
     var reward = LOGIN_BONUS_REWARDS[day - 1];
     var passActive = isLoginPassActive();
@@ -1717,6 +1733,7 @@ function showLoginBonusPopup() {
 var gameSettings = {
     soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {},
     loginStreak: 0, lastLoginDate: '', pendingStockItems: [],
+    lastLoginTimestamp: 0, loginBonusHistory: [],
     // ── 課金関連 ──
     purchased: {},         // { productId: true } 買い切り商品
     loginPassExpiry: 0,    // ログボ強化パスの有効期限(timestamp)
@@ -1738,6 +1755,8 @@ var gameSettings = {
             if (typeof parsed.loginStreak === 'number') gameSettings.loginStreak = parsed.loginStreak;
             if (typeof parsed.lastLoginDate === 'string') gameSettings.lastLoginDate = parsed.lastLoginDate;
             if (Array.isArray(parsed.pendingStockItems)) gameSettings.pendingStockItems = parsed.pendingStockItems;
+            if (typeof parsed.lastLoginTimestamp === 'number') gameSettings.lastLoginTimestamp = parsed.lastLoginTimestamp;
+            if (Array.isArray(parsed.loginBonusHistory)) gameSettings.loginBonusHistory = parsed.loginBonusHistory;
             // ── 課金関連 ──
             if (parsed.purchased && typeof parsed.purchased === 'object') gameSettings.purchased = parsed.purchased;
             if (typeof parsed.loginPassExpiry === 'number') gameSettings.loginPassExpiry = parsed.loginPassExpiry;
@@ -2463,7 +2482,7 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
-const CURRENT_VERSION     = '1.224';
+const CURRENT_VERSION     = '1.225';
 
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
