@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.239";
+                content: "Ver.1.242";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,12 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.239</span>
-                    <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
-                       style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
-                       onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
-                       data-i18n="privacy_link"><img src="images/icon_lock.png" class="ui-icon ui-icon-sm"> プライバシーポリシー
-                    </a>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.242</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -818,6 +813,24 @@
                         background: linear-gradient(180deg, #44bb77, #228855);
                         color: #fff; transition: background 0.15s ease;
                         -webkit-tap-highlight-color: transparent;">▶</button>
+                </div>
+
+                <!-- プライバシーポリシー & 利用規約 -->
+                <div style="display: flex; justify-content: center; align-items: center; gap: 12px;
+                    padding: 10px 0;">
+                    <a id="privacyLinkSettings" href="https://nullpoworks.github.io/privacy-policy.html"
+                       target="_blank" rel="noopener"
+                       onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
+                       style="color: rgba(255,255,255,0.5); font-size: clamp(7px, 1.6vw, 11px); text-decoration: underline;
+                           font-family: 'M PLUS Rounded 1c', sans-serif;"
+                       data-i18n="privacy_link_short">プライバシーポリシー</a>
+                    <span style="color: rgba(255,255,255,0.3);">|</span>
+                    <a id="termsLink" href="https://nullpoworks.github.io/terms-piyo-adventure.html"
+                       target="_blank" rel="noopener"
+                       onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
+                       style="color: rgba(255,255,255,0.5); font-size: clamp(7px, 1.6vw, 11px); text-decoration: underline;
+                           font-family: 'M PLUS Rounded 1c', sans-serif;"
+                       data-i18n="terms_link_short">利用規約</a>
                 </div>
 
                 <!-- 広告非表示（課金実装時に display:flex に戻す） -->
@@ -1890,7 +1903,7 @@ ja: {
     reward_ad_tshop_savings: _ic('icon_bank.png') + ' 広告を見てボーナス',
     reward_ad_tshop_savings_keeper: '動画を見ると\n貯金ボーナスがもらえるのだ！',
     reward_ad_tshop_savings_ok: '貯金ボーナス {amount}円\nゲットしたのだ！',
-    reward_ad_cooldown: '次の広告ボーナスまで\nしばらくお待ちください',
+    reward_ad_cooldown: '次の広告ボーナスまで\nしばらく待ってほしいのだ',
     // リタイア
     retire_confirm: 'タイトル画面に戻りますか？',
     // Canvas HUD
@@ -1949,6 +1962,9 @@ ja: {
     confirm_no: 'いいえ',
     privacy_link: _ic('icon_lock.png', 'ui-icon-sm') + ' プライバシーポリシー',
     privacy_url: 'https://nullpoworks.github.io/privacy-policy.html',
+    privacy_link_short: 'プライバシーポリシー',
+    terms_link_short: '利用規約',
+    terms_url: 'https://nullpoworks.github.io/terms-piyo-adventure.html',
     // ── ステージショップ ──
     shop_stage_title: 'ショップ',
     shop_buy: '購入',
@@ -2175,6 +2191,9 @@ en: {
     confirm_no: 'No',
     privacy_link: _ic('icon_lock.png', 'ui-icon-sm') + ' Privacy Policy',
     privacy_url: 'https://nullpoworks.github.io/privacy-policy.html?lang=en',
+    privacy_link_short: 'Privacy Policy',
+    terms_link_short: 'Terms of Service',
+    terms_url: 'https://nullpoworks.github.io/terms-piyo-adventure-en.html',
     // ── Stage Shop ──
     shop_stage_title: 'Shop',
     shop_buy: 'Buy',
@@ -2315,9 +2334,11 @@ function applyLanguage() {
     if (soundToggle) soundToggle.textContent = gameSettings.soundEnabled ? t('settings_on') : t('settings_off');
     var adStatus = document.getElementById('adFreeStatus');
     if (adStatus) adStatus.textContent = t('settings_adfree_status');
-    // プライバシーポリシーリンクのURL切替
-    var privacyLink = document.getElementById('privacyLink');
-    if (privacyLink) privacyLink.href = t('privacy_url');
+    // プライバシーポリシー・利用規約リンクのURL切替
+    var privacyLinkSettings = document.getElementById('privacyLinkSettings');
+    if (privacyLinkSettings) privacyLinkSettings.href = t('privacy_url');
+    var termsLink = document.getElementById('termsLink');
+    if (termsLink) termsLink.href = t('terms_url');
     // 縦画面警告のCSS変数を更新
     document.documentElement.style.setProperty('--orient-msg', '"' + t('orient_msg').replace(/\n/g, '\\A') + '"');
 }
