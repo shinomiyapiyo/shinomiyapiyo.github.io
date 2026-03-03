@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.237";
+                content: "Ver.1.238";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.237</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.238</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1565,7 +1565,7 @@ function adRevive() {
         gameState.isInvincible = true;
         gameState.invincibleTimer = 180; // 3秒間無敵
         player.velY = -6;
-        if (soundManager) soundManager.playStageBGM(gameRound);
+        playStageBGM();
         document.getElementById('ui').style.display = '';
         document.getElementById('controlBar').style.display = '';
         gameLoop();
@@ -2838,7 +2838,8 @@ var gameState = {
     isRespawning: false, enemyKills: 0,
     bulletFireTimer: 0,
     comboCount: 0, comboTimer: 0,
-    revivesLeft: 0, revivalFlashTimer: 0
+    revivesLeft: 0, revivalFlashTimer: 0,
+    hasRecordedHighScore: false
 };
 
 var player = {
@@ -3266,6 +3267,7 @@ function resetGame() {
     gameState.comboTimer = 0;
     gameState.revivesLeft = 0;
     gameState.revivalFlashTimer = 0;
+    gameState.hasRecordedHighScore = false;
     floatEffects = [];
     damageFlashTimer = 0;
     screenShake = { intensity: 0, timer: 0 };
@@ -3651,6 +3653,7 @@ function submitScore() {
     var newRef = database.ref('scores').push();
 
     newRef.set(scoreData).then(function() {
+        gameState.hasRecordedHighScore = true;
         btn.disabled = false;
         btn.innerHTML = t('name_submit');
         st.textContent = t('submit_rank_check');
@@ -3686,6 +3689,7 @@ function skipSubmit() {
 
     if (database) {
         database.ref('scores').push().set(scoreData).then(function() {
+            gameState.hasRecordedHighScore = true;
             st.textContent = t('submit_rank_check');
             return fetchAllRanks(scoreData);
         }).then(function(ranks) {
@@ -6414,15 +6418,20 @@ function gameOver() {
         speedLevel: gameState.speedLevel
     };
 
-    checkHighScore(finalGameStats).then(function(isHigh) {
-        setTimeout(function() {
-            if (isHigh) {
-                showNameInput();
-            } else {
-                showGameOverScreen();
-            }
-        }, 500);
-    });
+    if (gameState.hasRecordedHighScore) {
+        // 既にハイスコア記録済み（復活後の再ゲームオーバー）→ 直接ゲームオーバー画面へ
+        setTimeout(function() { showGameOverScreen(); }, 500);
+    } else {
+        checkHighScore(finalGameStats).then(function(isHigh) {
+            setTimeout(function() {
+                if (isHigh) {
+                    showNameInput();
+                } else {
+                    showGameOverScreen();
+                }
+            }, 500);
+        });
+    }
 }
 
 function showGameOverScreen() {
