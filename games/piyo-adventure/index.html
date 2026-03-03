@@ -8428,7 +8428,7 @@ function checkOrientation() {
     }
 
     // 指の現在X位置から移動方向を判定（L/Rエリア境界 = 画面幅15%）
-    var TOUCH_DEADZONE_LEFT = 12; // 左端12pxは拇指球の誤タッチ防止デッドゾーン
+    var TOUCH_DEADZONE_LEFT = 20; // 左端20pxは拇指球の誤タッチ防止デッドゾーン
     function updateMoveFromTouch(touch) {
         if (moveSwiped) return;
         if (touch.clientX < TOUCH_DEADZONE_LEFT) return;
