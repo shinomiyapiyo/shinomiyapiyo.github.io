@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.242";
+                content: "Ver.1.243";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.242</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.243</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -6010,6 +6010,18 @@ function updateBoss() {
 
     case 4: // 撃破演出
         bossState.defeatedTimer++;
+        // ボス撃破時に全敵消去
+        if (bossState.defeatedTimer === 1) {
+            for (var ei = 0; ei < enemies.length; ei++) {
+                spawnExplosionEffect(enemies[ei].x + enemies[ei].width / 2, enemies[ei].y + enemies[ei].height / 2);
+            }
+            for (var fi = 0; fi < flyingEnemies.length; fi++) {
+                spawnExplosionEffect(flyingEnemies[fi].x + flyingEnemies[fi].width / 2, flyingEnemies[fi].y + flyingEnemies[fi].height / 2);
+            }
+            enemies = [];
+            flyingEnemies = [];
+            bossState.eggs = [];
+        }
         // 時間差爆発 (15フレームごと × 5回)
         if (bossState.defeatedTimer % 15 === 0 && bossState.defeatedTimer <= 75) {
             var ex = b.x + Math.random() * b.width;
