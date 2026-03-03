@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.236";
+                content: "Ver.1.237";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.236</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.237</span>
                     <a id="privacyLink" href="https://nullpoworks.github.io/privacy-policy.html" target="_blank" rel="noopener"
                        style="color: #fff; font-size: clamp(6px, 1.0vw, 10px); text-decoration: underline; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px;"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -1547,7 +1547,7 @@ var rewardAdState = {
 var REWARD_AD_REVIVE_LIVES = 3;        // 広告復活で回復するライフ数
 var REWARD_AD_SHOP_BONUS_RATE = 0.3;   // ステージショップ: 現在所持金の30%ボーナス
 var REWARD_AD_SHOP_BONUS_MIN = 100;    // ステージショップ: 最低ボーナス額
-var REWARD_AD_SHOP_BONUS_MAX = 5000;   // ステージショップ: 上限ボーナス額
+var REWARD_AD_SHOP_BONUS_MAX = 3000;   // ステージショップ: 上限ボーナス額
 var REWARD_AD_TSHOP_BONUS = 3000;      // タイトルショップ: 固定3,000円ボーナス
 var REWARD_AD_TSHOP_COOLDOWN = 14400000; // タイトルショップ: クールダウン4時間
 
@@ -5073,7 +5073,7 @@ function updateStageShopUI() {
         if (shopState.deposited) {
             depLabel = t('shop_deposited');
         } else if (gameState.score > 0) {
-            depLabel = depLabel + ' (' + depAmt + ')';
+            depLabel = depLabel + ' (' + depAmt + t('currency_unit') + ')';
         }
         html += renderShopMenuItem('_menu_deposit', _ic('icon_bank.png'), depLabel);
         // リワード広告ボーナス
@@ -5142,7 +5142,7 @@ function updateStageShopUI() {
                 depBtn.disabled = false;
                 depBtn.style.opacity = '1';
                 depBtn.style.pointerEvents = 'auto';
-                depBtn.innerHTML = _ic('icon_bank.png', 'ui-icon-sm') + ' ' + t('shop_deposit_btn') + ' (' + depAmount + ')';
+                depBtn.innerHTML = _ic('icon_bank.png', 'ui-icon-sm') + ' ' + t('shop_deposit_btn') + ' (' + depAmount + t('currency_unit') + ')';
             }
         }
         if (depInfo) {
