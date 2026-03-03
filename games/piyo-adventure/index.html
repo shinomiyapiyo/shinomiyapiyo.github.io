@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.243";
+                content: "Ver.1.244";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.243</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.244</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -2590,6 +2590,8 @@ class SoundManager {
         this.selectSE.volume = 0.5;
         this.orSE = new Audio('or.mp3');
         this.orSE.volume = 0.5;
+        this.flashSE = new Audio('flash.mp3');
+        this.flashSE.volume = 0.5;
     }
 
     _createBGM(src, vol) {
@@ -2695,26 +2697,8 @@ class SoundManager {
 
     playFlash() {
         if (!this.ctx || !gameSettings.soundEnabled) return;
-        var t = this.ctx.currentTime;
-        // 高音のシュイーン系SE（閃光発動音）
-        var o = this.ctx.createOscillator(), g = this.ctx.createGain();
-        o.connect(g); g.connect(this.ctx.destination);
-        o.type = 'sine';
-        o.frequency.setValueAtTime(800, t);
-        o.frequency.exponentialRampToValueAtTime(2400, t + 0.15);
-        o.frequency.exponentialRampToValueAtTime(600, t + 0.4);
-        g.gain.setValueAtTime(0.2, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
-        o.start(t); o.stop(t + 0.4);
-        // ノイズ風の低音
-        var o2 = this.ctx.createOscillator(), g2 = this.ctx.createGain();
-        o2.connect(g2); g2.connect(this.ctx.destination);
-        o2.type = 'sawtooth';
-        o2.frequency.setValueAtTime(150, t);
-        o2.frequency.exponentialRampToValueAtTime(80, t + 0.3);
-        g2.gain.setValueAtTime(0.1, t);
-        g2.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-        o2.start(t); o2.stop(t + 0.3);
+        this.flashSE.currentTime = 0;
+        this.flashSE.play().catch(function(){});
     }
 
     playLevelUp() {
