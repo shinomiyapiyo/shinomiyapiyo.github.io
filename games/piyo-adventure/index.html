@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.247";
+                content: "Ver.1.248";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.247</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.248</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -755,15 +755,15 @@
             justify-content: flex-start; align-items: center;
             z-index: 9999; padding: 2vh 10px;
             overflow: hidden;">
-            <div data-i18n="settings_title" style="color: #ffd700; font-size: 4vw; font-weight: 800; margin-bottom: 1vh; flex-shrink: 0;
+            <div data-i18n="settings_title" style="color: #ffd700; font-size: clamp(14px, 3.5vw, 20px); font-weight: 800; margin-bottom: 0.5vh; flex-shrink: 0;
                 font-family: 'M PLUS Rounded 1c', sans-serif;
                 text-shadow: 0 0 12px rgba(255,215,0,0.4), 0 2px 6px rgba(0,0,0,0.8);
                 letter-spacing: 0.08em;"><img src="images/icon_settings.png" class="ui-icon"> 設定</div>
             <div style="
                 background: linear-gradient(180deg, rgba(15,5,30,0.9), rgba(5,0,15,0.95));
                 border: 2px solid rgba(255,105,180,0.4);
-                border-radius: 14px; padding: 16px;
-                width: 90vw; max-width: 500px; flex: 1; min-height: 0;
+                border-radius: 14px; padding: 10px 14px;
+                width: 90vw; max-width: 500px; flex: 0 1 auto;
                 overflow-y: auto; overflow-x: hidden;
                 font-family: 'M PLUS Rounded 1c', sans-serif;
                 -webkit-overflow-scrolling: touch;
@@ -771,11 +771,11 @@
 
                 <!-- サウンド設定 -->
                 <div style="display: flex; justify-content: space-between; align-items: center;
-                    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
-                    <span data-i18n="settings_sound" style="color: #fff; font-size: 3vw; font-weight: 700;"><img src="images/icon_sound.png" class="ui-icon"> サウンド</span>
+                    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                    <span data-i18n="settings_sound" style="color: #fff; font-size: clamp(11px, 2.5vw, 16px); font-weight: 700;"><img src="images/icon_sound.png" class="ui-icon"> サウンド</span>
                     <button id="soundToggleBtn" style="
-                        min-width: 70px; min-height: 44px; padding: 10px 16px; border-radius: 20px; border: none;
-                        font-size: 2.8vw; font-weight: 700; cursor: pointer;
+                        min-width: 60px; min-height: 36px; padding: 6px 14px; border-radius: 18px; border: none;
+                        font-size: clamp(10px, 2.2vw, 14px); font-weight: 700; cursor: pointer;
                         font-family: 'M PLUS Rounded 1c', sans-serif;
                         transition: background 0.15s ease;
                         -webkit-tap-highlight-color: transparent;
@@ -784,18 +784,18 @@
 
                 <!-- 言語設定 -->
                 <div style="display: flex; justify-content: space-between; align-items: center;
-                    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
-                    <span style="color: #fff; font-size: 3vw; font-weight: 700;">LANG</span>
-                    <div style="display: flex; gap: 8px;">
+                    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                    <span style="color: #fff; font-size: clamp(11px, 2.5vw, 16px); font-weight: 700;">LANG</span>
+                    <div style="display: flex; gap: 6px;">
                         <button id="langJaBtn" onclick="setLanguage('ja')" style="
-                            min-width: 90px; padding: 8px 16px; border-radius: 20px; border: none;
-                            font-size: 2.8vw; font-weight: 700; cursor: pointer;
+                            min-width: 70px; padding: 6px 12px; border-radius: 18px; border: none;
+                            font-size: clamp(10px, 2.2vw, 14px); font-weight: 700; cursor: pointer;
                             font-family: 'M PLUS Rounded 1c', sans-serif;
                             transition: all 0.2s ease;
                             color: #fff;">日本語</button>
                         <button id="langEnBtn" onclick="setLanguage('en')" style="
-                            min-width: 90px; padding: 8px 16px; border-radius: 20px; border: none;
-                            font-size: 2.8vw; font-weight: 700; cursor: pointer;
+                            min-width: 70px; padding: 6px 12px; border-radius: 18px; border: none;
+                            font-size: clamp(10px, 2.2vw, 14px); font-weight: 700; cursor: pointer;
                             font-family: 'M PLUS Rounded 1c', sans-serif;
                             transition: all 0.2s ease;
                             color: #fff;">English</button>
@@ -804,11 +804,11 @@
 
                 <!-- 遊び方 -->
                 <div style="display: flex; justify-content: space-between; align-items: center;
-                    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
-                    <span data-i18n="settings_howtoplay" style="color: #fff; font-size: 3vw; font-weight: 700;">遊び方</span>
+                    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                    <span data-i18n="settings_howtoplay" style="color: #fff; font-size: clamp(11px, 2.5vw, 16px); font-weight: 700;">遊び方</span>
                     <button id="howToPlayBtn" onclick="showGuide()" style="
-                        min-width: 70px; min-height: 44px; padding: 10px 16px; border-radius: 20px; border: none;
-                        font-size: 2.8vw; font-weight: 700; cursor: pointer;
+                        min-width: 60px; min-height: 36px; padding: 6px 14px; border-radius: 18px; border: none;
+                        font-size: clamp(10px, 2.2vw, 14px); font-weight: 700; cursor: pointer;
                         font-family: 'M PLUS Rounded 1c', sans-serif;
                         background: linear-gradient(180deg, #44bb77, #228855);
                         color: #fff; transition: background 0.15s ease;
@@ -817,7 +817,7 @@
 
                 <!-- プライバシーポリシー & 利用規約 -->
                 <div style="display: flex; justify-content: center; align-items: center; gap: 12px;
-                    padding: 10px 0;">
+                    padding: 6px 0;">
                     <a id="privacyLinkSettings" href="https://nullpoworks.github.io/privacy-policy.html"
                        target="_blank" rel="noopener"
                        onclick="event.stopPropagation();" ontouchend="event.stopPropagation();"
@@ -845,7 +845,7 @@
                         color: rgba(255,255,255,0.4);" data-i18n="settings_adfree_status">準備中</span>
                 </div>
             </div>
-            <button class="game-button" onclick="closeSettings()" data-i18n="btn_back" style="margin-top: 1vh; flex-shrink: 0; z-index: 31; font-size: 3vw; padding: 8px 20px;"></button>
+            <button class="game-button" onclick="closeSettings()" data-i18n="btn_back" style="margin-top: 0.5vh; flex-shrink: 0; z-index: 31; font-size: clamp(10px, 2.5vw, 14px); padding: 6px 18px;"></button>
         </div>
 
         <!-- 遊び方ガイド画面 -->
