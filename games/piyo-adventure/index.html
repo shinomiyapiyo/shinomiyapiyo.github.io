@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.246";
+                content: "Ver.1.247";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.246</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.247</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -1554,8 +1554,7 @@ function updateStoreUI() {
 // ─── リワード広告の状態管理 ───
 var rewardAdState = {
     reviveUsedThisRun: false,    // 今回のプレイで復活広告を使ったか（1プレイ1回）
-    shopAdUsedThisVisit: false,  // 今回のショップ訪問で広告ボーナスを使ったか
-    tshopAdCooldown: 0           // タイトルショップ広告のクールダウン（timestamp）
+    shopAdUsedThisVisit: false   // 今回のショップ訪問で広告ボーナスを使ったか
 };
 var REWARD_AD_REVIVE_LIVES = 3;        // 広告復活で回復するライフ数
 var REWARD_AD_SHOP_BONUS_RATE = 0.3;   // ステージショップ: 現在所持金の30%ボーナス
@@ -1602,14 +1601,14 @@ function adShopBonus() {
 
 // タイトルショップでのリワード広告ボーナス
 function adTshopBonus() {
-    if (Date.now() < rewardAdState.tshopAdCooldown) {
+    if (Date.now() < gameSettings.tshopAdCooldown) {
         setTshopKeeperText('reward_ad_cooldown');
         if (soundManager) soundManager.playDamage();
         return;
     }
     showAd('reward', function(success) {
         if (!success) return;
-        rewardAdState.tshopAdCooldown = Date.now() + REWARD_AD_TSHOP_COOLDOWN;
+        gameSettings.tshopAdCooldown = Date.now() + REWARD_AD_TSHOP_COOLDOWN;
         gameSettings.savings += REWARD_AD_TSHOP_BONUS;
         saveSettings();
         if (soundManager) soundManager.playItem();
@@ -1789,6 +1788,7 @@ var gameSettings = {
     soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {},
     loginStreak: 0, lastLoginDate: '', pendingStockItems: [],
     lastLoginTimestamp: 0, loginBonusHistory: [],
+    tshopAdCooldown: 0,    // タイトルショップ広告のクールダウン（timestamp, 永続化）
     // ── 課金関連 ──
     purchased: {},         // { productId: true } 買い切り商品
     loginPassExpiry: 0,    // ログボ強化パスの有効期限(timestamp)
@@ -1812,6 +1812,8 @@ var gameSettings = {
             if (Array.isArray(parsed.pendingStockItems)) gameSettings.pendingStockItems = parsed.pendingStockItems;
             if (typeof parsed.lastLoginTimestamp === 'number') gameSettings.lastLoginTimestamp = parsed.lastLoginTimestamp;
             if (Array.isArray(parsed.loginBonusHistory)) gameSettings.loginBonusHistory = parsed.loginBonusHistory;
+            // ── 広告クールダウン ──
+            if (typeof parsed.tshopAdCooldown === 'number') gameSettings.tshopAdCooldown = parsed.tshopAdCooldown;
             // ── 課金関連 ──
             if (parsed.purchased && typeof parsed.purchased === 'object') gameSettings.purchased = parsed.purchased;
             if (typeof parsed.loginPassExpiry === 'number') gameSettings.loginPassExpiry = parsed.loginPassExpiry;
