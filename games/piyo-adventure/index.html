@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.260";
+                content: "Ver.1.261";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.260</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.261</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -892,7 +892,8 @@
                     font-family: 'M PLUS Rounded 1c', sans-serif;
                     -webkit-overflow-scrolling: touch;
                     touch-action: pan-y; overscroll-behavior: contain;
-                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);">
+                    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+                    -webkit-text-size-adjust: 100%; text-size-adjust: 100%;">
                 </div>
                 <div id="guideScrollHint" style="
                     position: absolute; bottom: 0; left: 0; right: 0;
@@ -903,7 +904,7 @@
                     padding-bottom: 4px;
                     pointer-events: none;
                     transition: opacity 0.3s;">
-                    <span style="color: rgba(255,215,0,0.8); font-size: 1.6vw; font-family: 'M PLUS Rounded 1c', sans-serif;
+                    <span data-i18n="guide_scroll_hint" style="color: rgba(255,215,0,0.8); font-size: 1.6vw; font-family: 'M PLUS Rounded 1c', sans-serif;
                         animation: guideScrollBounce 1.5s ease-in-out infinite;">▼ スクロール</span>
                 </div>
             </div>
@@ -1970,6 +1971,7 @@ ja: {
     guide_boss_body: '・一定距離を走るとボスが出現します\n・ボスを踏んでダメージを与えましょう\n・ボス戦中はアイテムがドロップします',
     guide_tips_title: '◆ コツ',
     guide_tips_body: '・コンボを繋げるとスコアが大幅にアップ！\n・ストックアイテムはボス戦前に温存すると有利\n・貯金をコツコツ貯めて永続強化を目指そう',
+    guide_scroll_hint: '▼ スクロール',
     // 縦画面
     orient_msg: '画面を横向きにしてください\n画面の自動回転がオフの場合は\nロックを解除してください',
     // エラー
@@ -2202,6 +2204,7 @@ en: {
     guide_boss_body: '・A boss appears after running a certain distance\n・Stomp on the boss to deal damage\n・Items drop during boss fights',
     guide_tips_title: '◆ Tips',
     guide_tips_body: '・Chain combos for a big score boost!\n・Save stock items for boss battles\n・Keep saving up for permanent upgrades',
+    guide_scroll_hint: '▼ Scroll',
     orient_msg: 'Please rotate to landscape\nIf auto-rotate is off,\nplease unlock rotation',
     error_init: 'Failed to load game.\nPlease reload the page.',
     confirm_yes: 'Yes',
