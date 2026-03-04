@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.248";
+                content: "Ver.1.249";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -277,8 +277,8 @@
             z-index: 5;
             opacity: 0;
         }
-        #leftArea  { left: 0; width: 15%; }
-        #rightArea { left: 15%; width: 18%; }
+        #leftArea  { left: 0; width: 22%; }
+        #rightArea { left: 22%; width: 11%; }
         #jumpArea  { right: 0; width: 30%; }
         /* 中央33-70%はデッドゾーン（ホームインジケータ誤操作防止） */
 
@@ -324,13 +324,13 @@
         }
 
         .control-left {
-            width: 15%;
+            width: 22%;
             padding-left: env(safe-area-inset-left, 0px);
             background: rgba(100,180,255,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
         .control-right {
-            width: 18%;
+            width: 11%;
             background: rgba(255,140,60,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.248</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.249</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -8437,7 +8437,7 @@ function checkOrientation() {
     function updateMoveFromTouch(touch) {
         if (moveSwiped) return;
         if (touch.clientX < TOUCH_DEADZONE_LEFT) return;
-        var boundary = window.innerWidth * 0.15;
+        var boundary = window.innerWidth * 0.22;
         if (touch.clientX < boundary) {
             gameState.input.left = true; gameState.input.right = false;
             highlightControl(ctrlLeft);
