@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.250";
+                content: "Ver.1.251";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.250</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.251</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2608,6 +2608,8 @@ class SoundManager {
         this.orSE.volume = 0.5;
         this.flashSE = new Audio('flash.mp3');
         this.flashSE.volume = 0.5;
+        this.warningSE = new Audio('warning.mp3');
+        this.warningSE.volume = 0.7;
     }
 
     _createBGM(src, vol) {
@@ -2760,24 +2762,10 @@ class SoundManager {
 
     // ─── ボス警告SE ───
     playBossWarning() {
-        if (!this.ctx || !gameSettings.soundEnabled) return;
+        if (!gameSettings.soundEnabled) return;
         try {
-            var ao = this.ctx, t = ao.currentTime;
-            for (var rep = 0; rep < 3; rep++) {
-                var st = t + rep * 0.35;
-                var o1 = ao.createOscillator(), g1 = ao.createGain();
-                o1.type = 'sawtooth'; o1.frequency.value = 110;
-                o1.connect(g1); g1.connect(ao.destination);
-                g1.gain.setValueAtTime(0.2, st);
-                g1.gain.exponentialRampToValueAtTime(0.01, st + 0.25);
-                o1.start(st); o1.stop(st + 0.25);
-                var o2 = ao.createOscillator(), g2 = ao.createGain();
-                o2.type = 'square'; o2.frequency.value = 146;
-                o2.connect(g2); g2.connect(ao.destination);
-                g2.gain.setValueAtTime(0.12, st + 0.05);
-                g2.gain.exponentialRampToValueAtTime(0.01, st + 0.3);
-                o2.start(st + 0.05); o2.stop(st + 0.3);
-            }
+            this.warningSE.currentTime = 0;
+            this.warningSE.play();
         } catch (_) {}
     }
 
