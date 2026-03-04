@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.245";
+                content: "Ver.1.246";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.245</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.246</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -4523,14 +4523,20 @@ function updatePlatforms() {
             if (player.onGround && player.y + player.height >= prevY - 2 && player.y + player.height <= prevY + 4 &&
                 player.x + player.width > p.x && player.x < p.x + p.width) {
                 player.y += deltaY;
-                // 地面にめり込まないようクランプ（地形の最低地点=GROUND_Y）
-                var maxY = GROUND_Y - player.height;
-                if (player.y > maxY) {
-                    player.y = maxY;
-                    // 地面に着地したのでプラットフォームから降りる
-                    player.onGround = true;
-                    var mvBiome = getBiomeIndex(gameState.distance);
-                    player.groundType = mvBiome === 1 ? 'quicksand' : mvBiome === 2 ? 'ice' : 'normal';
+                // 地面にめり込まないようクランプ（実際の地形を確認）
+                for (var ti = 0; ti < terrain.length; ti++) {
+                    var t = terrain[ti];
+                    if (t.type === 'hole') continue;
+                    if (player.x + player.width > t.x && player.x < t.x + t.width &&
+                        player.y + player.height > t.y) {
+                        player.y = t.y - player.height;
+                        player.onGround = true;
+                        var gt = t.type || 'normal';
+                        if (gt === 'quicksand_elevated') gt = 'quicksand';
+                        else if (gt === 'ice_elevated') gt = 'ice';
+                        player.groundType = gt;
+                        break;
+                    }
                 }
             }
         } else if (p.special === 'disappearing') {
