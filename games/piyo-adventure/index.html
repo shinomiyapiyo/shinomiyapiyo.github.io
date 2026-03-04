@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.244";
+                content: "Ver.1.245";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.244</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.245</span>
                 </div>
 
                 <div id="titleButtons" style="
@@ -1577,7 +1577,8 @@ function adRevive() {
         gameState.gamePaused = false;
         gameState.isInvincible = true;
         gameState.invincibleTimer = 180; // 3秒間無敵
-        player.velY = -6;
+        gameState.revivalFlashTimer = 90; // 1.5秒の復活演出
+        resetPlayerPosition(); // 上空からリスポーン（死因に関わらず統一）
         playStageBGM();
         document.getElementById('ui').style.display = '';
         document.getElementById('controlBar').style.display = '';
