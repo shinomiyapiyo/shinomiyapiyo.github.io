@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.251";
+                content: "Ver.1.254";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -277,8 +277,8 @@
             z-index: 5;
             opacity: 0;
         }
-        #leftArea  { left: 0; width: 22%; }
-        #rightArea { left: 22%; width: 11%; }
+        #leftArea  { left: 0; width: 18%; }
+        #rightArea { left: 18%; width: 15%; }
         #jumpArea  { right: 0; width: 30%; }
         /* 中央33-70%はデッドゾーン（ホームインジケータ誤操作防止） */
 
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.251</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.254</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2766,6 +2766,7 @@ class SoundManager {
         try {
             this.warningSE.currentTime = 0;
             this.warningSE.play();
+            setTimeout(() => { this.warningSE.pause(); }, 2000);
         } catch (_) {}
     }
 
@@ -3202,6 +3203,7 @@ function handleTitleScreenClick(e) {
     if (e.target.closest('#titleButtons')) return;
     if (e.target.classList.contains('game-button')) return;
     if (e.target.closest('a')) return;
+    if (e.target.closest('#forceUpdateBtn')) return;
     startGame();
 }
 
@@ -8433,12 +8435,12 @@ function checkOrientation() {
         if (zone) zone.classList.add('active');
     }
 
-    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = 画面幅15%）
+    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = 画面幅18%）
     var TOUCH_DEADZONE_LEFT = 20; // 左端20pxは拇指球の誤タッチ防止デッドゾーン
     function updateMoveFromTouch(touch) {
         if (moveSwiped) return;
         if (touch.clientX < TOUCH_DEADZONE_LEFT) return;
-        var boundary = window.innerWidth * 0.22;
+        var boundary = window.innerWidth * 0.18;
         if (touch.clientX < boundary) {
             gameState.input.left = true; gameState.input.right = false;
             highlightControl(ctrlLeft);
@@ -8930,6 +8932,7 @@ function initialize() {
         if (e.target.closest('#titleButtons')) return;
         if (e.target.classList.contains('game-button')) return;
         if (e.target.closest('a')) return;
+        if (e.target.closest('#forceUpdateBtn')) return;
         e.preventDefault();
         startGame();
     });
