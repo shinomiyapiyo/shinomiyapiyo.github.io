@@ -35,7 +35,7 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 <canvas id="gc"></canvas>
 <script>
 'use strict';
-const APP_VER='0.917';
+const APP_VER='0.918';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -667,9 +667,7 @@ const AN=[
 ];
 function genA(){
   BW=BW_NORMAL;runnerActive=false;
-  // [TEST] Force bugaSphere on block 2 normal mode — REMOVE AFTER TESTING
-  if(gameMode==='normal'&&cB===2){hasA=true}
-  else if(gameMode==='normal'){
+  if(gameMode==='normal'){
     if(cB<=1||cB>=14){hasA=false;return}
     hasA=Math.random()<0.70;
   }else if(gameMode==='complete'){
@@ -687,12 +685,7 @@ function genA(){
       const available=[];
       for(let i=0;i<AN.length;i++){if(!clearedAnomalies.includes(AN[i]))available.push(i)}
       if(available.length===0){hasA=false;return}// All anomalies cleared
-      // [TEST] Force bugaSphere on block 2 — REMOVE AFTER TESTING
-      if(gameMode==='normal'&&cB===2){
-        for(let i=0;i<AN.length;i++){if(AN[i]==='bugaSphere'){aT=i;break}}
-      }else{
-        aT=available[Math.floor(Math.random()*available.length)];
-      }
+      aT=available[Math.floor(Math.random()*available.length)];
     }else{
       aT=Math.floor(Math.random()*AN.length);
     }
