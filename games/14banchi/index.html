@@ -35,7 +35,7 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 <canvas id="gc"></canvas>
 <script>
 'use strict';
-const APP_VER='0.918';
+const APP_VER='0.920';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -1629,16 +1629,21 @@ function dClear(){
   // CLEAR! sprite or fallback text
   const clTx=ICN.text_clear,clPulse=0.85+Math.sin(fc*0.05)*0.12;
   if(clTx&&clTx.complete&&clTx.naturalWidth){
+    const clW=200,clH=clW*(clTx.naturalHeight/clTx.naturalWidth);
+    const clCX=W*0.33,clCY=H*0.14;
     X.save();
-    const clW=150,clH=clW*(clTx.naturalHeight/clTx.naturalWidth);
-    X.shadowColor='#FFD700';X.shadowBlur=16*clPulse;
+    // 1px black outline only
+    X.shadowColor='#000';X.shadowBlur=0;
+    for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){if(ox||oy){X.shadowOffsetX=ox;X.shadowOffsetY=oy;X.drawImage(clTx,clCX-clW/2,clCY,clW,clH)}}
+    // Gold glow on top
+    X.shadowOffsetX=0;X.shadowOffsetY=0;X.shadowColor='#FFD700';X.shadowBlur=16*clPulse;
     X.globalAlpha=clPulse;
-    X.drawImage(clTx,W*0.33-clW/2,H*0.16,clW,clH);
+    X.drawImage(clTx,clCX-clW/2,clCY,clW,clH);
     X.shadowBlur=0;X.globalAlpha=1;X.restore();
     // Celebrate icons flanking sprite
     X.save();X.shadowColor='#FFD700';X.shadowBlur=6;
-    dI(ICN.celebrate,W*0.33-clW/2-24,H*0.16+clH/2,36);
-    dI(ICN.celebrate,W*0.33+clW/2+24,H*0.16+clH/2,36);
+    dI(ICN.celebrate,clCX-clW/2-28,clCY+clH/2,36);
+    dI(ICN.celebrate,clCX+clW/2+28,clCY+clH/2,36);
     X.shadowBlur=0;X.restore();
   }else{
     X.fillStyle='#CC2222';X.font='bold 34px sans-serif';X.textAlign='center';
@@ -1648,10 +1653,14 @@ function dClear(){
     dI(ICN.celebrate,W*0.33+X.measureText(t('clearHeader')).width/2+22,H*0.22-4,36);
     X.shadowBlur=0;X.restore();
   }
-  // Sub-text with subtle glow
-  X.save();X.shadowColor='rgba(180,120,60,0.4)';X.shadowBlur=6;
-  X.fillStyle='#554433';X.font='16px sans-serif';X.textAlign='center';X.fillText(t('clearMsg'),W*0.33,H*0.4);
-  X.fillStyle='#887766';X.font='14px sans-serif';X.fillText(t('clearCongrats'),W*0.33,H*0.55);
+  // Sub-text with dark band for readability
+  X.save();
+  X.fillStyle='rgba(0,0,0,0.45)';X.beginPath();
+  const bandY1=H*0.34,bandY2=H*0.50,bandH=bandY2-bandY1;
+  X.roundRect(W*0.33-160,bandY1,320,bandH,8);X.fill();
+  X.textAlign='center';X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=4;
+  X.fillStyle='#FFFFFF';X.font='bold 16px sans-serif';X.fillText(t('clearMsg'),W*0.33,H*0.40);
+  X.fillStyle='#EEDDCC';X.font='14px sans-serif';X.fillText(t('clearCongrats'),W*0.33,H*0.47);
   X.shadowBlur=0;X.restore();
   if(clearImgOk){const ih=H*0.82,iw=ih*(clearImg.width/clearImg.height);X.shadowColor='rgba(0,0,0,0.1)';X.shadowBlur=15;X.shadowOffsetX=3;X.shadowOffsetY=3;X.drawImage(clearImg,W*0.7-iw/2,H*0.5-ih/2,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   // Replay & Title buttons with gradient
