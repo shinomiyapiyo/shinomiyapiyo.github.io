@@ -35,7 +35,7 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 <canvas id="gc"></canvas>
 <script>
 'use strict';
-const APP_VER='0.920';
+const APP_VER='0.921';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -1711,19 +1711,33 @@ function dCompleteClear(){
   if(completeBgOk){X.drawImage(completeBgImg,0,0,W,H)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0a2e1a');bg.addColorStop(1,'#0a0a14');X.fillStyle=bg;X.fillRect(0,0,W,H)}
   const cGlow=X.createRadialGradient(W*0.33,H*0.35,0,W*0.33,H*0.35,W*0.4);cGlow.addColorStop(0,'rgba(255,200,100,0.12)');cGlow.addColorStop(1,'transparent');X.fillStyle=cGlow;X.fillRect(0,0,W,H);
   for(let i=0;i<80;i++){const sx=((fc*0.8+i*97)%W),sy=((fc*0.5+i*131)%H);X.fillStyle=['#22AA66','#44CC88','#88EEBB'][i%3];X.globalAlpha=0.5+Math.sin(fc*0.03+i)*0.3;X.beginPath();X.arc(sx,sy,1+Math.random()*2,0,Math.PI*2);X.fill()}X.globalAlpha=1;
-  X.save();X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=6;X.shadowOffsetX=1;X.shadowOffsetY=1;
   const pulse=0.8+Math.sin(fc*0.05)*0.2;
-  X.fillStyle=`rgba(34,170,102,${pulse})`;X.font='bold 36px serif';X.textAlign='center';
-  dI(ICN.celebrate,W*0.33-X.measureText(t('allClearHeader')).width/2-24,H*0.22-4,30);
-  X.fillText(t('allClearHeader'),W*0.33,H*0.22);
-  dI(ICN.celebrate,W*0.33+X.measureText(t('allClearHeader')).width/2+24,H*0.22-4,30);
-  X.fillStyle='#22AA66';X.font='bold 20px sans-serif';X.textAlign='center';
-  X.fillText(tf('allClearMsg',AN.length),W*0.33,H*0.38);
-  X.fillStyle='#CCFFDD';X.font='14px sans-serif';
+  // Header with stroke outline
+  X.save();X.textAlign='center';X.font='bold 52px serif';
+  const hdrTxt=t('allClearHeader'),hdrW=X.measureText(hdrTxt).width;
+  X.strokeStyle='#000';X.lineWidth=5;X.lineJoin='round';X.strokeText(hdrTxt,W*0.33,H*0.22);
+  // Gold-white gradient fill
+  const hdrGrad=X.createLinearGradient(W*0.33-hdrW/2,H*0.22-30,W*0.33-hdrW/2,H*0.22+4);
+  hdrGrad.addColorStop(0,'#FFFDE0');hdrGrad.addColorStop(0.4,'#FFD700');hdrGrad.addColorStop(0.7,'#FFAA00');hdrGrad.addColorStop(1,'#FFE066');
+  X.fillStyle=hdrGrad;X.globalAlpha=pulse;X.fillText(hdrTxt,W*0.33,H*0.22);X.globalAlpha=1;
+  // Glow layer
+  X.shadowColor='#FFD700';X.shadowBlur=12*pulse;X.fillText(hdrTxt,W*0.33,H*0.22);
+  X.shadowBlur=0;
+  dI(ICN.celebrate,W*0.33-hdrW/2-24,H*0.22-4,30);
+  dI(ICN.celebrate,W*0.33+hdrW/2+24,H*0.22-4,30);
+  X.shadowBlur=0;X.restore();
+  // Sub-text with dark band
+  X.save();
+  X.fillStyle='rgba(0,0,0,0.45)';X.beginPath();
+  X.roundRect(W*0.33-170,H*0.32,340,H*0.36,8);X.fill();
+  X.textAlign='center';X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=4;
+  X.fillStyle='#FFFFFF';X.font='bold 18px sans-serif';
+  X.fillText(tf('allClearMsg',AN.length),W*0.33,H*0.40);
+  X.fillStyle='#EEDDCC';X.font='14px sans-serif';
   X.fillText(t('allClearNarr'),W*0.33,H*0.50);
-  X.fillStyle='#CCFFDD';X.font='13px sans-serif';
-  X.fillText(tf('reachedBlock',cB),W*0.33,H*0.62);
-  X.restore();
+  X.fillStyle='#EEDDCC';X.font='13px sans-serif';
+  X.fillText(tf('reachedBlock',cB),W*0.33,H*0.60);
+  X.shadowBlur=0;X.restore();
   if(clearImgOk){const ih=H*0.7,iw=ih*(clearImg.width/clearImg.height);X.drawImage(clearImg,W*0.72-iw/2,H*0.52-ih/2,iw,ih)}
   completeClearBtns.length=0;
   const cbW=160,cbH=40;
