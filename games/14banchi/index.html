@@ -20,7 +20,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:no
 canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 #rb{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#FFD700;font-family:sans-serif;text-align:center}
 #rb .ic{font-size:56px;animation:ra 2s ease-in-out infinite}
-#rb .mg{font-size:17px;font-weight:bold}
+#rb .mg{font-size:17px;font-weight:bold;white-space:pre-line}
 @keyframes ra{0%,100%{transform:rotate(0deg)}50%{transform:rotate(90deg)}}
 @media(orientation:portrait){#rb{display:flex}}
 #splash{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease-out}
@@ -35,7 +35,11 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 <canvas id="gc"></canvas>
 <script>
 'use strict';
-const APP_VER='0.921';
+// Android ブラウザからのアクセスをベータテストページにリダイレクト
+if(/Android/i.test(navigator.userAgent)&&typeof window.nativeExitApp!=='function'){
+location.replace('https://nullpoworks.github.io/beta-test.html');
+}
+const APP_VER='0.927';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -216,6 +220,8 @@ const T={
   retireConfirm:{ja:'本当にリタイヤしますか？',en:'Really retire?'},
   yes:{ja:'はい',en:'Yes'},
   no:{ja:'いいえ',en:'No'},
+  revivePrompt:{ja:'広告を見て復活しますか？',en:'Watch an ad to revive?'},
+  reviveInfo:{ja:'ライフが2回復します',en:'Restores 2 lives'},
   // Clear
   clearHeader:{ja:'脱 出 成 功 ！',en:'Escape Success!'},
   clearMsg:{ja:'ぴよ氏は無事に夜道を抜けた！',en:'Piyo made it through the night!'},
@@ -286,7 +292,7 @@ const T={
   misjudgeMsg:{ja:'異変の判断を間違えた',en:'Misjudged the anomaly'},
   lifeRecovery:{ja:'ライフ回復！',en:'Life recovered!'},
   lifeCount:{ja:(c,m)=>`ライフ: ${c}/${m}`,en:(c,m)=>`Lives: ${c}/${m}`},
-  rotateMsg:{ja:'横向きにしてプレイしてください',en:'Please rotate to landscape mode'},
+  rotateMsg:{ja:'画面ロックを解除して\n横向きにしてプレイしてください',en:'Unlock screen rotation and\nplay in landscape mode'},
   saveMark:{ja:(n,m)=>`${n}/${m}`,en:(n,m)=>`${n}/${m}`},
   deleteSave:{ja:'削除',en:'Del'},
   // [DEBUG OFF] dbgAnomaly:{ja:(name)=>`[DBG] 異変: ${name}`,en:(name)=>`[DBG] Anomaly: ${name}`},
@@ -1069,6 +1075,23 @@ function dGate(){
     X.globalAlpha=1;X.shadowBlur=0;X.restore();
   }
 }
+// Front layers: redraw inner pillar half over the player for walk-through effect
+function dBackGateFront(){
+  const gy=H*GH,gx=bsX+BACK_X+30-camX,cx=gx+22;
+  const img=ICN.torii_back;
+  const toriiH=H*0.60,toriiW=toriiH*1.44;
+  if(!img||!img.complete||!img.naturalWidth)return;
+  X.save();X.beginPath();X.rect(cx,gy-toriiH,toriiW/2,toriiH);X.clip();
+  X.drawImage(img,cx-toriiW/2,gy-toriiH,toriiW,toriiH);X.restore();
+}
+function dGateFront(){
+  const gy=H*GH,gx=bsX+BW-30-camX,cx=gx+22;
+  const img=ICN.torii_next;
+  const toriiH=H*0.60,toriiW=toriiH*1.44;
+  if(!img||!img.complete||!img.naturalWidth)return;
+  X.save();X.beginPath();X.rect(cx-toriiW/2,gy-toriiH,toriiW/2,toriiH);X.clip();
+  X.drawImage(img,cx-toriiW/2,gy-toriiH,toriiW,toriiH);X.restore();
+}
 
 // === ANOMALY RENDERING ===
 function dTkyTower(){
@@ -1431,6 +1454,7 @@ function dPause(){
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
   const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
+  dBackGateFront();dGateFront();
   X.restore();
   // Dark overlay with vignette
   X.fillStyle='rgba(0,0,0,0.65)';X.fillRect(0,0,W,H);
@@ -1438,7 +1462,7 @@ function dPause(){
   vig.addColorStop(0,'transparent');vig.addColorStop(1,'rgba(0,0,0,0.4)');
   X.fillStyle=vig;X.fillRect(0,0,W,H);
   // Pause panel
-  const panW=250,panH=250,panX=(W-panW)/2,panY=(H-panH)/2;
+  const panW=250,panH=274,panX=(W-panW)/2,panY=(H-panH)/2;
   const pf=ICN.pause_frame;
   if(pf&&pf.complete&&pf.naturalWidth){
     X.drawImage(pf,panX-8,panY-8,panW+16,panH+16);
@@ -1497,6 +1521,25 @@ function handlePauseTap(cx,cy){
 
 function hitPauseBtn(cx,cy){
   return cx>=pauseBtn.x&&cx<=pauseBtn.x+pauseBtn.w&&cy>=pauseBtn.y&&cy<=pauseBtn.y+pauseBtn.h;
+}
+
+// === REVIVE PROMPT ===
+function dRevivePrompt(){
+  X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(0,0,W,H);
+  const fl=0.3+Math.sin(fc*0.08)*0.15;
+  X.fillStyle=`rgba(180,0,0,${fl})`;X.fillRect(0,0,W,H);
+  const panW=280,panH=180,panX=(W-panW)/2,panY=(H-panH)/2;
+  X.fillStyle='rgba(10,0,0,0.92)';X.beginPath();X.roundRect(panX,panY,panW,panH,12);X.fill();
+  X.strokeStyle='#CC4444';X.lineWidth=2;X.beginPath();X.roundRect(panX,panY,panW,panH,12);X.stroke();
+  X.textAlign='center';
+  X.fillStyle='#FF8888';X.font='bold 18px sans-serif';X.fillText(t('revivePrompt'),W/2,panY+40);
+  X.fillStyle='#AAAAAA';X.font='13px sans-serif';X.fillText(t('reviveInfo'),W/2,panY+62);
+  reviveBtns.length=0;
+  const btnW=120,btnH=42,yesX=W/2-btnW-8,noX=W/2+8,btnY=panY+panH-btnH-20;
+  reviveBtns.push({x:yesX,y:btnY,w:btnW,h:btnH,id:'yes'});
+  reviveBtns.push({x:noX,y:btnY,w:btnW,h:btnH,id:'no'});
+  dBtn(yesX,btnY,btnW,btnH,t('yes'),'#44AA44',null,{dark:true,round:8});
+  dBtn(noX,btnY,btnW,btnH,t('no'),'#AA4444',null,{dark:true,round:8});
 }
 
 // === TITLE ===
@@ -1626,41 +1669,42 @@ function dClear(){
     X.beginPath();X.arc(px,py,pr,0,Math.PI*2);X.fill();
   }X.globalAlpha=1;
   const at=fc*0.025;dCk(W*0.06,H*0.3,at,1.2);dCk(W*0.94,H*0.35,at+1.5,1);dHt(W*0.1,H*0.6,2,at);dHt(W*0.9,H*0.55,1.7,at+2);
-  // CLEAR! sprite or fallback text
+  // CLEAR! sprite or fallback text (scaled to screen)
   const clTx=ICN.text_clear,clPulse=0.85+Math.sin(fc*0.05)*0.12;
+  const clCX=W*0.33,clCY=H*0.08;
+  let clBottom=clCY;
   if(clTx&&clTx.complete&&clTx.naturalWidth){
-    const clW=200,clH=clW*(clTx.naturalHeight/clTx.naturalWidth);
-    const clCX=W*0.33,clCY=H*0.14;
+    const clW=Math.min(200,H*0.32),clH=clW*(clTx.naturalHeight/clTx.naturalWidth);
     X.save();
-    // 1px black outline only
     X.shadowColor='#000';X.shadowBlur=0;
     for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){if(ox||oy){X.shadowOffsetX=ox;X.shadowOffsetY=oy;X.drawImage(clTx,clCX-clW/2,clCY,clW,clH)}}
-    // Gold glow on top
     X.shadowOffsetX=0;X.shadowOffsetY=0;X.shadowColor='#FFD700';X.shadowBlur=16*clPulse;
     X.globalAlpha=clPulse;
     X.drawImage(clTx,clCX-clW/2,clCY,clW,clH);
     X.shadowBlur=0;X.globalAlpha=1;X.restore();
-    // Celebrate icons flanking sprite
     X.save();X.shadowColor='#FFD700';X.shadowBlur=6;
     dI(ICN.celebrate,clCX-clW/2-28,clCY+clH/2,36);
     dI(ICN.celebrate,clCX+clW/2+28,clCY+clH/2,36);
     X.shadowBlur=0;X.restore();
+    clBottom=clCY+clH;
   }else{
     X.fillStyle='#CC2222';X.font='bold 34px sans-serif';X.textAlign='center';
     X.save();X.shadowColor='#FFD700';X.shadowBlur=10;
-    dI(ICN.celebrate,W*0.33-X.measureText(t('clearHeader')).width/2-22,H*0.22-4,36);
-    X.fillText(t('clearHeader'),W*0.33,H*0.22);
-    dI(ICN.celebrate,W*0.33+X.measureText(t('clearHeader')).width/2+22,H*0.22-4,36);
+    const hdrY=clCY+34;
+    dI(ICN.celebrate,W*0.33-X.measureText(t('clearHeader')).width/2-22,hdrY-4,36);
+    X.fillText(t('clearHeader'),W*0.33,hdrY);
+    dI(ICN.celebrate,W*0.33+X.measureText(t('clearHeader')).width/2+22,hdrY-4,36);
     X.shadowBlur=0;X.restore();
+    clBottom=hdrY+8;
   }
-  // Sub-text with dark band for readability
+  // Sub-text with dark band (positioned below sprite)
   X.save();
+  const bandY1=clBottom+Math.max(6,H*0.02),bandH2=Math.max(H*0.15,50);
   X.fillStyle='rgba(0,0,0,0.45)';X.beginPath();
-  const bandY1=H*0.34,bandY2=H*0.50,bandH=bandY2-bandY1;
-  X.roundRect(W*0.33-160,bandY1,320,bandH,8);X.fill();
+  X.roundRect(W*0.33-160,bandY1,320,bandH2,8);X.fill();
   X.textAlign='center';X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=4;
-  X.fillStyle='#FFFFFF';X.font='bold 16px sans-serif';X.fillText(t('clearMsg'),W*0.33,H*0.40);
-  X.fillStyle='#EEDDCC';X.font='14px sans-serif';X.fillText(t('clearCongrats'),W*0.33,H*0.47);
+  X.fillStyle='#FFFFFF';X.font='bold 16px sans-serif';X.fillText(t('clearMsg'),W*0.33,bandY1+bandH2*0.38);
+  X.fillStyle='#EEDDCC';X.font='14px sans-serif';X.fillText(t('clearCongrats'),W*0.33,bandY1+bandH2*0.75);
   X.shadowBlur=0;X.restore();
   if(clearImgOk){const ih=H*0.82,iw=ih*(clearImg.width/clearImg.height);X.shadowColor='rgba(0,0,0,0.1)';X.shadowBlur=15;X.shadowOffsetX=3;X.shadowOffsetY=3;X.drawImage(clearImg,W*0.7-iw/2,H*0.5-ih/2,iw,ih);X.shadowColor='transparent';X.shadowBlur=0;X.shadowOffsetX=0;X.shadowOffsetY=0}
   // Replay & Title buttons with gradient
@@ -1689,7 +1733,7 @@ function dChallengeClear(){
   X.fillStyle='#FFEEBB';X.font='14px sans-serif';X.fillText(t('hallLegend'),W/2,H*0.50);
   X.restore();
   if(clearImgOk){const ih=H*0.5,iw=ih*(clearImg.width/clearImg.height);X.drawImage(clearImg,W*0.75-iw/2,H*0.55,iw,ih)}
-  if(showNameEntry){dNameEntry(W*0.33,H*0.20)}
+  if(showNameEntry){dNameEntry(W/2,Math.max(H*0.55,H*0.50+20))}
   else{
     X.save();X.shadowColor='rgba(0,0,0,0.7)';X.shadowBlur=4;
     if(lastRankPos>0){X.fillStyle='#FFD700';X.font='bold 18px sans-serif';X.textAlign='center';dI(ICN.crown,W/2-X.measureText(tf('currentRank',lastRankPos)).width/2-14,H*0.60-2,20);X.fillText(tf('currentRank',lastRankPos),W/2,H*0.60)}
@@ -2182,6 +2226,7 @@ const BACK_X=-750;// back gate position relative to bsX
 let completeHitTimer=0;
 const COMPLETE_HIT_FADE=50;// frames of red fade before resetting
 let rewardAdOffered=false;// prevent offering reward ad multiple times per game
+let reviveBtns=[];
 
 // === COMPLETE MODE SAVE/LOAD ===
 function saveCompleteProgress(){
@@ -2200,23 +2245,14 @@ function completeDie(){
   completeLives--;
   saveCompleteProgress();// save immediately on every life loss (anti-exploit)
   if(completeLives<=0){
-    // Last life lost: offer rewarded ad to revive (once per game)
-    if(!rewardAdOffered){
+    // Last life lost: show revive prompt (once per game)
+    if(!rewardAdOffered&&!window.adRemoved&&typeof window.nativeShowRewardedAd==='function'){
       rewardAdOffered=true;
       bL=false;bR=false;pMov=false;
-      const offered=offerRewardedAd(
-        ()=>{// Rewarded: restore 2 lives and continue
-          completeLives=2;saveCompleteProgress();
-          gs='complete_hit';completeHitTimer=0;
-        },
-        ()=>{// Skipped/failed: die normally
-          gs='dying';deathTimer=0;
-          stopBgm();playSe(seMissSrc);
-        }
-      );
-      if(offered){gs='complete_hit';completeHitTimer=0;return true}
+      gs='revive_prompt';
+      return true;
     }
-    return false;// no ad available or already offered, die normally
+    return false;// no ad available, already offered, or ads removed → die normally
   }
   // Start red fade animation, then reset to block 1
   gs='complete_hit';completeHitTimer=0;bL=false;bR=false;pMov=false;
@@ -2286,7 +2322,10 @@ function update(){
     if(gameMode==='complete')clearCompleteProgress();
     gs='gameover';bL=false;bR=false}return}
   if(gs==='complete_hit'){completeHitTimer++;if(completeHitTimer===1)vib([30,20,30]);if(completeHitTimer>=COMPLETE_HIT_FADE){
-    gs='playing';btTimer=BT_HALF*2;btLabel=tf('blockNum',1);btAction=()=>{cB=1;genA();sB();bL=false;bR=false;sM(t('returnedMsg'),tf('remainingLives',completeLives))}}return}
+    gs='playing';btTimer=BT_HALF*2;btLabel=tf('blockNum',1);btAction=()=>{cB=1;genA();sB();bL=false;bR=false;
+      playBgm(stageBgms[Math.min(Math.floor(clearedAnomalies.length*6/AN.length),5)]);
+      sM(t('returnedMsg'),tf('remainingLives',completeLives))}}return}
+  if(gs==='revive_prompt')return;// freeze game, wait for user choice
   if(gs==='gameover'){if(deathTimer<DEATH_BGM_DELAY){deathTimer++;if(deathTimer===DEATH_BGM_DELAY){playBgm(bgmDeath)}}return}
   if(gs==='challenge_clear')return;
   if(gs==='complete_clear')return;
@@ -2303,8 +2342,10 @@ function update(){
     if(gameMode==='challenge'&&nb>CHALLENGE_MAX){cB++;gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
     btLabel=tf('blockNum',nb);btAction=()=>{cB++;
       if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){clearCompleteProgress();gs='complete_clear';playBgm(bgmGoal);return}
-      // Stage BGM: cycle all 10 tracks every 20 blocks (challenge & complete)
-      if(gameMode!=='normal'&&cB>=20&&cB%20===0){playBgm(stageBgms[(cB/20)%10])}
+      // Challenge: cycle BGM by block count
+      if(gameMode==='challenge'&&cB>=20&&cB%20===0){playBgm(stageBgms[(cB/20)%10])}
+      // Complete: cycle BGM by cleared anomaly count (stage1-6 only)
+      if(gameMode==='complete'){playBgm(stageBgms[Math.min(Math.floor(clearedAnomalies.length*6/AN.length),5)])}
       genA();sB();sM(tf('blockNum',cB))};btTimer=BT_HALF*2
   }else{
     if(gameMode==='challenge'){
@@ -2539,57 +2580,63 @@ function dGameOver(){
     // Draw masked result onto main canvas
     X.drawImage(oc,ix,iy);
   }
-  // Main text — GAME OVER sprite with pulsating glow
-  const pulse=0.7+Math.sin(fc*0.06)*0.3;
-  const dTx=ICN.text_dead,deadY=showNameEntry?H*0.05:H*0.12;
+  // === Flow-based layout (prevents overlap on any screen size) ===
+  const cx=W*0.3,pulse=0.7+Math.sin(fc*0.06)*0.3;
+  const dTx=ICN.text_dead;
+  const dTw=Math.min(180,H*0.30);
+  const dTh=(dTx&&dTx.complete&&dTx.naturalWidth)?dTw*(dTx.naturalHeight/dTx.naturalWidth):42;
+  const gap=Math.max(6,H*0.025);
+  const goScore=gameMode==='challenge'?challengeScore:cB;
+  const hasName=gameMode==='challenge'&&showNameEntry;
+  const hasCause=lastDeathCause&&window.adRemoved;
+  const hasRank=!showNameEntry&&gameMode==='challenge'&&lastRankPos>0;
+  // Calculate total content height for vertical centering
+  let totalH=dTh+gap+20;// sprite + narrative
+  if(hasName)totalH+=130+gap;
+  if(gameMode==='challenge')totalH+=34+gap;
+  if(hasCause)totalH+=18+gap;
+  if(hasRank)totalH+=24+gap;
+  let curY=Math.max(H*0.03,(H-totalH)/2);
+  // 1. GAME OVER sprite
   if(dTx&&dTx.complete&&dTx.naturalWidth){
-    X.save();
-    const dTw=180,dTh=dTw*(dTx.naturalHeight/dTx.naturalWidth);
-    X.shadowColor='#FF0000';X.shadowBlur=25*pulse;
-    X.globalAlpha=pulse;
-    X.drawImage(dTx,W*0.3-dTw/2,deadY,dTw,dTh);
+    X.save();X.shadowColor='#FF0000';X.shadowBlur=25*pulse;X.globalAlpha=pulse;
+    X.drawImage(dTx,cx-dTw/2,curY,dTw,dTh);
     X.shadowBlur=0;X.globalAlpha=1;X.restore();
   }else{
-    X.save();
-    X.shadowColor='#FF0000';X.shadowBlur=20;
-    X.fillStyle=`rgba(200,20,20,${pulse})`;
-    X.font='bold 42px serif';X.textAlign='center';
-    X.fillText(t('deathMsg'),W*0.3,deadY+40);
-    X.shadowBlur=0;X.shadowColor='transparent';
-    X.restore();
+    X.save();X.shadowColor='#FF0000';X.shadowBlur=20;
+    X.fillStyle=`rgba(200,20,20,${pulse})`;X.font='bold 42px serif';X.textAlign='center';
+    X.fillText(t('deathMsg'),cx,curY+dTh*0.8);
+    X.shadowBlur=0;X.shadowColor='transparent';X.restore();
   }
-  // Sub text - score
-  const goScore=gameMode==='challenge'?challengeScore:cB;
+  curY+=dTh+gap;
+  // 2. Name entry (challenge mode)
+  if(hasName){dNameEntry(cx,curY+10);curY+=130+gap}
+  // 3. Death narrative
   X.fillStyle='#882222';X.font='16px sans-serif';X.textAlign='center';
-  X.fillText(tf('deathNarr',goScore),W*0.3,showNameEntry?H*0.35:H*0.40);
-  // Score emphasis for challenge mode
+  X.fillText(tf('deathNarr',goScore),cx,curY+16);curY+=22+gap;
+  // 4. Challenge score emphasis
   if(gameMode==='challenge'){
     X.fillStyle='#CC6633';X.font='bold 28px serif';
-    X.fillText(tf('deathScore',goScore),W*0.3,showNameEntry?H*0.50:H*0.55);
+    X.fillText(tf('deathScore',goScore),cx,curY+28);curY+=34+gap;
   }
-  // Death cause (ad removal purchasers only)
-  if(lastDeathCause&&window.adRemoved){
+  // 5. Death cause (ad removal only)
+  if(hasCause){
     const causeNames={thug:t('deathThug'),creep:t('deathCreep'),wizard:t('deathWizard'),ghost:t('deathGhost'),alien:t('deathAlien'),evilFog:t('deathFog'),runnerPiyo:t('deathRunner'),bugaSphere:t('deathBugaSphere'),misjudge:t('deathJudge')};
     const cn=causeNames[lastDeathCause]||lastDeathCause;
-    const causeY=gameMode==='challenge'?(showNameEntry?H*0.58:H*0.65):(showNameEntry?H*0.50:H*0.55);
     X.fillStyle='#664444';X.font='13px sans-serif';
-    X.fillText(tf('deathCauseLabel',cn),W*0.3,causeY);
+    X.fillText(tf('deathCauseLabel',cn),cx,curY+13);curY+=18+gap;
   }
-  // Name entry
-  if(gameMode==='challenge'&&showNameEntry){
-    dNameEntry(W*0.3,H*0.18);
-  }
-  // Rank position after name entry
-  if(!showNameEntry&&gameMode==='challenge'&&lastRankPos>0){
+  // 6. Rank (challenge, after name entry)
+  if(hasRank){
     X.fillStyle='#CC8844';X.font='bold 18px sans-serif';X.textAlign='center';
-    X.fillText(tf('currentRank',lastRankPos),W*0.3,showNameEntry?H*0.68:H*0.75);
+    X.fillText(tf('currentRank',lastRankPos),cx,curY+18);curY+=24+gap;
   }
-  // Tap to continue
+  // 7. Tap to continue (bottom-anchored)
   if(!showNameEntry){
     const tapA=0.3+Math.sin(fc*0.05)*0.7;
     X.fillStyle=`rgba(150,80,80,${Math.max(0,tapA)})`;
     X.font='14px sans-serif';X.textAlign='center';
-    X.fillText(t('tapToTitle'),W*0.3,H*0.88);
+    X.fillText(t('tapToTitle'),cx,Math.max(curY+14,H*0.85));
   }
 }
 
@@ -2603,6 +2650,7 @@ function render(){
   if(gs==='challenge_clear'){dChallengeClear();return}
   if(gs==='complete_clear'){dCompleteClear();return}
   if(gs==='gameover'){dGameOver();return}
+  if(gs==='revive_prompt'){dRevivePrompt();return}
   if(gs==='paused'){dPause();return}
   X.save();X.translate(skX,skY);
   dSky();dTkyTower();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
@@ -2623,6 +2671,7 @@ function render(){
   const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
   dBugaSphere();
+  dBackGateFront();dGateFront();
   dChallengeFog();
   if(tTm>0){const al=tTp==='r'?Math.sin(tTm/40*Math.PI)*0.4:(tTm/30)*0.2;X.fillStyle=tTp==='r'?`rgba(255,20,20,${al})`:`rgba(255,255,180,${al})`;X.fillRect(-10,-10,W+20,H+20)}
   // Dying red fade
@@ -2761,7 +2810,9 @@ function startGame(mode){
   let resumed=false;
   if(mode==='complete'){resumed=loadCompleteProgress()}
   genA();sB();
-  gs='playing';playBgm(bgmStage);
+  gs='playing';
+  if(mode==='complete'&&resumed){playBgm(stageBgms[Math.min(Math.floor(clearedAnomalies.length*6/AN.length),5)])}
+  else{playBgm(bgmStage)}
   if(mode==='challenge')sM(tf('blockNum',1),t('challengeStart'));
   else if(mode==='complete'&&resumed)sM(tf('blockNum',1),tf('resumeProgress',clearedAnomalies.length,AN.length));
   else sM(tf('blockNum',1),t('nightRoad'));
@@ -2870,6 +2921,25 @@ function hS(e){
       if(b.id==='title'){showAdThenTitle(goToTitle);return}
     }}return;
   }
+  if(gs==='revive_prompt'){
+    const rcR=C.getBoundingClientRect();const tsR=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
+    const cxR=(tsR[0].clientX-rcR.left)*(W/rcR.width),cyR=(tsR[0].clientY-rcR.top)*(H/rcR.height);
+    for(const b of reviveBtns){
+      if(cxR>=b.x&&cxR<=b.x+b.w&&cyR>=b.y&&cyR<=b.y+b.h){
+        if(b.id==='yes'){
+          const offered=offerRewardedAd(
+            ()=>{completeLives=2;saveCompleteProgress();gs='complete_hit';completeHitTimer=0},
+            ()=>{gs='dying';deathTimer=0;stopBgm();playSe(seMissSrc)}
+          );
+          if(!offered){gs='dying';deathTimer=0;stopBgm();playSe(seMissSrc)}
+        }else{
+          gs='dying';deathTimer=0;stopBgm();playSe(seMissSrc);
+        }
+        return;
+      }
+    }
+    return;// ignore taps outside buttons
+  }
   if(gs==='gameover'){
     if(showNameEntry){
       const rc=C.getBoundingClientRect();const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
@@ -2971,6 +3041,25 @@ C.addEventListener('mousedown',(e)=>{
       if(b.id==='replay'){showAdThenTitle(()=>startGame('challenge'));return}
       if(b.id==='title'){showAdThenTitle(goToTitle);return}
     }}return;
+  }
+  if(gs==='revive_prompt'){
+    const rcR2=C.getBoundingClientRect();
+    const mxR=(e.clientX-rcR2.left)*(W/rcR2.width),myR=(e.clientY-rcR2.top)*(H/rcR2.height);
+    for(const b of reviveBtns){
+      if(mxR>=b.x&&mxR<=b.x+b.w&&myR>=b.y&&myR<=b.y+b.h){
+        if(b.id==='yes'){
+          const offered=offerRewardedAd(
+            ()=>{completeLives=2;saveCompleteProgress();gs='complete_hit';completeHitTimer=0},
+            ()=>{gs='dying';deathTimer=0;stopBgm();playSe(seMissSrc)}
+          );
+          if(!offered){gs='dying';deathTimer=0;stopBgm();playSe(seMissSrc)}
+        }else{
+          gs='dying';deathTimer=0;stopBgm();playSe(seMissSrc);
+        }
+        return;
+      }
+    }
+    return;
   }
   if(gs==='gameover'){
     if(showNameEntry){
