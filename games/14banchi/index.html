@@ -30,14 +30,19 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 </style>
 </head>
 <body>
+<div id="beta-gate" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:10000;flex-direction:column;align-items:center;justify-content:center;gap:20px;color:#FFD700;font-family:sans-serif;text-align:center;padding:24px"><div style="font-size:24px;font-weight:bold">「14番地」早期テストプレイ</div><div style="color:#AA9977;font-size:14px;line-height:1.6;max-width:400px">このゲームは現在クローズドテスト中です。<br>Android版のテストプレイに参加するには、<br>下のボタンからテスター登録を行ってください。</div><button id="beta-btn" style="margin-top:12px;padding:14px 36px;font-size:16px;font-weight:bold;color:#0a0a14;background:#FFD700;border:none;border-radius:8px;cursor:pointer;font-family:sans-serif">テストプレイに参加する</button></div>
 <div id="splash"><div class="sp-title">「14番地」</div><div class="sp-sub">NullPo Works</div></div>
 <div id="rb"><div class="ic">↻</div><div class="mg">横向きにしてプレイしてください</div></div>
 <canvas id="gc"></canvas>
 <script>
 'use strict';
-// Android ブラウザからのアクセスをベータテストページにリダイレクト
+// Android ブラウザ → ベータテスト同意画面を表示
 if(/Android/i.test(navigator.userAgent)&&typeof window.nativeExitApp!=='function'){
-location.replace('https://nullpoworks.github.io/beta-test.html');
+  const bg=document.getElementById('beta-gate');
+  bg.style.display='flex';
+  document.getElementById('beta-btn').onclick=function(){
+    location.replace('https://nullpoworks.github.io/beta-test.html');
+  };
 }
 const APP_VER='0.927';
 const C=document.getElementById('gc'),X=C.getContext('2d');
