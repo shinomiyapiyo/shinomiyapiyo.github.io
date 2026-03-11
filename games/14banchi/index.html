@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.nativeExitApp!=='function
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.927';
+const APP_VER='0.929';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -2741,7 +2741,12 @@ function render(){
   }
 }
 
-function loop(){update();render();requestAnimationFrame(loop)}
+let _lastFrameTime=0;
+function loop(now){
+  if(now-_lastFrameTime<16.667){requestAnimationFrame(loop);return}
+  _lastFrameTime=now;
+  update();render();requestAnimationFrame(loop);
+}
 
 // === INPUT ===
 // Prevent touch→mouse ghost event duplication on mobile
@@ -3098,18 +3103,18 @@ C.addEventListener('wheel',(e)=>{
 C.addEventListener('mouseup',()=>{if(!isGhostMouse()){bL=false;bR=false}});C.addEventListener('mouseleave',()=>{if(!isGhostMouse()){bL=false;bR=false}});
 
 // Hidden input for mobile keyboard
-const nameEl=document.createElement('input');nameEl.type='text';nameEl.maxLength=8;
+const nameEl=document.createElement('input');nameEl.type='text';nameEl.maxLength=8;nameEl.setAttribute('inputmode','text');
 nameEl.setAttribute('autocomplete','off');nameEl.setAttribute('autocorrect','off');
 nameEl.setAttribute('autocapitalize','off');nameEl.setAttribute('spellcheck','false');
-nameEl.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);opacity:0.01;font-size:16px;width:1px;height:1px;border:none;z-index:10000;';
+nameEl.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:16px;width:200px;height:40px;border:none;outline:none;background:transparent;color:transparent;caret-color:transparent;z-index:10000;';
 document.body.appendChild(nameEl);
 nameEl.addEventListener('input',()=>{nameInput=nameEl.value.substring(0,8)});
 nameEl.addEventListener('blur',()=>{nameInputActive=false});
 function openNameInput(){
   nameEl.value=nameInput;nameInputActive=true;
-  // iOS requires focus in user gesture context; use setTimeout as fallback
-  try{nameEl.focus()}catch(e){console.warn('[14b:dom]',e)}
-  setTimeout(()=>{try{nameEl.focus()}catch(e){console.warn('[14b:dom]',e)}},50);
+  nameEl.readOnly=false;
+  try{nameEl.focus();nameEl.click()}catch(e){console.warn('[14b:dom]',e)}
+  setTimeout(()=>{try{nameEl.focus()}catch(e){console.warn('[14b:dom]',e)}},100);
 }
 
 document.addEventListener('keydown',(e)=>{
@@ -3151,7 +3156,7 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch
 // === Hide splash screen ===
 {const sp=document.getElementById('splash');if(sp){sp.classList.add('hide');sp.addEventListener('transitionend',()=>sp.remove(),{once:true})}}
 
-loop();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
