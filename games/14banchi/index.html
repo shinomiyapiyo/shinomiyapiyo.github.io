@@ -37,14 +37,14 @@ canvas{display:block;position:absolute;top:var(--sat);left:var(--sal)}
 <script>
 'use strict';
 // Android ブラウザ → ベータテスト同意画面を表示
-if(/Android/i.test(navigator.userAgent)&&typeof window.nativeExitApp!=='function'){
+if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefined'){
   const bg=document.getElementById('beta-gate');
   bg.style.display='flex';
   document.getElementById('beta-btn').onclick=function(){
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.931';
+const APP_VER='0.932';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
