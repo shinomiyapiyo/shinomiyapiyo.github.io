@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.nativeExitApp!=='function
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.929';
+const APP_VER='0.931';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -2743,9 +2743,11 @@ function render(){
 
 let _lastFrameTime=0;
 function loop(now){
-  if(now-_lastFrameTime<16.667){requestAnimationFrame(loop);return}
-  _lastFrameTime=now;
-  update();render();requestAnimationFrame(loop);
+  requestAnimationFrame(loop);
+  if(now-_lastFrameTime<15)return;
+  _lastFrameTime+=16.667;
+  if(_lastFrameTime<now-16.667)_lastFrameTime=now;
+  update();render();
 }
 
 // === INPUT ===
