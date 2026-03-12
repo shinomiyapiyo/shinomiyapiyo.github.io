@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.932';
+const APP_VER='0.935';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -593,7 +593,7 @@ let btTimer=0,btAction=null,btLabel='';const BT_HALF=12;
 let bsX=0;let BW=2100;const BW_NORMAL=2100;const BW_SHORT=1260;const GH=0.76;
 let bL=false,bR=false,skT=0,skX=0,skY=0;
 let runnerX=0,runnerActive=false;// runnerPiyo state
-let bsphX=0,bsphY=0,bsphTimer=0,bsphPhase=0,bsphPrevX=0,bsphPrevY=0,bsphSafe=false;// bugaSphere state
+let bsphX=0,bsphY=0,bsphTimer=0,bsphPhase=0,bsphPrevX=0,bsphPrevY=0,bsphSafe=false,bsphReady=false;// bugaSphere state
 // FIX: evilFog start frame - use null instead of 0 so falsy check works correctly
 let efStart=null;
 // Normal mode: track cleared anomalies so they don't repeat
@@ -702,7 +702,7 @@ function genA(){
     }
     if(AN[aT]==='shortBlock')BW=BW_SHORT;
     if(AN[aT]==='runnerPiyo'){runnerX=bsX+BW+100;runnerActive=true}
-    if(AN[aT]==='bugaSphere'){bsphX=bsX+BW*0.7;bsphY=H*0.45;bsphTimer=0;bsphPhase=2;bsphPrevX=bsphX;bsphPrevY=bsphY;bsphSafe=true}
+    if(AN[aT]==='bugaSphere'){bsphX=bsX+BW*0.7;bsphY=H*0.45;bsphTimer=0;bsphPhase=2;bsphPrevX=bsphX;bsphPrevY=bsphY;bsphSafe=true;bsphReady=false}
   }
   // Heart item drop (complete mode only, 1/15 chance, not on block 1)
   heartItemActive=false;
@@ -1333,7 +1333,7 @@ function dAnom(){
   // bugaSphere drawn separately after player (see dBugaSphere)
 }
 function dBugaSphere(){
-  if(!hasA||AN[aT]!=='bugaSphere')return;
+  if(!hasA||AN[aT]!=='bugaSphere'||!bsphReady)return;
   const bsx=bsphX-camX,bsy=bsphY+Math.sin(fc*0.04)*6;
   const sphImg=ICN.buga_sphere,sphS=67;
   if(bsphPhase===1){
@@ -1517,7 +1517,7 @@ function handlePauseTap(cx,cy){
       if(b.id===0){gs='playing';retireConfirm=false;return true}// Resume
       if(b.id===20){toggleMute();return true}// Mute toggle
       if(b.id===1){retireConfirm=true;return true}// Show retire confirmation
-      if(b.id===10){retireConfirm=false;gs='title';playBgm(bgmTitle);return true}// Confirm retire
+      if(b.id===10){retireConfirm=false;if(gameMode==='challenge'){challengeScore=cB;showNameEntry=isRankIn(challengeScore);nameInput='';nameInputActive=showNameEntry;gs='gameover';stopBgm();playBgm(bgmDeath)}else{gs='title';playBgm(bgmTitle)}return true}// Confirm retire
       if(b.id===11){retireConfirm=false;return true}// Cancel retire
     }
   }
@@ -1738,7 +1738,7 @@ function dChallengeClear(){
   X.fillStyle='#FFEEBB';X.font='14px sans-serif';X.fillText(t('hallLegend'),W/2,H*0.50);
   X.restore();
   if(clearImgOk){const ih=H*0.5,iw=ih*(clearImg.width/clearImg.height);X.drawImage(clearImg,W*0.75-iw/2,H*0.55,iw,ih)}
-  if(showNameEntry){dNameEntry(W/2,Math.max(H*0.55,H*0.50+20))}
+  if(showNameEntry){dNameEntry(W/2,Math.max(H*0.55,H*0.50+20));syncNameElPos()}
   else{
     X.save();X.shadowColor='rgba(0,0,0,0.7)';X.shadowBlur=4;
     if(lastRankPos>0){X.fillStyle='#FFD700';X.font='bold 18px sans-serif';X.textAlign='center';dI(ICN.crown,W/2-X.measureText(tf('currentRank',lastRankPos)).width/2-14,H*0.60-2,20);X.fillText(tf('currentRank',lastRankPos),W/2,H*0.60)}
@@ -2047,7 +2047,7 @@ function hitNameSkipBtn(cx,cy){
 function handleNameSkip(){
   const sc=gs==='challenge_clear'?CHALLENGE_MAX:challengeScore;
   saveRanking(t('anonName'),sc);
-  showNameEntry=false;nameInputActive=false;nameInput='';
+  showNameEntry=false;nameInputActive=false;nameInput='';hideNameEl();
 }
 
 // === NAME FILTER (NG word / sanitize) ===
@@ -2263,7 +2263,7 @@ function completeDie(){
   gs='complete_hit';completeHitTimer=0;bL=false;bR=false;pMov=false;
   return true;// handled, skip dying
 }
-function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;pDir=1;efStart=null;stopQuakeSe()}
+function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;pDir=1;efStart=null;stopQuakeSe();bsphReady=false}
 function sM(t,s){mTx=t;mSb=s||'';mTm=90}
 
 // === AD HOOK ===
@@ -2428,6 +2428,7 @@ function update(){
     // bugaSphere - 追尾 + ワープ回り込みロジック
     // Phase: 0=chase, 1=warp-telegraph(点滅予告), 2=warped-pause(ワープ後停止), 3=flank-rush(高速接近)
     if(a==='bugaSphere'){
+      if(!bsphReady){if(pX>=bsX+BW*0.4){bsphReady=true;bsphTimer=0;bsphPhase=2;bsphSafe=true}else break}
       bsphTimer++;
       const gy2=H*GH-20;
       if(bsphPhase===0){
@@ -2615,7 +2616,7 @@ function dGameOver(){
   }
   curY+=dTh+gap;
   // 2. Name entry (challenge mode)
-  if(hasName){dNameEntry(cx,curY+10);curY+=130+gap}
+  if(hasName){dNameEntry(cx,curY+10);syncNameElPos();curY+=130+gap}
   // 3. Death narrative
   X.fillStyle='#882222';X.font='16px sans-serif';X.textAlign='center';
   X.fillText(tf('deathNarr',goScore),cx,curY+16);curY+=22+gap;
@@ -2866,7 +2867,7 @@ function handleNameOK(){
     if(containsNG(clean)){nameNgTimer=120;nameInput='';nameEl.value='';return}
     const sc=gs==='challenge_clear'?CHALLENGE_MAX:challengeScore;
     saveRanking(clean,sc);
-    showNameEntry=false;nameInputActive=false;
+    showNameEntry=false;nameInputActive=false;hideNameEl();
   }
 }
 
@@ -3108,15 +3109,34 @@ C.addEventListener('mouseup',()=>{if(!isGhostMouse()){bL=false;bR=false}});C.add
 const nameEl=document.createElement('input');nameEl.type='text';nameEl.maxLength=8;nameEl.setAttribute('inputmode','text');
 nameEl.setAttribute('autocomplete','off');nameEl.setAttribute('autocorrect','off');
 nameEl.setAttribute('autocapitalize','off');nameEl.setAttribute('spellcheck','false');
-nameEl.style.cssText='position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:16px;width:200px;height:40px;border:none;outline:none;background:transparent;color:transparent;caret-color:transparent;z-index:10000;';
+nameEl.style.cssText='position:fixed;top:-100px;left:-100px;font-size:16px;width:1px;height:1px;opacity:0;z-index:10001;pointer-events:none;border:none;outline:none;background:#1a1a2e;color:#FFF;caret-color:#FFD700;padding:0 8px;box-sizing:border-box;font-family:monospace;';
 document.body.appendChild(nameEl);
 nameEl.addEventListener('input',()=>{nameInput=nameEl.value.substring(0,8)});
 nameEl.addEventListener('blur',()=>{nameInputActive=false});
+function syncNameElPos(){
+  if(!showNameEntry||!nameEntryInputBtn)return;
+  const rc=C.getBoundingClientRect();
+  const sx=rc.width/W,sy=rc.height/H;
+  const b=nameEntryInputBtn;
+  nameEl.style.left=(rc.left+b.x*sx)+'px';
+  nameEl.style.top=(rc.top+b.y*sy)+'px';
+  nameEl.style.width=(b.w*sx)+'px';
+  nameEl.style.height=(b.h*sy)+'px';
+  nameEl.style.fontSize=Math.max(12,Math.floor(16*sy))+'px';
+  nameEl.style.opacity='1';
+  nameEl.style.pointerEvents='auto';
+}
+function hideNameEl(){
+  nameEl.style.top='-100px';nameEl.style.left='-100px';
+  nameEl.style.width='1px';nameEl.style.height='1px';
+  nameEl.style.opacity='0';nameEl.style.pointerEvents='none';
+  nameEl.blur();
+}
 function openNameInput(){
   nameEl.value=nameInput;nameInputActive=true;
   nameEl.readOnly=false;
-  try{nameEl.focus();nameEl.click()}catch(e){console.warn('[14b:dom]',e)}
-  setTimeout(()=>{try{nameEl.focus()}catch(e){console.warn('[14b:dom]',e)}},100);
+  syncNameElPos();
+  try{nameEl.focus()}catch(e){console.warn('[14b:dom]',e)}
 }
 
 document.addEventListener('keydown',(e)=>{
