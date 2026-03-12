@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.935';
+const APP_VER='0.937';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -700,9 +700,7 @@ function genA(){
     }else{
       aT=Math.floor(Math.random()*AN.length);
     }
-    if(AN[aT]==='shortBlock')BW=BW_SHORT;
-    if(AN[aT]==='runnerPiyo'){runnerX=bsX+BW+100;runnerActive=true}
-    if(AN[aT]==='bugaSphere'){bsphX=bsX+BW*0.7;bsphY=H*0.45;bsphTimer=0;bsphPhase=2;bsphPrevX=bsphX;bsphPrevY=bsphY;bsphSafe=true;bsphReady=false}
+    const ifn=ANOM_INIT[AN[aT]];if(ifn)ifn();
   }
   // Heart item drop (complete mode only, 1/15 chance, not on block 1)
   heartItemActive=false;
@@ -1190,148 +1188,192 @@ function dTkyTower(){
     X.beginPath();X.arc(tx+deckW2-3,deckY2-1,1.5,0,Math.PI*2);X.fill();
   }
 }
-function dAnom(){
-  const gy=H*GH,sd=cB*999;
-  if(!hasA)return;
-  const a=AN[aT];
-
-  // extraPole
-  if(a==='extraPole'){const ex=bsX+BW*0.45-camX;X.fillStyle='#2A2A30';X.fillRect(ex,gy-125,5,127);X.fillRect(ex-10,gy-125,25,4);const lg=X.createRadialGradient(ex+2,gy-123,0,ex+2,gy-123,50);lg.addColorStop(0,'rgba(200,50,50,0.5)');lg.addColorStop(1,'transparent');X.fillStyle=lg;X.beginPath();X.arc(ex+2,gy-123,50,0,Math.PI*2);X.fill()}
-
-  // floatingEyes
-  if(a==='floatingEyes'){for(let i=0;i<10;i++){const ex=((sd+i*211)%BW)+bsX-camX,ey=H*0.06+((sd+i*157)%(H*0.32));if(ex<-30||ex>W+30)continue;const es=2.5+Math.sin(fc*0.04+i)*1.2,al=0.4+Math.sin(fc*0.03+i*2)*0.3;X.fillStyle=`rgba(255,0,0,${al})`;X.beginPath();X.arc(ex,ey,es,0,Math.PI*2);X.fill();X.beginPath();X.arc(ex+12,ey,es,0,Math.PI*2);X.fill()}}
-
-  // shootingStar - occasional shooting stars across sky
-  if(a==='shootingStar'){
-    for(let i=0;i<3;i++){
-      const period=180+i*120;
-      const t=((fc+i*60)%period)/period;
-      if(t<0.15){
-        const sx=W*0.1+i*W*0.3,sy=H*0.05+i*H*0.08;
-        const ex=sx+W*0.3,ey=sy+H*0.15;
-        const p=t/0.15;
-        const cx=sx+(ex-sx)*p,cy=sy+(ey-sy)*p;
-        const al=p<0.5?p*2:(1-p)*2;
-        X.strokeStyle=`rgba(255,255,200,${al*0.8})`;X.lineWidth=2;
-        X.beginPath();X.moveTo(cx,cy);X.lineTo(cx-(ex-sx)*0.1,cy-(ey-sy)*0.1);X.stroke();
-        X.fillStyle=`rgba(255,255,220,${al})`;X.beginPath();X.arc(cx,cy,2,0,Math.PI*2);X.fill();
-      }
+// --- Anomaly draw functions (called from dAnom via ANOM_DRAW dispatch table) ---
+function drawAnom_extraPole(gy,sd){const ex=bsX+BW*0.45-camX;X.fillStyle='#2A2A30';X.fillRect(ex,gy-125,5,127);X.fillRect(ex-10,gy-125,25,4);const lg=X.createRadialGradient(ex+2,gy-123,0,ex+2,gy-123,50);lg.addColorStop(0,'rgba(200,50,50,0.5)');lg.addColorStop(1,'transparent');X.fillStyle=lg;X.beginPath();X.arc(ex+2,gy-123,50,0,Math.PI*2);X.fill()}
+function drawAnom_floatingEyes(gy,sd){for(let i=0;i<10;i++){const ex=((sd+i*211)%BW)+bsX-camX,ey=H*0.06+((sd+i*157)%(H*0.32));if(ex<-30||ex>W+30)continue;const es=2.5+Math.sin(fc*0.04+i)*1.2,al=0.4+Math.sin(fc*0.03+i*2)*0.3;X.fillStyle=`rgba(255,0,0,${al})`;X.beginPath();X.arc(ex,ey,es,0,Math.PI*2);X.fill();X.beginPath();X.arc(ex+12,ey,es,0,Math.PI*2);X.fill()}}
+function drawAnom_shootingStar(gy,sd){
+  for(let i=0;i<3;i++){
+    const period=180+i*120;
+    const t=((fc+i*60)%period)/period;
+    if(t<0.15){
+      const sx=W*0.1+i*W*0.3,sy=H*0.05+i*H*0.08;
+      const ex=sx+W*0.3,ey=sy+H*0.15;
+      const p=t/0.15;
+      const cx=sx+(ex-sx)*p,cy=sy+(ey-sy)*p;
+      const al=p<0.5?p*2:(1-p)*2;
+      X.strokeStyle=`rgba(255,255,200,${al*0.8})`;X.lineWidth=2;
+      X.beginPath();X.moveTo(cx,cy);X.lineTo(cx-(ex-sx)*0.1,cy-(ey-sy)*0.1);X.stroke();
+      X.fillStyle=`rgba(255,255,220,${al})`;X.beginPath();X.arc(cx,cy,2,0,Math.PI*2);X.fill();
     }
   }
-
-  // bloodDrip
-  if(a==='bloodDrip'){for(let i=0;i<12;i++){const dx=((sd+i*171)%BW)+bsX-camX;if(dx<-10||dx>W+10)continue;const dl=18+((sd+i*91)%40),al=0.3+Math.sin(fc*0.02+i)*0.15;X.fillStyle=`rgba(150,0,0,${al})`;X.fillRect(dx,0,2,dl);X.beginPath();X.arc(dx+1,dl,2,0,Math.PI*2);X.fill()}}
-
-  // ghost
-  if(a==='ghost'){const gx=bsX+BW*0.5-camX,al=0.15+Math.sin(fc*0.03)*0.1,yo=Math.sin(fc*0.02)*7;X.globalAlpha=al;X.fillStyle='#FFF';X.beginPath();X.ellipse(gx,gy-48+yo,16,26,0,0,Math.PI*2);X.fill();X.fillStyle='#000';X.beginPath();X.arc(gx-5,gy-53+yo,2.5,0,Math.PI*2);X.fill();X.beginPath();X.arc(gx+5,gy-53+yo,2.5,0,Math.PI*2);X.fill();X.beginPath();X.arc(gx,gy-44+yo,3.5,0,Math.PI);X.fill();X.globalAlpha=1}
-
-  // thug
-  if(a==='thug'){const ti=SPR['thug'];if(ti&&ti.complete){const tx=bsX+BW*0.5-camX;const th=H*0.32;const tw=th*(ti.naturalWidth/ti.naturalHeight);const breathe=Math.sin(fc*0.04)*1.5;X.drawImage(ti,tx-tw/2,gy-th+breathe+9,tw,th)}}
-
-  // creep - hoodie figure standing eerily
-  if(a==='creep'){const ci=SPR['creep'];if(ci&&ci.complete){const cx=bsX+BW*0.55-camX;const ch2=H*0.32;const cw=ch2*(ci.naturalWidth/ci.naturalHeight);const sway=Math.sin(fc*0.025)*2;X.drawImage(ci,cx-cw/2+sway,gy-ch2+9,cw,ch2)}}
-
-  // wizard - crying wizard at desk
-  if(a==='wizard'){const wi=SPR['wizard'];if(wi&&wi.complete){const wx=bsX+BW*0.45-camX;const wh=H*0.30;const ww=wh*(wi.naturalWidth/wi.naturalHeight);const bob=Math.sin(fc*0.05)*1.5;X.drawImage(wi,wx-ww/2,gy-wh+bob+9,ww,wh)}}
-
-  // alien - standing alien
-  if(a==='alien'){const ai=SPR['alien'];if(ai&&ai.complete){const ax=bsX+BW*0.48-camX;const ah=H*0.30;const aw=ah*(ai.naturalWidth/ai.naturalHeight);const hover=Math.sin(fc*0.04)*2;X.drawImage(ai,ax-aw/2,gy-ah+hover+9,aw,ah)}}
-
-  // foggy
-  if(a==='foggy'){for(let i=0;i<8;i++){const fx=((fc*0.3+i*200+sd)%(W+200))-100;const fy=H*0.3+((sd+i*77)%(H*0.35));const fw=120+((sd+i*53)%80);const al=0.06+Math.sin(fc*0.01+i)*0.03;X.fillStyle=`rgba(180,180,200,${al})`;X.beginPath();X.ellipse(fx,fy,fw,25+i*3,0,0,Math.PI*2);X.fill()}}
-
-  // shadowHands
-  if(a==='shadowHands'){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.5+Math.sin(fc*0.02+i)*0.2;X.fillStyle=`rgba(20,0,35,${al})`;X.save();X.translate(hx,gy+2);
-    // Draw a hand shape
-    X.beginPath();X.moveTo(0,0);X.lineTo(-4,-18-rise);X.lineTo(-2,-24-rise);X.lineTo(0,-20-rise);X.lineTo(2,-26-rise);X.lineTo(4,-22-rise);X.lineTo(6,-27-rise);X.lineTo(7,-21-rise);X.lineTo(8,-25-rise);X.lineTo(9,-18-rise);X.lineTo(6,-12-rise);X.lineTo(10,0);X.closePath();X.fill();X.restore()}}
-
-  // reverseGrav (rain going upward)
-  if(a==='reverseGrav'){X.strokeStyle='rgba(100,120,200,0.3)';X.lineWidth=1;for(let i=0;i<40;i++){const rx=((fc*2+i*97+sd)%W);const ry=H*GH-((fc*3+i*131+sd)%(H*GH));X.beginPath();X.moveTo(rx,ry);X.lineTo(rx+0.5,ry+8);X.stroke()}}
-
-  // heartbeat (screen pulsing)
-  if(a==='heartbeat'){const pulse=Math.abs(Math.sin(fc*0.08));if(pulse>0.85){const al=(pulse-0.85)*3;X.fillStyle=`rgba(60,0,0,${al*0.15})`;X.fillRect(0,0,W,H);
-    // Vignette pulse
-    const vg=X.createRadialGradient(W/2,H/2,W*0.2,W/2,H/2,W*0.7);vg.addColorStop(0,'transparent');vg.addColorStop(1,`rgba(40,0,0,${al*0.3})`);X.fillStyle=vg;X.fillRect(0,0,W,H)}}
-
-  // earthquake - screen shakes periodically with SE
-  if(a==='earthquake'){
-    const qCycle=90;const qPhase=fc%qCycle;
-    if(qPhase<70){
-      const intensity=qPhase<20?(qPhase/20)*22:(1-(qPhase-20)/50)*22;
-      skX=Math.sin(fc*2.5)*(intensity)+((Math.random()-0.5)*intensity*0.8);
-      skY=Math.cos(fc*3.1)*(intensity*0.7)+((Math.random()-0.5)*intensity*0.6);
-    }else{skX=0;skY=0}
-    if(qPhase===0)playSe('quake');
-  }
-
-  // wrongMoon - subtle creepy modifications to the normal moon (drawn in dSky, so skip normal moon for this)
-  // Note: wrongMoon replaces normal moon rendering - see dSky
-
-  // FIX: evilFog - use module-level efStart (null-based) instead of window._efStart (0-based)
-  if(a==='evilFog'){
-    if(efStart===null)efStart=fc;
-    const elapsed=fc-efStart;
-    const fogDelay=120;// 2 seconds before fog starts
-    if(elapsed>fogDelay){
-      const fogSpeed=4.1;
-      const fogX=bsX+BW+200-(elapsed-fogDelay)*fogSpeed;
-      const fogScreenX=fogX-camX;
-      // Draw fog wall
-      for(let i=0;i<15;i++){
-        const fx=fogScreenX+Math.sin(fc*0.03+i*0.7)*20-i*8;
-        const fy=i*(H/15);
-        const fw=W*0.6;const fh=H/12;
-        const al=0.25+Math.sin(fc*0.02+i)*0.1;
-        X.fillStyle=`rgba(100,10,10,${al})`;
-        X.beginPath();X.ellipse(fx,fy,fw,fh,0,0,Math.PI*2);X.fill();
-      }
-      // Warning text when fog approaches
-      if(fogScreenX<W+100&&fogScreenX>W*0.3){
-        const warnAl=0.5+Math.sin(fc*0.1)*0.5;
-        X.fillStyle=`rgba(255,50,50,${warnAl})`;X.font='bold 18px serif';X.textAlign='center';
-        X.fillText(t('flee'),W/2,H*0.15);
-      }
-      // Play foghorn when fog first appears
-      if(elapsed===fogDelay+1)playSe('foghorn');
-    }
-  }
-
-  // runnerPiyo - another piyo sprinting from right to left (red tinted)
-  if(a==='runnerPiyo'&&runnerActive){
-    const rsx=runnerX-camX;
-    if(rsx>-60&&rsx<W+60){
-      const fr=WALK_L[(Math.floor(fc/3))%WALK_L.length];
-      const baseSprScale=Math.min(H*0.32/120,1.3);
-      const sprScaleR=fr==='stand'?baseSprScale*1.04:baseSprScale;
-      const redImg=RED_SPR[fr];
-      const img=SPR[fr];
-      const drawSrc=redImg||img;
-      if(drawSrc&&(drawSrc.complete!==false)){
-        const nw=img?img.naturalWidth:drawSrc.width;
-        const nh=img?img.naturalHeight:drawSrc.height;
-        const sw=nw*sprScaleR,sh=nh*sprScaleR;
-        const bob2=Math.sin(fc*0.5)*1.5;
-        X.save();
-        X.translate(rsx,0);
-        X.scale(-1,1);
-        X.drawImage(drawSrc,-sw/2,gy-sh+bob2+9,sw,sh);
-        X.restore();
-      }
-      // Warning text
-      if(runnerX-pX<400&&runnerX-pX>0){
-        const warnAl=0.5+Math.sin(fc*0.12)*0.5;
-        X.fillStyle=`rgba(255,50,50,${warnAl})`;X.font='bold 16px serif';X.textAlign='center';
-        X.fillText(t('flee'),W/2,H*0.15);
-      }
-    }
-  }
-
-  // silentLamp - lamp post exists but light is completely off
-  if(a==='silentLamp'){/* rendered via dLmp() with light suppressed */}
-
-  // bugaSphere - metallic sphere that chases the player
-  // bugaSphere drawn separately after player (see dBugaSphere)
 }
+function drawAnom_bloodDrip(gy,sd){for(let i=0;i<12;i++){const dx=((sd+i*171)%BW)+bsX-camX;if(dx<-10||dx>W+10)continue;const dl=18+((sd+i*91)%40),al=0.3+Math.sin(fc*0.02+i)*0.15;X.fillStyle=`rgba(150,0,0,${al})`;X.fillRect(dx,0,2,dl);X.beginPath();X.arc(dx+1,dl,2,0,Math.PI*2);X.fill()}}
+function drawAnom_ghost(gy,sd){const gx=bsX+BW*0.5-camX,al=0.15+Math.sin(fc*0.03)*0.1,yo=Math.sin(fc*0.02)*7;X.globalAlpha=al;X.fillStyle='#FFF';X.beginPath();X.ellipse(gx,gy-48+yo,16,26,0,0,Math.PI*2);X.fill();X.fillStyle='#000';X.beginPath();X.arc(gx-5,gy-53+yo,2.5,0,Math.PI*2);X.fill();X.beginPath();X.arc(gx+5,gy-53+yo,2.5,0,Math.PI*2);X.fill();X.beginPath();X.arc(gx,gy-44+yo,3.5,0,Math.PI);X.fill();X.globalAlpha=1}
+function drawAnom_thug(gy,sd){const ti=SPR['thug'];if(ti&&ti.complete){const tx=bsX+BW*0.5-camX;const th=H*0.32;const tw=th*(ti.naturalWidth/ti.naturalHeight);const breathe=Math.sin(fc*0.04)*1.5;X.drawImage(ti,tx-tw/2,gy-th+breathe+9,tw,th)}}
+function drawAnom_creep(gy,sd){const ci=SPR['creep'];if(ci&&ci.complete){const cx=bsX+BW*0.55-camX;const ch2=H*0.32;const cw=ch2*(ci.naturalWidth/ci.naturalHeight);const sway=Math.sin(fc*0.025)*2;X.drawImage(ci,cx-cw/2+sway,gy-ch2+9,cw,ch2)}}
+function drawAnom_wizard(gy,sd){const wi=SPR['wizard'];if(wi&&wi.complete){const wx=bsX+BW*0.45-camX;const wh=H*0.30;const ww=wh*(wi.naturalWidth/wi.naturalHeight);const bob=Math.sin(fc*0.05)*1.5;X.drawImage(wi,wx-ww/2,gy-wh+bob+9,ww,wh)}}
+function drawAnom_alien(gy,sd){const ai=SPR['alien'];if(ai&&ai.complete){const ax=bsX+BW*0.48-camX;const ah=H*0.30;const aw=ah*(ai.naturalWidth/ai.naturalHeight);const hover=Math.sin(fc*0.04)*2;X.drawImage(ai,ax-aw/2,gy-ah+hover+9,aw,ah)}}
+function drawAnom_foggy(gy,sd){for(let i=0;i<8;i++){const fx=((fc*0.3+i*200+sd)%(W+200))-100;const fy=H*0.3+((sd+i*77)%(H*0.35));const fw=120+((sd+i*53)%80);const al=0.06+Math.sin(fc*0.01+i)*0.03;X.fillStyle=`rgba(180,180,200,${al})`;X.beginPath();X.ellipse(fx,fy,fw,25+i*3,0,0,Math.PI*2);X.fill()}}
+function drawAnom_shadowHands(gy,sd){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.5+Math.sin(fc*0.02+i)*0.2;X.fillStyle=`rgba(20,0,35,${al})`;X.save();X.translate(hx,gy+2);
+  X.beginPath();X.moveTo(0,0);X.lineTo(-4,-18-rise);X.lineTo(-2,-24-rise);X.lineTo(0,-20-rise);X.lineTo(2,-26-rise);X.lineTo(4,-22-rise);X.lineTo(6,-27-rise);X.lineTo(7,-21-rise);X.lineTo(8,-25-rise);X.lineTo(9,-18-rise);X.lineTo(6,-12-rise);X.lineTo(10,0);X.closePath();X.fill();X.restore()}}
+function drawAnom_reverseGrav(gy,sd){X.strokeStyle='rgba(100,120,200,0.3)';X.lineWidth=1;for(let i=0;i<40;i++){const rx=((fc*2+i*97+sd)%W);const ry=H*GH-((fc*3+i*131+sd)%(H*GH));X.beginPath();X.moveTo(rx,ry);X.lineTo(rx+0.5,ry+8);X.stroke()}}
+function drawAnom_heartbeat(gy,sd){const pulse=Math.abs(Math.sin(fc*0.08));if(pulse>0.85){const al=(pulse-0.85)*3;X.fillStyle=`rgba(60,0,0,${al*0.15})`;X.fillRect(0,0,W,H);
+  const vg=X.createRadialGradient(W/2,H/2,W*0.2,W/2,H/2,W*0.7);vg.addColorStop(0,'transparent');vg.addColorStop(1,`rgba(40,0,0,${al*0.3})`);X.fillStyle=vg;X.fillRect(0,0,W,H)}}
+function drawAnom_earthquake(gy,sd){
+  const qCycle=90;const qPhase=fc%qCycle;
+  if(qPhase<70){
+    const intensity=qPhase<20?(qPhase/20)*22:(1-(qPhase-20)/50)*22;
+    skX=Math.sin(fc*2.5)*(intensity)+((Math.random()-0.5)*intensity*0.8);
+    skY=Math.cos(fc*3.1)*(intensity*0.7)+((Math.random()-0.5)*intensity*0.6);
+  }else{skX=0;skY=0}
+  if(qPhase===0)playSe('quake');
+}
+function drawAnom_evilFog(gy,sd){
+  if(efStart===null)efStart=fc;
+  const elapsed=fc-efStart;
+  const fogDelay=120;
+  if(elapsed>fogDelay){
+    const fogSpeed=4.1;
+    const fogX=bsX+BW+200-(elapsed-fogDelay)*fogSpeed;
+    const fogScreenX=fogX-camX;
+    for(let i=0;i<15;i++){
+      const fx=fogScreenX+Math.sin(fc*0.03+i*0.7)*20-i*8;
+      const fy=i*(H/15);
+      const fw=W*0.6;const fh=H/12;
+      const al=0.25+Math.sin(fc*0.02+i)*0.1;
+      X.fillStyle=`rgba(100,10,10,${al})`;
+      X.beginPath();X.ellipse(fx,fy,fw,fh,0,0,Math.PI*2);X.fill();
+    }
+    if(fogScreenX<W+100&&fogScreenX>W*0.3){
+      const warnAl=0.5+Math.sin(fc*0.1)*0.5;
+      X.fillStyle=`rgba(255,50,50,${warnAl})`;X.font='bold 18px serif';X.textAlign='center';
+      X.fillText(t('flee'),W/2,H*0.15);
+    }
+    if(elapsed===fogDelay+1)playSe('foghorn');
+  }
+}
+function drawAnom_runnerPiyo(gy,sd){
+  if(!runnerActive)return;
+  const rsx=runnerX-camX;
+  if(rsx>-60&&rsx<W+60){
+    const fr=WALK_L[(Math.floor(fc/3))%WALK_L.length];
+    const baseSprScale=Math.min(H*0.32/120,1.3);
+    const sprScaleR=fr==='stand'?baseSprScale*1.04:baseSprScale;
+    const redImg=RED_SPR[fr];
+    const img=SPR[fr];
+    const drawSrc=redImg||img;
+    if(drawSrc&&(drawSrc.complete!==false)){
+      const nw=img?img.naturalWidth:drawSrc.width;
+      const nh=img?img.naturalHeight:drawSrc.height;
+      const sw=nw*sprScaleR,sh=nh*sprScaleR;
+      const bob2=Math.sin(fc*0.5)*1.5;
+      X.save();
+      X.translate(rsx,0);
+      X.scale(-1,1);
+      X.drawImage(drawSrc,-sw/2,gy-sh+bob2+9,sw,sh);
+      X.restore();
+    }
+    if(runnerX-pX<400&&runnerX-pX>0){
+      const warnAl=0.5+Math.sin(fc*0.12)*0.5;
+      X.fillStyle=`rgba(255,50,50,${warnAl})`;X.font='bold 16px serif';X.textAlign='center';
+      X.fillText(t('flee'),W/2,H*0.15);
+    }
+  }
+}
+// --- Anomaly dispatch table ---
+const ANOM_DRAW={extraPole:drawAnom_extraPole,floatingEyes:drawAnom_floatingEyes,shootingStar:drawAnom_shootingStar,bloodDrip:drawAnom_bloodDrip,ghost:drawAnom_ghost,thug:drawAnom_thug,creep:drawAnom_creep,wizard:drawAnom_wizard,alien:drawAnom_alien,foggy:drawAnom_foggy,shadowHands:drawAnom_shadowHands,reverseGrav:drawAnom_reverseGrav,heartbeat:drawAnom_heartbeat,earthquake:drawAnom_earthquake,evilFog:drawAnom_evilFog,runnerPiyo:drawAnom_runnerPiyo};
+function dAnom(){
+  if(!hasA)return;
+  const a=AN[aT],gy=H*GH,sd=cB*999;
+  const fn=ANOM_DRAW[a];
+  if(fn)fn(gy,sd);
+}
+// --- Anomaly update functions (collision/movement, called from update via ANOM_UPDATE dispatch) ---
+function _anomKill(cause){lastDeathCause=cause;if(!completeDie()){gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;stopBgm();playSe(seMissSrc)}else{playSe(seMissSrc)}}
+function updateAnom_staticKiller(posRatio){const ex=bsX+BW*posRatio;if(Math.abs(pX-ex)<40)_anomKill(AN[aT])}
+function updateAnom_thug(){updateAnom_staticKiller(0.5)}
+function updateAnom_creep(){updateAnom_staticKiller(0.55)}
+function updateAnom_wizard(){updateAnom_staticKiller(0.45)}
+function updateAnom_ghost(){updateAnom_staticKiller(0.5)}
+function updateAnom_alien(){updateAnom_staticKiller(0.48)}
+function updateAnom_evilFog(){
+  if(efStart===null)return;
+  const elapsed=fc-efStart,fogDelay=120;
+  if(elapsed>fogDelay){
+    const fogX=bsX+BW+200-(elapsed-fogDelay)*4.1;
+    if(pX>fogX-20)_anomKill('evilFog');
+  }
+}
+function updateAnom_runnerPiyo(){
+  if(!runnerActive)return;
+  runnerX-=4.3;
+  if(Math.abs(pX-runnerX)<30)_anomKill('runnerPiyo');
+}
+function updateAnom_bugaSphere(){
+  if(!bsphReady){if(pX>=bsX+BW*0.4){bsphReady=true;bsphTimer=0;bsphPhase=2;bsphSafe=true}else return}
+  bsphTimer++;
+  const gy2=H*GH-20;
+  if(bsphPhase===0){
+    const dx=pX-bsphX,dy=gy2-bsphY;
+    const dist=Math.sqrt(dx*dx+dy*dy)||1;
+    const leftOfPlayer=bsphX<pX;
+    const movePattern=leftOfPlayer?((cB*37+Math.floor(bsphTimer/60))%3):0;
+    if(movePattern===1&&(bsphTimer%60)<25){
+      bsphY+=Math.sin(fc*0.05)*0.3;
+    }else if(movePattern===2){
+      bsphX+=dx/dist*0.8+Math.sin(fc*0.07)*2.5;
+      bsphY+=dy/dist*0.4+Math.cos(fc*0.05)*1.2;
+    }else{
+      bsphX+=dx/dist*2.2;
+      bsphY+=dy/dist*0.7;
+    }
+    const warpInterval=120+((cB*73+bsphTimer*7)%80);
+    if(bsphTimer>=warpInterval){bsphPhase=1;bsphTimer=0;bsphPrevX=bsphX;bsphPrevY=bsphY}
+  }else if(bsphPhase===1){
+    if(bsphTimer>=25){
+      const bsphMaxX2=bsX+BW*0.75;
+      const bsphMinX=bsX+BACK_X+80;
+      const playerBeyondRight=pX>bsphMaxX2;
+      const warpMaxR=playerBeyondRight?pX+200:bsphMaxX2;
+      const candL=Math.max(pX-140-Math.random()*60,bsphMinX);
+      const candR=Math.min(pX+140+Math.random()*60,warpMaxR);
+      const distL=Math.abs(pX-candL),distR=Math.abs(pX-candR);
+      let preferLeft=!playerBeyondRight&&((bsphX>pX)?Math.random()<0.5:Math.random()<0.35);
+      if(preferLeft&&distL>=100){bsphX=candL}
+      else if(!preferLeft&&distR>=100){bsphX=candR}
+      else if(distL>=distR){bsphX=candL}
+      else{bsphX=candR}
+      bsphY=gy2-20-Math.random()*30;
+      bsphPhase=2;bsphTimer=0;bsphSafe=true;
+    }
+  }else if(bsphPhase===2){
+    const isInitSpawn=bsphPrevX===bsphX&&bsphPrevY===bsphY;
+    const pauseLen=isInitSpawn?90:30;
+    if(bsphTimer>=pauseLen){bsphPhase=isInitSpawn?0:3;bsphTimer=0}
+  }else if(bsphPhase===3){
+    const dx=pX-bsphX,dy=gy2-bsphY;
+    const dist=Math.sqrt(dx*dx+dy*dy)||1;
+    bsphX+=dx/dist*3.8;bsphY+=dy/dist*1.1;
+    if(bsphTimer>=70||dist<30){bsphPhase=0;bsphTimer=0}
+  }
+  const bsphMinX2=bsX+BACK_X+80;
+  const bsphMaxX=bsX+BW*0.75;
+  if(bsphX<bsphMinX2)bsphX=bsphMinX2;
+  if(bsphPhase===0&&bsphX>bsphMaxX)bsphX=bsphMaxX;
+  bsphY=Math.max(H*0.2,Math.min(gy2,bsphY));
+  const cdx2=pX-bsphX,cdy2=gy2-bsphY,cDist=Math.sqrt(cdx2*cdx2+cdy2*cdy2);
+  if(bsphSafe&&cDist>100)bsphSafe=false;
+  if(bsphPhase===0&&!bsphSafe){
+    if(cDist<25)_anomKill('bugaSphere');
+  }
+}
+// --- Anomaly update dispatch table ---
+const ANOM_UPDATE={thug:updateAnom_thug,creep:updateAnom_creep,wizard:updateAnom_wizard,ghost:updateAnom_ghost,alien:updateAnom_alien,evilFog:updateAnom_evilFog,runnerPiyo:updateAnom_runnerPiyo,bugaSphere:updateAnom_bugaSphere};
+// --- Anomaly init functions (called from genA via ANOM_INIT dispatch) ---
+function initAnom_shortBlock(){BW=BW_SHORT}
+function initAnom_runnerPiyo(){runnerX=bsX+BW+100;runnerActive=true}
+function initAnom_bugaSphere(){bsphX=bsX+BW*0.7;bsphY=H*0.45;bsphTimer=0;bsphPhase=2;bsphPrevX=bsphX;bsphPrevY=bsphY;bsphSafe=true;bsphReady=false}
+const ANOM_INIT={shortBlock:initAnom_shortBlock,runnerPiyo:initAnom_runnerPiyo,bugaSphere:initAnom_bugaSphere};
 function dBugaSphere(){
   if(!hasA||AN[aT]!=='bugaSphere'||!bsphReady)return;
   const bsx=bsphX-camX,bsy=bsphY+Math.sin(fc*0.04)*6;
@@ -2379,142 +2421,10 @@ function update(){
     heartItemActive=false;
     if(completeLives<getMaxLives()){completeLives++;saveCompleteProgress();playSe('heart');vib(10);sM(t('lifeRecovery'),tf('lifeCount',completeLives,getMaxLives()))}
   }
-  // === COLLISION CHECK with killer anomalies ===
+  // === COLLISION CHECK with killer anomalies (via ANOM_UPDATE dispatch) ===
   if(hasA&&tTm===0){
-    const killTypes=['thug','creep','wizard','ghost','alien'];
-    const a=AN[aT];
-    if(killTypes.includes(a)){
-      let ex=0;
-      if(a==='thug')ex=bsX+BW*0.5;
-      else if(a==='creep')ex=bsX+BW*0.55;
-      else if(a==='wizard')ex=bsX+BW*0.45;
-      else if(a==='ghost')ex=bsX+BW*0.5;
-      else if(a==='alien')ex=bsX+BW*0.48;
-      const dist=Math.abs(pX-ex);
-      if(dist<40){
-        lastDeathCause=a;
-        if(!completeDie()){
-          gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
-          stopBgm();playSe(seMissSrc);
-        }else{playSe(seMissSrc)}
-      }
-    }
-    // evilFog collision - fog wall position
-    if(a==='evilFog'&&efStart!==null){
-      const elapsed=fc-efStart;
-      const fogDelay=120;
-      if(elapsed>fogDelay){
-        const fogX=bsX+BW+200-(elapsed-fogDelay)*4.1;
-        if(pX>fogX-20){
-          lastDeathCause='evilFog';
-          if(!completeDie()){
-            gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
-            stopBgm();playSe(seMissSrc);
-          }else{playSe(seMissSrc)}
-        }
-      }
-    }
-    // runnerPiyo collision - another piyo running at you (faster than player)
-    if(a==='runnerPiyo'&&runnerActive){
-      runnerX-=4.3;
-      if(Math.abs(pX-runnerX)<30){
-        lastDeathCause='runnerPiyo';
-        if(!completeDie()){
-          gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
-          stopBgm();playSe(seMissSrc);
-        }else{playSe(seMissSrc)}
-      }
-    }
-    // bugaSphere - 追尾 + ワープ回り込みロジック
-    // Phase: 0=chase, 1=warp-telegraph(点滅予告), 2=warped-pause(ワープ後停止), 3=flank-rush(高速接近)
-    if(a==='bugaSphere'){
-      if(!bsphReady){if(pX>=bsX+BW*0.4){bsphReady=true;bsphTimer=0;bsphPhase=2;bsphSafe=true}else break}
-      bsphTimer++;
-      const gy2=H*GH-20;
-      if(bsphPhase===0){
-        // Normal chase with variation when sphere is left of player
-        const dx=pX-bsphX,dy=gy2-bsphY;
-        const dist=Math.sqrt(dx*dx+dy*dy)||1;
-        const leftOfPlayer=bsphX<pX;
-        const movePattern=leftOfPlayer?((cB*37+Math.floor(bsphTimer/60))%3):0;
-        if(movePattern===1&&(bsphTimer%60)<25){
-          // Pattern 1: brief pause (25 frames of 60-frame cycle)
-          bsphY+=Math.sin(fc*0.05)*0.3;// subtle hover only
-        }else if(movePattern===2){
-          // Pattern 2: left-right float while drifting toward player
-          bsphX+=dx/dist*0.8+Math.sin(fc*0.07)*2.5;
-          bsphY+=dy/dist*0.4+Math.cos(fc*0.05)*1.2;
-        }else{
-          // Default: direct chase
-          bsphX+=dx/dist*2.2;
-          bsphY+=dy/dist*0.7;
-        }
-        // Trigger warp every 120-200 frames
-        const warpInterval=120+((cB*73+bsphTimer*7)%80);
-        if(bsphTimer>=warpInterval){
-          bsphPhase=1;bsphTimer=0;bsphPrevX=bsphX;bsphPrevY=bsphY;
-        }
-      }else if(bsphPhase===1){
-        // Telegraph: blink for 25 frames (warning), don't move
-        if(bsphTimer>=25){
-          // Warp to player's left or right side
-          const bsphMaxX2=bsX+BW*0.75;
-          const bsphMinX=bsX+BACK_X+80;
-          const playerBeyondRight=pX>bsphMaxX2;
-          // Right warp limit: extended when player is beyond boundary
-          const warpMaxR=playerBeyondRight?pX+200:bsphMaxX2;
-          // Try left and right candidates, pick the one with more distance
-          const candL=Math.max(pX-140-Math.random()*60,bsphMinX);
-          const candR=Math.min(pX+140+Math.random()*60,warpMaxR);
-          const distL=Math.abs(pX-candL),distR=Math.abs(pX-candR);
-          // When player is beyond right boundary, force right warp so player can retreat left
-          // Otherwise: 35% left / 65% right — give player more chances to retreat to BACK gate
-          let preferLeft=!playerBeyondRight&&((bsphX>pX)?Math.random()<0.5:Math.random()<0.35);
-          // Pick candidate with sufficient distance; fallback to the farther one
-          if(preferLeft&&distL>=100){bsphX=candL}
-          else if(!preferLeft&&distR>=100){bsphX=candR}
-          else if(distL>=distR){bsphX=candL}
-          else{bsphX=candR}
-          bsphY=gy2-20-Math.random()*30;
-          bsphPhase=2;bsphTimer=0;bsphSafe=true;// activate invincibility flag
-        }
-      }else if(bsphPhase===2){
-        // Post-warp/spawn pause with invincibility
-        // Initial spawn (prevX===bsphX): longer pause (90f=1.5s) then straight to chase
-        // After warp (prevX!==bsphX): 30f(0.5s) then rush
-        const isInitSpawn=bsphPrevX===bsphX&&bsphPrevY===bsphY;
-        const pauseLen=isInitSpawn?90:30;
-        if(bsphTimer>=pauseLen){bsphPhase=isInitSpawn?0:3;bsphTimer=0}
-      }else if(bsphPhase===3){
-        // Flank rush: charge toward player at high speed
-        const dx=pX-bsphX,dy=gy2-bsphY;
-        const dist=Math.sqrt(dx*dx+dy*dy)||1;
-        bsphX+=dx/dist*3.8;bsphY+=dy/dist*1.1;
-        // Return to normal chase after 70 frames or close enough
-        if(bsphTimer>=70||dist<30){bsphPhase=0;bsphTimer=0}
-      }
-      // Clamp X: Phase 0 only — confine chase to BACK+80 ~ BW*0.75
-      // Phase 2/3: no right clamp (allow warp beyond boundary when player is far right)
-      const bsphMinX2=bsX+BACK_X+80;
-      const bsphMaxX=bsX+BW*0.75;
-      if(bsphX<bsphMinX2)bsphX=bsphMinX2;
-      if(bsphPhase===0&&bsphX>bsphMaxX)bsphX=bsphMaxX;
-      // Clamp Y
-      bsphY=Math.max(H*0.2,Math.min(gy2,bsphY));
-      // Collision: ONLY during Phase 0 (chase) and not while bsphSafe (clamp snap protection)
-      // Phase 1(telegraph), 2(post-warp), 3(rush) are always safe — they are repositioning phases
-      const cdx2=pX-bsphX,cdy2=gy2-bsphY,cDist=Math.sqrt(cdx2*cdx2+cdy2*cdy2);
-      if(bsphSafe&&cDist>100)bsphSafe=false;
-      if(bsphPhase===0&&!bsphSafe){
-        if(cDist<25){
-          lastDeathCause='bugaSphere';
-          if(!completeDie()){
-            gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
-            stopBgm();playSe(seMissSrc);
-          }else{playSe(seMissSrc)}
-        }
-      }
-    }
+    const ufn=ANOM_UPDATE[AN[aT]];
+    if(ufn)ufn();
   }
   if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){if((gameMode==='normal'||gameMode==='complete')&&!clearedAnomalies.includes(AN[aT])){clearedAnomalies.push(AN[aT]);if(gameMode==='complete')saveCompleteProgress()}tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM(t('anomalyFound'),t('correctReturn'))}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM(t('noAnomaly'),t('wrongReturn'))}}
   if(pX>bsX+BW+30){if(hasA){tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM(t('missedAnomaly'),t('observeMore'))}else{tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM(t('correctAdvance'))}}
