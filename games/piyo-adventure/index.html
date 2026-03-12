@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.263";
+                content: "Ver.1.264";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.263</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.264</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -5987,7 +5987,7 @@ function updateBoss() {
             bossState.flashAttackTimer--;
             // 発動直後（残り28フレーム）にダメージ判定：地面近くにいたら被弾
             if (bossState.flashAttackTimer === 27) {
-                if (!gameState.isInvincible && player.y + player.height >= GROUND_Y - 70) {
+                if (!gameState.isInvincible && gameState.puShield <= 0 && player.y + player.height >= GROUND_Y - 70) {
                     takeDamage();
                 }
             }
@@ -6430,10 +6430,14 @@ function updateEggs() {
             bossState.eggs.splice(i, 1);
             continue;
         }
-        // プレイヤー衝突
-        if (!gameState.isInvincible && aabb(player, egg)) {
-            bossState.eggs.splice(i, 1);
-            takeDamage();
+        // プレイヤー衝突（シールド中は卵を消滅させてダメージなし）
+        if (aabb(player, egg)) {
+            if (gameState.isInvincible || gameState.puShield > 0) {
+                bossState.eggs.splice(i, 1);
+            } else {
+                bossState.eggs.splice(i, 1);
+                takeDamage();
+            }
         }
     }
 }
