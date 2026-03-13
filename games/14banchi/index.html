@@ -11,8 +11,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <title>14番地</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" async></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" async></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;
@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.937';
+const APP_VER='0.938';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -394,16 +394,22 @@ let showNameEntry=false;
 let challengeScore=0;
 const CHALLENGE_MAX=500;
 
-// === FIREBASE ===
+// === FIREBASE (async load — SDK may not be available yet) ===
 let db=null;
-try{
-  firebase.initializeApp({
-    apiKey:"AIzaSyCy4l4OcropLUjAljFmhpRLUOhG-4EJg1w",
-    authDomain:"block14-ranking.firebaseapp.com",
-    projectId:"block14-ranking"
-  });
-  db=firebase.firestore();
-}catch(e){console.warn('[14b:firebase]',e)}
+function initFirebase(){
+  if(typeof firebase==='undefined'||!firebase.firestore)return false;
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyCy4l4OcropLUjAljFmhpRLUOhG-4EJg1w",
+      authDomain:"block14-ranking.firebaseapp.com",
+      projectId:"block14-ranking"
+    });
+    db=firebase.firestore();
+  }catch(e){console.warn('[14b:firebase]',e)}
+  return true;
+}
+// Try immediately (if SDK loaded before main script), otherwise retry after page load
+if(!initFirebase()){window.addEventListener('load',()=>{setTimeout(()=>{initFirebase();loadRanking()},100)})}
 
 async function loadRanking(){
   rankData=[];rankLoaded=false;
@@ -2652,9 +2658,10 @@ function render(){
   }
 }
 
-let _lastFrameTime=0;
+let _lastFrameTime=-1;
 function loop(now){
   requestAnimationFrame(loop);
+  if(_lastFrameTime<0){_lastFrameTime=now;return}
   if(now-_lastFrameTime<15)return;
   _lastFrameTime+=16.667;
   if(_lastFrameTime<now-16.667)_lastFrameTime=now;
