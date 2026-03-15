@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.265";
+                content: "Ver.1.266";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.265</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.266</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2371,6 +2371,7 @@ function escapeHtml(str) {
 }
 
 // ─── NGワードフィルター ───
+var NG_WHITELIST = ['かすみ'];
 var NG_WORDS = [
     // ── 日本語：卑猥・下品 ──
     'ちんこ','ちんぽ','ちんちん','まんこ','おまんこ','せっくす','セックス',
@@ -2450,10 +2451,19 @@ function containsNgWord(name) {
         .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); })   // カタカナ→ひらがな
         .replace(/[\s\u3000._\-!@#$%^&*=+~`|:;,\/\\'"?。、！？・\u200b\u00a0]/g, '');  // スペース・記号除去
 
+    // ホワイトリスト: 該当部分をプレースホルダに置換してからNGチェック
+    var checked = normalized;
+    for (var w = 0; w < NG_WHITELIST.length; w++) {
+        var wlNorm = NG_WHITELIST[w].toLowerCase()
+            .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+        while (checked.indexOf(wlNorm) !== -1) {
+            checked = checked.replace(wlNorm, '\u0000'.repeat(wlNorm.length));
+        }
+    }
     for (var i = 0; i < NG_WORDS.length; i++) {
         var ngNormalized = NG_WORDS[i].toLowerCase()
             .replace(/[\u30a1-\u30f6]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
-        if (normalized.indexOf(ngNormalized) !== -1) return true;
+        if (checked.indexOf(ngNormalized) !== -1) return true;
     }
     return false;
 }
