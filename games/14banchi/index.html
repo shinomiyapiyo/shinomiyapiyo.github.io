@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.944';
+const APP_VER='0.946';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -1220,51 +1220,55 @@ function drawAnom_thug(gy,sd){const ti=SPR['thug'];if(ti&&ti.complete){const tx=
 function drawAnom_creep(gy,sd){const ci=SPR['creep'];if(ci&&ci.complete){const cx=bsX+BW*0.55-camX;const ch2=H*0.32;const cw=ch2*(ci.naturalWidth/ci.naturalHeight);const sway=Math.sin(fc*0.025)*2;X.drawImage(ci,cx-cw/2+sway,gy-ch2+9,cw,ch2)}}
 function drawAnom_wizard(gy,sd){const wi=SPR['wizard'];if(wi&&wi.complete){const wx=bsX+BW*0.45-camX;const wh=H*0.30;const ww=wh*(wi.naturalWidth/wi.naturalHeight);const bob=Math.sin(fc*0.05)*1.5;X.drawImage(wi,wx-ww/2,gy-wh+bob+9,ww,wh)}}
 function drawAnom_alien(gy,sd){const ai=SPR['alien'];if(ai&&ai.complete){const ax=bsX+BW*0.48-camX;const ah=H*0.30;const aw=ah*(ai.naturalWidth/ai.naturalHeight);const hover=Math.sin(fc*0.04)*2;X.drawImage(ai,ax-aw/2,gy-ah+hover+9,aw,ah)}}
+let _fogOC=null,_fogOX=null,_fogW=0,_fogH=0;
 function drawAnom_foggy(gy,sd){
-  // White smoke clouds — source-over with high-alpha white radial gradients
-  const fC=[
-    {sx:0.05,sy:0.35,r:220,spd:0.18,ofy:0.011},
-    {sx:0.25,sy:0.50,r:200,spd:0.14,ofy:0.016},
-    {sx:0.48,sy:0.28,r:240,spd:0.22,ofy:0.009},
-    {sx:0.70,sy:0.45,r:210,spd:0.16,ofy:0.014},
-    {sx:0.90,sy:0.38,r:190,spd:0.11,ofy:0.018},
-    {sx:0.12,sy:0.62,r:180,spd:0.20,ofy:0.013},
-    {sx:0.55,sy:0.58,r:205,spd:0.15,ofy:0.015},
-    {sx:0.38,sy:0.18,r:195,spd:0.19,ofy:0.012},
-    {sx:0.82,sy:0.22,r:175,spd:0.17,ofy:0.010},
-    {sx:0.18,sy:0.12,r:185,spd:0.21,ofy:0.017},
-  ];
-  for(let c=0;c<fC.length;c++){
-    const f=fC[c];
-    const dx=Math.sin(fc*0.003*f.spd+c*2.1)*55+Math.cos(fc*0.002*f.spd+c)*35;
-    const dy=Math.sin(fc*f.ofy+c*1.7)*20;
-    const cx=W*f.sx+dx,cy=H*f.sy+dy;
-    const sc=1+Math.sin(fc*0.006+c*1.3)*0.18;
-    const r=f.r*sc;
-    for(let s=0;s<3;s++){
-      const ang=s*2.094+Math.sin(fc*0.004+c)*0.5;
-      const spread=r*0.32;
-      const ox=Math.cos(ang)*spread+Math.sin(fc*0.005+c+s*2.5)*r*0.13;
-      const oy=Math.sin(ang)*spread*0.5+Math.cos(fc*0.004+c*0.7+s*1.8)*r*0.09;
-      const sr=r*(0.55+s*0.1);
-      const al=0.35+Math.sin(fc*0.008+c+s)*0.08;
-      const grd=X.createRadialGradient(cx+ox,cy+oy,sr*0.05,cx+ox,cy+oy,sr);
-      grd.addColorStop(0,`rgba(255,255,255,${al*0.6})`);
-      grd.addColorStop(0.25,`rgba(230,235,245,${al*0.4})`);
-      grd.addColorStop(0.55,`rgba(210,215,230,${al*0.18})`);
-      grd.addColorStop(1,'rgba(200,205,220,0)');
-      X.fillStyle=grd;X.fillRect(cx+ox-sr,cy+oy-sr,sr*2,sr*2);
-    }
+  if(!_fogOC||_fogW!==W||_fogH!==H){
+    _fogOC=document.createElement('canvas');
+    _fogOC.width=W;_fogOC.height=H;
+    _fogOX=_fogOC.getContext('2d');
+    _fogW=W;_fogH=H;
   }
-  // Full-screen fog veil
+  if(fc%6===0){
+    _fogOX.clearRect(0,0,W,H);
+    const fC=[
+      {sx:0.08,sy:0.35,r:250,spd:0.18,ofy:0.011},
+      {sx:0.35,sy:0.50,r:240,spd:0.14,ofy:0.016},
+      {sx:0.60,sy:0.28,r:260,spd:0.22,ofy:0.009},
+      {sx:0.85,sy:0.45,r:235,spd:0.16,ofy:0.014},
+      {sx:0.20,sy:0.15,r:230,spd:0.20,ofy:0.013},
+      {sx:0.50,sy:0.60,r:245,spd:0.15,ofy:0.015},
+    ];
+    for(let c=0;c<fC.length;c++){
+      const f=fC[c];
+      const dx=Math.sin(fc*0.003*f.spd+c*2.1)*55+Math.cos(fc*0.002*f.spd+c)*35;
+      const dy=Math.sin(fc*f.ofy+c*1.7)*20;
+      const cx=W*f.sx+dx,cy=H*f.sy+dy;
+      const sc=1+Math.sin(fc*0.006+c*1.3)*0.18;
+      const r=f.r*sc;
+      for(let s=0;s<2;s++){
+        const ang=s*3.14+Math.sin(fc*0.004+c)*0.5;
+        const spread=r*0.3;
+        const ox=Math.cos(ang)*spread;
+        const oy=Math.sin(ang)*spread*0.5;
+        const sr=r*(0.6+s*0.15);
+        const al=0.35+Math.sin(fc*0.008+c+s)*0.08;
+        const grd=_fogOX.createRadialGradient(cx+ox,cy+oy,sr*0.05,cx+ox,cy+oy,sr);
+        grd.addColorStop(0,`rgba(255,255,255,${al*0.6})`);
+        grd.addColorStop(0.3,`rgba(230,235,245,${al*0.4})`);
+        grd.addColorStop(0.6,`rgba(210,215,230,${al*0.18})`);
+        grd.addColorStop(1,'rgba(200,205,220,0)');
+        _fogOX.fillStyle=grd;_fogOX.fillRect(cx+ox-sr,cy+oy-sr,sr*2,sr*2);
+      }
+    }
+    const fo=_fogOX.createLinearGradient(0,H*0.3,0,H);
+    fo.addColorStop(0,'rgba(220,225,240,0)');
+    fo.addColorStop(0.5,`rgba(220,225,240,${0.10+Math.sin(fc*0.006)*0.03})`);
+    fo.addColorStop(1,`rgba(230,235,245,${0.15+Math.sin(fc*0.007)*0.04})`);
+    _fogOX.fillStyle=fo;_fogOX.fillRect(0,0,W,H);
+  }
+  if(_fogOC)X.drawImage(_fogOC,0,0);
   X.fillStyle=`rgba(200,205,220,${0.18+Math.sin(fc*0.005)*0.04})`;
   X.fillRect(0,0,W,H);
-  // Denser fog band near ground
-  const fo=X.createLinearGradient(0,H*0.3,0,H);
-  fo.addColorStop(0,'rgba(220,225,240,0)');
-  fo.addColorStop(0.5,`rgba(220,225,240,${0.10+Math.sin(fc*0.006)*0.03})`);
-  fo.addColorStop(1,`rgba(230,235,245,${0.15+Math.sin(fc*0.007)*0.04})`);
-  X.fillStyle=fo;X.fillRect(0,0,W,H);
 }
 function drawAnom_shadowHands(gy,sd){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.5+Math.sin(fc*0.02+i)*0.2;X.fillStyle=`rgba(20,0,35,${al})`;X.save();X.translate(hx,gy+2);
   X.beginPath();X.moveTo(0,0);X.lineTo(-4,-18-rise);X.lineTo(-2,-24-rise);X.lineTo(0,-20-rise);X.lineTo(2,-26-rise);X.lineTo(4,-22-rise);X.lineTo(6,-27-rise);X.lineTo(7,-21-rise);X.lineTo(8,-25-rise);X.lineTo(9,-18-rise);X.lineTo(6,-12-rise);X.lineTo(10,0);X.closePath();X.fill();X.restore()}}
@@ -2327,11 +2331,19 @@ const NG_REGEX=[
   /a+s+s+h+o+l+e/i,       // a**hole variants
   /wh+[o0]+r+e/i,         // w***e variants
 ];
+const NG_ALLOW=['かすみ','カスミ','霞'];
 function containsNG(name){
   const low=name.toLowerCase().replace(/[\s\u3000\u00A0]/g,'');
   // Word list check
   for(const w of NG_WORDS){
-    if(low.includes(w.toLowerCase().replace(/[\s]/g,'')))return true;
+    const wl=w.toLowerCase().replace(/[\s]/g,'');
+    if(low.includes(wl)){
+      let allowed=false;
+      for(const a of NG_ALLOW){
+        if(low.includes(a.toLowerCase())&&a.toLowerCase().includes(wl)){allowed=true;break}
+      }
+      if(!allowed)return true;
+    }
   }
   // Regex evasion check
   const stripped=name.replace(/[\s\u3000\u00A0\-_\.]/g,'');
