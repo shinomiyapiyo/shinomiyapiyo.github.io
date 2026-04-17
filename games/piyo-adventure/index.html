@@ -76,7 +76,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.269";
+                content: "Ver.1.270";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -660,7 +660,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.269</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.270</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -4914,6 +4914,7 @@ function showStageShopScreen() {
     shopMode = 'menu';
     shopSellingIndex = null;
     shopSellHighlightIndex = null;
+    shopDepositing = false;
     shopInputCooldown = Date.now() + 350;
     setShopBg('shop01');
     var el = document.getElementById('stageShopScreen');
@@ -4953,7 +4954,7 @@ function hideStageShopScreen() {
     el.style.display = 'none';
     // ゲームHUDを復帰
     var uiEl = document.getElementById('ui');
-    if (uiEl) uiEl.style.display = '';
+    if (uiEl) uiEl.style.display = 'block';
     // ストックスロットを復帰
     updateStockUI();
     setShopBg('shop01');  // 次回用にリセット
@@ -5138,7 +5139,7 @@ function updateStageShopUI() {
         }
         if (closeBtn) {
             closeBtn.innerHTML = t('shop_back');
-            closeBtn.parentElement.style.display = '';
+            closeBtn.parentElement.style.display = 'flex';
         }
     } else if (shopMode === 'sell') {
         // 売却モード：ストックアイテムリスト
@@ -5151,7 +5152,7 @@ function updateStageShopUI() {
         }
         if (closeBtn) {
             closeBtn.innerHTML = t('shop_back');
-            closeBtn.parentElement.style.display = '';
+            closeBtn.parentElement.style.display = 'flex';
         }
     }
 
@@ -5166,7 +5167,7 @@ function updateStageShopUI() {
         if (depInfo) { depInfo.style.display = 'none'; }
     } else {
         if (depBtn) {
-            depBtn.style.display = '';
+            depBtn.style.display = 'block';
             if (shopState.deposited) {
                 depBtn.disabled = true;
                 depBtn.style.opacity = '0.4';
@@ -5185,7 +5186,7 @@ function updateStageShopUI() {
             }
         }
         if (depInfo) {
-            depInfo.style.display = '';
+            depInfo.style.display = 'block';
             if (!shopState.deposited && gameState.score > 0) {
                 depInfo.textContent = t('shop_deposit_preview', { sf: gameSettings.savings, st: gameSettings.savings + depAmount, cf: gameState.score, ct: gameState.score - depAmount });
             } else {
@@ -5705,7 +5706,7 @@ function showTitleShop() {
     // リワード広告ボタンの表示制御
     var tshopAdBtnEl = document.getElementById('tshopRewardAdBtn');
     if (tshopAdBtnEl) {
-        tshopAdBtnEl.style.display = gameSettings.adFree ? 'none' : '';
+        tshopAdBtnEl.style.display = gameSettings.adFree ? 'none' : 'block';
     }
     updateTitleShopUI();
     if (soundManager) soundManager.playBGM('shop');
