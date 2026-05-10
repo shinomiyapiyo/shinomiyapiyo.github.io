@@ -1123,6 +1123,48 @@
             margin-top: 1rem;
         }
 
+        .next-live__share {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .next-live__share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.625rem;
+            font-weight: 700;
+            padding: 0.3rem 0.7rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            transition: opacity 0.2s;
+        }
+
+        .next-live__share-btn:hover {
+            opacity: 0.85;
+        }
+
+        .next-live__share-btn--x {
+            background: #000;
+        }
+
+        .next-live__share-btn--line {
+            background: #06C755;
+        }
+
+        .next-live__share-btn--copy {
+            background: #6b7280;
+        }
+
+        .next-live__share-btn--copy.copied {
+            background: var(--dark-pink);
+        }
+
         .yt-grid {
             display: flex;
             flex-direction: column;
@@ -1863,6 +1905,48 @@
                     '<p class="next-live__empty">次のライブ情報をお楽しみに！🐥</p>';
                 events[0].parentNode.insertBefore(fallback, events[0]);
             }
+        })();
+
+        // Share buttons for live events
+        (function() {
+            var siteUrl = 'https://shinomiyapiyo.github.io/';
+            document.querySelectorAll('.js-live-event').forEach(function(el) {
+                var title = el.querySelector('.next-live__title');
+                if (!title) return;
+                var dateBox = el.querySelector('.next-live__date-box');
+                var month = dateBox ? dateBox.querySelector('.next-live__month').textContent : '';
+                var day = dateBox ? dateBox.querySelector('.next-live__day').textContent : '';
+                var dow = dateBox ? dateBox.querySelector('.next-live__dow').textContent : '';
+                var dateStr = month + ' ' + day + ' (' + dow + ')';
+                var eventName = title.textContent.replace(/\n/g, ' ').trim();
+                var shareText = '🎤 ' + dateStr + ' ' + eventName + '\n四ノ宮ぴよ Official\n';
+
+                var shareDiv = document.createElement('div');
+                shareDiv.className = 'next-live__share';
+
+                var xUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(siteUrl);
+                var lineUrl = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(siteUrl) + '&text=' + encodeURIComponent(shareText);
+
+                shareDiv.innerHTML =
+                    '<a href="' + xUrl + '" target="_blank" rel="noopener noreferrer" class="next-live__share-btn next-live__share-btn--x" aria-label="Xでシェア">𝕏 シェア</a>' +
+                    '<a href="' + lineUrl + '" target="_blank" rel="noopener noreferrer" class="next-live__share-btn next-live__share-btn--line" aria-label="LINEでシェア">LINE</a>' +
+                    '<button type="button" class="next-live__share-btn next-live__share-btn--copy js-copy-share" aria-label="テキストをコピー">📋 コピー</button>';
+
+                var copyBtn = shareDiv.querySelector('.js-copy-share');
+                copyBtn.addEventListener('click', function() {
+                    var copyText = shareText + siteUrl;
+                    navigator.clipboard.writeText(copyText).then(function() {
+                        copyBtn.textContent = '✓ コピーしました';
+                        copyBtn.classList.add('copied');
+                        setTimeout(function() {
+                            copyBtn.textContent = '📋 コピー';
+                            copyBtn.classList.remove('copied');
+                        }, 2000);
+                    });
+                });
+
+                el.appendChild(shareDiv);
+            });
         })();
 
         // Lightbox for flyer images
