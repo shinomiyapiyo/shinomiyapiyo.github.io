@@ -1910,21 +1910,35 @@
         // Share buttons for live events
         (function() {
             var siteUrl = 'https://shinomiyapiyo.github.io/';
+            var monthMap = {JAN:'1',FEB:'2',MAR:'3',APR:'4',MAY:'5',JUN:'6',JUL:'7',AUG:'8',SEP:'9',OCT:'10',NOV:'11',DEC:'12'};
+            var dowMap = {MON:'月',TUE:'火',WED:'水',THU:'木',FRI:'金',SAT:'土',SUN:'日'};
+
             document.querySelectorAll('.js-live-event').forEach(function(el) {
                 var title = el.querySelector('.next-live__title');
                 if (!title) return;
                 var dateBox = el.querySelector('.next-live__date-box');
-                var month = dateBox ? dateBox.querySelector('.next-live__month').textContent : '';
-                var day = dateBox ? dateBox.querySelector('.next-live__day').textContent : '';
-                var dow = dateBox ? dateBox.querySelector('.next-live__dow').textContent : '';
-                var dateStr = month + ' ' + day + ' (' + dow + ')';
+                var monthEn = dateBox ? dateBox.querySelector('.next-live__month').textContent.trim() : '';
+                var day = dateBox ? dateBox.querySelector('.next-live__day').textContent.trim() : '';
+                var dowEn = dateBox ? dateBox.querySelector('.next-live__dow').textContent.trim() : '';
+                var monthJa = monthMap[monthEn] || monthEn;
+                var dowJa = dowMap[dowEn] || dowEn;
+                var dateStr = monthJa + '月' + day + '日(' + dowJa + ')';
                 var eventName = title.textContent.replace(/\n/g, ' ').trim();
-                var shareText = '🎤 ' + dateStr + ' ' + eventName + '\n四ノ宮ぴよ Official\n';
+
+                var metaText = el.querySelector('.next-live__meta') ? el.querySelector('.next-live__meta').textContent : '';
+                var performer = '';
+                if (metaText.indexOf('にゃんカスモンスター') !== -1) {
+                    performer = '🐱 にゃんカスモンスター';
+                } else {
+                    performer = '🐥 四ノ宮ぴよ';
+                }
+
+                var shareText = '🎤 ' + dateStr + '\n' + eventName + '\n' + performer + '\n\n📍詳細はこちら👇\n';
 
                 var shareDiv = document.createElement('div');
                 shareDiv.className = 'next-live__share';
 
-                var xUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(siteUrl);
+                var xUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText + siteUrl);
                 var lineUrl = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(siteUrl) + '&text=' + encodeURIComponent(shareText);
 
                 shareDiv.innerHTML =
