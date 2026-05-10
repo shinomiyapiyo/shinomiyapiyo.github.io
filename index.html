@@ -1925,15 +1925,26 @@
                 var dateStr = monthJa + '月' + day + '日(' + dowJa + ')';
                 var eventName = title.textContent.replace(/\n/g, ' ').trim();
 
-                var metaText = el.querySelector('.next-live__meta') ? el.querySelector('.next-live__meta').textContent : '';
-                var performer = '';
-                if (metaText.indexOf('にゃんカスモンスター') !== -1) {
-                    performer = '🐱 にゃんカスモンスター';
+                var metaEl = el.querySelector('.next-live__meta');
+                var metaHtml = metaEl ? metaEl.innerHTML : '';
+                var metaText = metaEl ? metaEl.textContent : '';
+
+                var performer = metaText.indexOf('にゃんカスモンスター') !== -1
+                    ? '🐱 にゃんカスモンスター' : '🐥 四ノ宮ぴよ';
+
+                var venueMatch = metaHtml.match(/📍<\/span>([^<]+)/);
+                var venue = venueMatch ? venueMatch[1].trim() : '後日発表';
+
+                var timeMatch = metaHtml.match(/🕐<\/span>([^<]+)/);
+                var time = '';
+                if (timeMatch) {
+                    time = timeMatch[1].trim();
                 } else {
-                    performer = '🐥 四ノ宮ぴよ';
+                    var perfTimeMatch = metaHtml.match(/🎤<\/span>([^<]*\d+:\d+[^<]*)/);
+                    time = perfTimeMatch ? perfTimeMatch[1].trim() : '後日発表';
                 }
 
-                var shareText = '🎤 ' + dateStr + '\n' + eventName + '\n' + performer + '\n\n📍詳細はこちら👇\n';
+                var shareText = '🎤 ' + dateStr + '\n' + eventName + '\n' + performer + '\n📍 ' + venue + '\n🕐 ' + time + '\n\n👇詳細はこちら\n';
 
                 var shareDiv = document.createElement('div');
                 shareDiv.className = 'next-live__share';
