@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.276";
+                content: "Ver.1.277";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -497,6 +497,62 @@
 
         /* --- iPhone safe-area対応（タイトル画面は#titleContentで処理済み） --- */
 
+        /* --- DQ風ショップUI共通（静的HTML・JSレンダラー両方から使用） --- */
+        .dq-badge {
+            color: #fff; font-size: clamp(9px, 2vw, 13px);
+            font-family: 'DotGothic16', monospace;
+            background: rgba(0,0,48,0.85); padding: 1px 5px; border-radius: 3px;
+            border: 1px solid rgba(255,255,255,0.6);
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+        .dq-keeper-img {
+            width: clamp(18px,3.5vw,26px); height: clamp(18px,3.5vw,26px);
+            image-rendering: pixelated; flex-shrink: 0;
+        }
+        .dq-keeper-text {
+            color: #fff; font-family: 'DotGothic16', monospace;
+            font-size: clamp(10px, 2vw, 14px);
+            line-height: 1.3; white-space: pre-line;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+        .dq-confirm-opt {
+            color: #fff; font-family: 'DotGothic16', monospace;
+            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
+            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
+        }
+        /* DQ風ショップ行（renderStageShopItem等のJSレンダラーが生成） */
+        .shop-row {
+            display: flex; align-items: center; cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .shop-row.hl { background: rgba(255,255,255,0.1); }
+        .shop-row.dim { opacity: 0.6; }
+        .shop-row-item  { gap: 2px; padding: 2px 3px; flex-wrap: wrap; }  /* 商品/売却行 */
+        .shop-row-menu  { gap: 4px; padding: 5px 6px; }                   /* メニュー行 */
+        .shop-row-tshop { gap: 2px; padding: 3px 3px; }                   /* タイトルショップ行 */
+        .shop-cursor {
+            color: #fff; font-family: 'DotGothic16', monospace;
+            font-size: clamp(9px, 1.8vw, 12px); width: 0.9em; text-align: center; flex-shrink: 0;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+        .shop-row-menu .shop-cursor { font-size: clamp(10px, 2vw, 14px); }
+        .shop-icon-img { flex-shrink: 0; image-rendering: pixelated; vertical-align: middle; }
+        .shop-icon-txt { font-size: clamp(10px, 2.2vw, 15px); flex-shrink: 0; }
+        .shop-row-menu .shop-icon-txt { font-size: clamp(11px, 2.4vw, 16px); }
+        .shop-name {
+            font-size: clamp(9px, 1.8vw, 12px); font-weight: 700;
+            font-family: 'DotGothic16', monospace;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+        .shop-row-menu .shop-name { font-size: clamp(10px, 2vw, 14px); color: #fff; }
+        .shop-price {
+            font-size: clamp(8px, 1.5vw, 11px); font-weight: 700;
+            font-family: 'DotGothic16', monospace;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+            margin-left: auto; white-space: nowrap;
+        }
+
         /* --- 更新通知 --- */
         .update-notification {
             position: fixed;
@@ -663,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.276</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.277</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -930,16 +986,8 @@
                 border-right: 2px solid rgba(255,255,255,0.3);">
                 <!-- ステータス -->
                 <div style="display:flex; gap:4px; margin-bottom: 3px; flex-shrink: 0;">
-                    <span id="stageShopScore" style="color: #fff; font-size: clamp(9px, 2vw, 13px);
-                        font-family: 'DotGothic16', monospace;
-                        background: rgba(0,0,48,0.85); padding: 1px 5px; border-radius: 3px;
-                        border: 1px solid rgba(255,255,255,0.6);
-                        text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"><img src="images/icon_money.png" class="ui-icon ui-icon-sm"> 0円</span>
-                    <span id="stageShopLives" style="color: #fff; font-size: clamp(9px, 2vw, 13px);
-                        font-family: 'DotGothic16', monospace;
-                        background: rgba(0,0,48,0.85); padding: 1px 5px; border-radius: 3px;
-                        border: 1px solid rgba(255,255,255,0.6);
-                        text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"><img src="images/icon_lives.png" class="ui-icon ui-icon-sm"> 5</span>
+                    <span id="stageShopScore" class="dq-badge"><img src="images/icon_money.png" class="ui-icon ui-icon-sm"> 0円</span>
+                    <span id="stageShopLives" class="dq-badge"><img src="images/icon_lives.png" class="ui-icon ui-icon-sm"> 5</span>
                 </div>
                 <!-- 店員セリフ枠（DQ風：紺背景＋白枠） -->
                 <div id="shopKeeperBox" style="
@@ -952,12 +1000,8 @@
                     flex-shrink: 0;
                     position: relative;">
                     <div style="display:flex; align-items:flex-start; gap:4px;">
-                        <img src="images/keeper_stage.png" style="width:clamp(18px,3.5vw,26px); height:clamp(18px,3.5vw,26px); image-rendering:pixelated; flex-shrink:0;">
-                        <span id="shopKeeperText" style="
-                            color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(10px, 2vw, 14px);
-                            line-height: 1.3; white-space: pre-line;
-                            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"></span>
+                        <img src="images/keeper_stage.png" class="dq-keeper-img">
+                        <span id="shopKeeperText" class="dq-keeper-text"></span>
                     </div>
                     <!-- はい/いいえ確認ボックス（DQ風） -->
                     <div id="shopConfirmBox" style="display:none;
@@ -966,18 +1010,8 @@
                         border: 2px solid #fff; border-radius: 5px;
                         padding: 3px 0; min-width: 90px; z-index: 10;
                         box-shadow: 0 3px 10px rgba(0,0,0,0.6);">
-                        <div id="shopConfirmYes" style="
-                            color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
-                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
-                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
-                            ">　 はい</div>
-                        <div id="shopConfirmNo" style="
-                            color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
-                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
-                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
-                            ">　 いいえ</div>
+                        <div id="shopConfirmYes" class="dq-confirm-opt">　 はい</div>
+                        <div id="shopConfirmNo" class="dq-confirm-opt">　 いいえ</div>
                     </div>
                 </div>
                 <!-- 商品リスト（DQコマンドメニュー風） -->
@@ -1045,11 +1079,7 @@
                 border-right: 2px solid rgba(255,255,255,0.3);">
                 <!-- 貯金残高 -->
                 <div style="display:flex; gap:4px; margin-bottom: 3px; flex-shrink: 0;">
-                    <span id="titleShopSavings" style="color: #fff; font-size: clamp(9px, 2vw, 13px);
-                        font-family: 'DotGothic16', monospace;
-                        background: rgba(0,0,48,0.85); padding: 1px 5px; border-radius: 3px;
-                        border: 1px solid rgba(255,255,255,0.6);
-                        text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"><img src="images/icon_bank.png" class="ui-icon ui-icon-sm"> 0円</span>
+                    <span id="titleShopSavings" class="dq-badge"><img src="images/icon_bank.png" class="ui-icon ui-icon-sm"> 0円</span>
                 </div>
                 <!-- 店員セリフ枠（DQ風：紺背景＋白枠） -->
                 <div id="tshopKeeperBox" style="
@@ -1062,12 +1092,8 @@
                     flex-shrink: 0;
                     position: relative;">
                     <div style="display:flex; align-items:flex-start; gap:4px;">
-                        <img src="images/keeper_title.png" style="width:clamp(18px,3.5vw,26px); height:clamp(18px,3.5vw,26px); image-rendering:pixelated; flex-shrink:0;">
-                        <span id="tshopKeeperText" style="
-                            color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(10px, 2vw, 14px);
-                            line-height: 1.3; white-space: pre-line;
-                            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);"></span>
+                        <img src="images/keeper_title.png" class="dq-keeper-img">
+                        <span id="tshopKeeperText" class="dq-keeper-text"></span>
                     </div>
                     <!-- はい/いいえ確認ボックス（DQ風） -->
                     <div id="tshopConfirmBox" style="display:none;
@@ -1076,18 +1102,8 @@
                         border: 2px solid #fff; border-radius: 5px;
                         padding: 3px 0; min-width: 90px; z-index: 10;
                         box-shadow: 0 3px 10px rgba(0,0,0,0.6);">
-                        <div id="tshopConfirmYes" style="
-                            color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
-                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
-                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
-                            ">　 はい</div>
-                        <div id="tshopConfirmNo" style="
-                            color: #fff; font-family: 'DotGothic16', monospace;
-                            font-size: clamp(11px, 2.2vw, 15px); padding: 7px 14px;
-                            cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
-                            -webkit-tap-highlight-color: rgba(255,255,255,0.15);
-                            ">　 いいえ</div>
+                        <div id="tshopConfirmYes" class="dq-confirm-opt">　 はい</div>
+                        <div id="tshopConfirmNo" class="dq-confirm-opt">　 いいえ</div>
                     </div>
                 </div>
                 <!-- アップグレードリスト（DQコマンドメニュー風） -->
@@ -5076,42 +5092,24 @@ function renderStageShopItem(item, purchaseCount) {
     var highlighted = isConfirming || isHighlighted;
     var textColor = canBuy ? '#fff' : 'rgba(180,180,180,0.5)';
     var priceText = soldOut ? t('shop_sold_out') : (hpFull ? '―' : item.price + t('currency_unit'));
-    return '<div data-item-id="' + item.id + '" style="' +
-        'display:flex; align-items:center; gap:2px;' +
-        'padding:2px 3px; cursor:pointer; flex-wrap:wrap;' +
-        (highlighted ? 'background:rgba(255,255,255,0.1);' : '') +
-        'border-bottom:1px solid rgba(255,255,255,0.06);' +
-        (canBuy ? '' : 'opacity:0.6;') + '">' +
-        '<span style="color:#fff; font-family:DotGothic16,monospace;' +
-            'font-size:clamp(9px,1.8vw,12px); width:0.9em; text-align:center; flex-shrink:0;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
+    return '<div data-item-id="' + item.id + '" class="shop-row shop-row-item' +
+        (highlighted ? ' hl' : '') + (canBuy ? '' : ' dim') + '">' +
+        '<span class="shop-cursor">' + cursor + '</span>' +
         (item.iconImg
-            ? '<img src="' + item.iconImg + '" width="18" height="18" style="flex-shrink:0; image-rendering:pixelated; vertical-align:middle;">'
-            : '<span style="font-size:clamp(10px,2.2vw,15px); flex-shrink:0;">' + item.icon + '</span>') +
-        '<span style="color:' + textColor + '; font-size:clamp(9px,1.8vw,12px);' +
-            'font-weight:700; font-family:DotGothic16,monospace;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(item.nameKey)) + '</span>' +
-        '<span style="color:#ffd700; font-size:clamp(8px,1.5vw,11px); font-weight:700;' +
-            'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
-            'margin-left:auto; white-space:nowrap;">' + escapeHtml(priceText) + '</span>' +
+            ? '<img src="' + item.iconImg + '" width="18" height="18" class="shop-icon-img">'
+            : '<span class="shop-icon-txt">' + item.icon + '</span>') +
+        '<span class="shop-name" style="color:' + textColor + ';">' + escapeHtml(t(item.nameKey)) + '</span>' +
+        '<span class="shop-price" style="color:#ffd700;">' + escapeHtml(priceText) + '</span>' +
     '</div>';
 }
 
 function renderShopMenuItem(id, icon, text) {
     var isHighlighted = (shopHighlightedItem === id);
     var cursor = isHighlighted ? '>' : '　';
-    return '<div data-item-id="' + id + '" style="' +
-        'display:flex; align-items:center; gap:4px;' +
-        'padding:5px 6px; cursor:pointer;' +
-        (isHighlighted ? 'background:rgba(255,255,255,0.1);' : '') +
-        'border-bottom:1px solid rgba(255,255,255,0.06);">' +
-        '<span style="color:#fff; font-family:DotGothic16,monospace;' +
-            'font-size:clamp(10px,2vw,14px); width:0.9em; text-align:center; flex-shrink:0;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
-        '<span style="font-size:clamp(11px,2.4vw,16px); flex-shrink:0;">' + icon + '</span>' +
-        '<span style="color:#fff; font-size:clamp(10px,2vw,14px);' +
-            'font-weight:700; font-family:DotGothic16,monospace;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(text) + '</span>' +
+    return '<div data-item-id="' + id + '" class="shop-row shop-row-menu' + (isHighlighted ? ' hl' : '') + '">' +
+        '<span class="shop-cursor">' + cursor + '</span>' +
+        '<span class="shop-icon-txt">' + icon + '</span>' +
+        '<span class="shop-name">' + escapeHtml(text) + '</span>' +
     '</div>';
 }
 
@@ -5124,23 +5122,13 @@ function renderSellItem(stockIndex) {
     var isConfirming = (shopSellingIndex === stockIndex);
     var highlighted = isHighlighted || isConfirming;
     var cursor = highlighted ? '>' : '　';
-    return '<div data-item-id="_sell_' + stockIndex + '" style="' +
-        'display:flex; align-items:center; gap:2px;' +
-        'padding:2px 3px; cursor:pointer; flex-wrap:wrap;' +
-        (highlighted ? 'background:rgba(255,255,255,0.1);' : '') +
-        'border-bottom:1px solid rgba(255,255,255,0.06);">' +
-        '<span style="color:#fff; font-family:DotGothic16,monospace;' +
-            'font-size:clamp(9px,1.8vw,12px); width:0.9em; text-align:center; flex-shrink:0;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
+    return '<div data-item-id="_sell_' + stockIndex + '" class="shop-row shop-row-item' + (highlighted ? ' hl' : '') + '">' +
+        '<span class="shop-cursor">' + cursor + '</span>' +
         (shopItem.iconImg
-            ? '<img src="' + shopItem.iconImg + '" width="18" height="18" style="flex-shrink:0; image-rendering:pixelated; vertical-align:middle;">'
-            : '<span style="font-size:clamp(10px,2.2vw,15px); flex-shrink:0;">' + shopItem.icon + '</span>') +
-        '<span style="color:#fff; font-size:clamp(9px,1.8vw,12px);' +
-            'font-weight:700; font-family:DotGothic16,monospace;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(shopItem.nameKey)) + '</span>' +
-        '<span style="color:#ffd700; font-size:clamp(8px,1.5vw,11px); font-weight:700;' +
-            'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
-            'margin-left:auto; white-space:nowrap;">' + sellPrice + t('currency_unit') + '</span>' +
+            ? '<img src="' + shopItem.iconImg + '" width="18" height="18" class="shop-icon-img">'
+            : '<span class="shop-icon-txt">' + shopItem.icon + '</span>') +
+        '<span class="shop-name" style="color:#fff;">' + escapeHtml(t(shopItem.nameKey)) + '</span>' +
+        '<span class="shop-price" style="color:#ffd700;">' + sellPrice + t('currency_unit') + '</span>' +
     '</div>';
 }
 
@@ -5745,25 +5733,15 @@ function renderTitleShopItem(upgrade) {
     }
     var priceColor = isMax ? '#4CAF50' : (isPremium ? '#ff69b4' : '#ffd700');
     var textColor = isPremium ? 'rgba(255,105,180,0.6)' : '#fff';
-    return '<div data-tshop-id="' + upgrade.id + '" style="' +
-        'display:flex; align-items:center; gap:2px;' +
-        'padding:3px 3px; cursor:pointer;' +
-        (isHighlighted ? 'background:rgba(255,255,255,0.1);' : '') +
-        'border-bottom:1px solid rgba(255,255,255,0.06);' +
-        (isPremium ? 'opacity:0.6;' : '') + '">' +
-        '<span style="color:#fff; font-family:DotGothic16,monospace;' +
-            'font-size:clamp(9px,1.8vw,12px); width:0.9em; text-align:center; flex-shrink:0;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + cursor + '</span>' +
+    return '<div data-tshop-id="' + upgrade.id + '" class="shop-row shop-row-tshop' +
+        (isHighlighted ? ' hl' : '') + (isPremium ? ' dim' : '') + '">' +
+        '<span class="shop-cursor">' + cursor + '</span>' +
         (upgrade.iconImg
-            ? '<img src="' + upgrade.iconImg + '" width="18" height="18" style="flex-shrink:0; image-rendering:pixelated; vertical-align:middle;">'
-            : '<span style="font-size:clamp(10px,2.2vw,15px); flex-shrink:0;">' + upgrade.icon + '</span>') +
-        '<span style="color:' + textColor + '; font-size:clamp(9px,1.8vw,12px);' +
-            'font-weight:700; font-family:DotGothic16,monospace;' +
-            'text-shadow:1px 1px 0 rgba(0,0,0,0.8);">' + escapeHtml(t(upgrade.nameKey)) +
+            ? '<img src="' + upgrade.iconImg + '" width="18" height="18" class="shop-icon-img">'
+            : '<span class="shop-icon-txt">' + upgrade.icon + '</span>') +
+        '<span class="shop-name" style="color:' + textColor + ';">' + escapeHtml(t(upgrade.nameKey)) +
             ' <span style="font-size:clamp(7px,1.3vw,10px);color:#ffd700;">' + levelDots + '</span></span>' +
-        '<span style="color:' + priceColor + '; font-size:clamp(8px,1.5vw,11px); font-weight:700;' +
-            'font-family:DotGothic16,monospace; text-shadow:1px 1px 0 rgba(0,0,0,0.8);' +
-            'margin-left:auto; white-space:nowrap;">' + (priceHtml || escapeHtml(priceText)) + '</span>' +
+        '<span class="shop-price" style="color:' + priceColor + ';">' + (priceHtml || escapeHtml(priceText)) + '</span>' +
     '</div>';
 }
 
