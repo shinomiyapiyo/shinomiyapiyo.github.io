@@ -40,6 +40,9 @@
             --sar: env(safe-area-inset-right, 0px);
             --sat: env(safe-area-inset-top, 0px);
             --sab: env(safe-area-inset-bottom, 0px);
+            /* L/R操作エリア幅の単一の正（タッチ領域・表示バー・JS境界判定すべてここを参照） */
+            --touch-l: 18%;
+            --touch-r: 15%;
         }
         html, body {
             margin: 0; padding: 0;
@@ -76,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.271";
+                content: "Ver.1.272";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -277,8 +280,8 @@
             z-index: 5;
             opacity: 0;
         }
-        #leftArea  { left: 0; width: 18%; }
-        #rightArea { left: 18%; width: 15%; }
+        #leftArea  { left: 0; width: var(--touch-l); }
+        #rightArea { left: var(--touch-l); width: var(--touch-r); }
         #jumpArea  { right: 0; width: 30%; }
         /* 中央33-70%はデッドゾーン（ホームインジケータ誤操作防止） */
 
@@ -324,13 +327,13 @@
         }
 
         .control-left {
-            width: 18%;
+            width: var(--touch-l);
             padding-left: env(safe-area-inset-left, 0px);
             background: rgba(100,180,255,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
         .control-right {
-            width: 15%;
+            width: var(--touch-r);
             background: rgba(255,140,60,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
@@ -660,7 +663,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.271</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.272</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1590,7 +1593,7 @@ function adRevive() {
         gameState.gameStarted = true;
         gameState.gamePaused = false;
         gameState.isInvincible = true;
-        gameState.invincibleTimer = 180; // 3秒間無敵
+        gameState.invincibleTimer = INVINCIBLE_FRAMES; // 3秒間無敵
         gameState.revivalFlashTimer = 90; // 1.5秒の復活演出
         resetPlayerPosition(); // 上空からリスポーン（死因に関わらず統一）
         playStageBGM();
@@ -2594,6 +2597,26 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
+// ─── ボス攻撃選択の累積しきい値（updateBossAI_mamaでMath.random()と比較順に評価） ───
+// 例: AIフェーズ2でr<0.15なら閃光、r<0.35なら突進…最後のしきい値以上は様子見
+var BOSS_ATTACK_RATES = {
+    1: { flash: 0.15 },
+    2: { flash: 0.15, rush: 0.35, egg: 0.55, flame: 0.80 },
+    3: { flash: 0.15, rush: 0.30, egg: 0.50, jump: 0.65, flame: 0.85 }
+};
+
+// ─── パワーアップ持続時間（フレーム @60fps） ───
+var PU_DURATION = {
+    lemon: 300,        // フィールド: レモン缶（5秒）
+    shield: 300,       // フィールド: シールド（5秒）
+    energy: 480,       // フィールド: エナジー（8秒）
+    magnet: 600,       // フィールド: マグネット（10秒）
+    barrierItem: 600,  // ショップ: バリア（10秒）
+    lemonItem: 1200,   // ショップ: レモンスペシャル（20秒）
+    fullCharge: 900,   // ショップ: フルチャージ（15秒）
+    reviveShield: 300  // 復活薬使用時のシールド（5秒）
+};
+
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
@@ -2929,26 +2952,26 @@ var STAGE_SHOP_ITEMS = [
         icon: '', iconImg: 'images/icon_barrier.png', price: 3000, maxPerVisit: 2,
         stockItem: true,
         stockEffect: function() {
-            gameState.puShield = 600;
+            gameState.puShield = PU_DURATION.barrierItem;
             gameState.isInvincible = true;
-            gameState.invincibleTimer = 600;
+            gameState.invincibleTimer = PU_DURATION.barrierItem;
         }
     },
     {
         id: 'lemon_special', nameKey: 'shop_item_lemon', descKey: 'shop_item_lemon_desc',
         icon: '', iconImg: 'images/icon_lemon_special.png', price: 1200, maxPerVisit: 2,
         stockItem: true,
-        stockEffect: function() { gameState.puLemon = 1200; }
+        stockEffect: function() { gameState.puLemon = PU_DURATION.lemonItem; }
     },
     {
         id: 'full_charge', nameKey: 'shop_item_fullcharge', descKey: 'shop_item_fullcharge_desc',
         icon: '', iconImg: 'images/icon_full_charge.png', price: 5000, maxPerVisit: 1,
         stockItem: true,
         stockEffect: function() {
-            gameState.puLemon = 900;
-            gameState.puShield = 900;
-            gameState.puEnergy = 900;
-            gameState.puMagnet = 900;
+            gameState.puLemon = PU_DURATION.fullCharge;
+            gameState.puShield = PU_DURATION.fullCharge;
+            gameState.puEnergy = PU_DURATION.fullCharge;
+            gameState.puMagnet = PU_DURATION.fullCharge;
         }
     },
     {
@@ -2958,9 +2981,9 @@ var STAGE_SHOP_ITEMS = [
         stockEffect: function() {
             // ストックから手動使用した場合: HP2回復+バリア付与
             gameState.lives = Math.min(gameState.lives + 2, 10);
-            gameState.puShield = 300;
+            gameState.puShield = PU_DURATION.reviveShield;
             gameState.isInvincible = true;
-            gameState.invincibleTimer = 300;
+            gameState.invincibleTimer = PU_DURATION.reviveShield;
         }
     }
 ];
@@ -3536,12 +3559,6 @@ function hideGuide() {
 function closeGuide() {
     if (isInTransitionCooldown()) return;
     history.back();
-}
-
-function hideGuideDirect() {
-    var el = document.getElementById('guideScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
 }
 
 function updateSettingsUI() {
@@ -4623,14 +4640,14 @@ function updatePowerUps() {
             else gameState.score += 1000;
             spawnLifeUpEffect(pu.x + pu.width / 2, pu.y);
         } else if (pu.type === 'lemon_can') {
-            gameState.puLemon = 300;
+            gameState.puLemon = PU_DURATION.lemon;
         } else if (pu.type === 'shield') {
-            gameState.puShield = 300;
+            gameState.puShield = PU_DURATION.shield;
         } else if (pu.type === 'energy') {
-            gameState.puEnergy = 480;
+            gameState.puEnergy = PU_DURATION.energy;
             gameState.bulletFireTimer = 0;
         } else if (pu.type === 'magnet') {
-            gameState.puMagnet = 600;
+            gameState.puMagnet = PU_DURATION.magnet;
         }
     }
 }
@@ -5787,23 +5804,6 @@ function updateTitleShopUI() {
     container.innerHTML = html;
 }
 
-function buyTitleUpgrade(upgradeId) {
-    var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
-    if (!upgrade) return false;
-    if (upgrade.premium && !gameSettings.purchased['starter_pack']) return false;
-    var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
-    if (currentLevel >= upgrade.maxLevel) return false;
-    var price = upgrade.prices[currentLevel];
-    if (gameSettings.savings < price) { if (soundManager) soundManager.playDamage(); return false; }
-    gameSettings.savings -= price;
-    if (!gameSettings.upgrades) gameSettings.upgrades = {};
-    gameSettings.upgrades[upgradeId] = currentLevel + 1;
-    saveSettings();
-    if (soundManager) soundManager.playItem();
-    updateTitleShopUI();
-    return true;
-}
-
 function applyUpgrades() {
     var ups = gameSettings.upgrades || {};
     var coinLv = ups.coin_master || 0;
@@ -6000,7 +6000,7 @@ function updateBoss() {
         // ── 閃光攻撃ダメージ判定 ──
         if (bossState.flashAttackTimer > 0) {
             bossState.flashAttackTimer--;
-            // 発動直後（残り28フレーム）にダメージ判定：地面近くにいたら被弾
+            // 発動直後（残り27フレーム時点）にダメージ判定：地面近くにいたら被弾
             if (bossState.flashAttackTimer === 27) {
                 if (!gameState.isInvincible && gameState.puShield <= 0 && player.y + player.height >= GROUND_Y - 70) {
                     takeDamage();
@@ -6236,31 +6236,32 @@ function updateBossAI_mama(b) {
 
     // ── 攻撃選択 ──
     var r = Math.random();
+    var rates = BOSS_ATTACK_RATES[phase];
     var canFlash = gameRound >= 2; // ROUND2以降で閃光攻撃解禁
     if (phase === 1) {
         // Phase1: パトロール＋召喚のみ（ROUND2+は閃光チャンス有り）
-        if (canFlash && r < 0.15) {
+        if (canFlash && r < rates.flash) {
             b.isCharging = true;
             b.chargeTimer = 50; // チャージ時間
         }
         b.attackTimer = 180;
     } else if (phase === 2) {
-        if (canFlash && r < 0.15) {
+        if (canFlash && r < rates.flash) {
             // 閃光攻撃（チャージ開始）
             b.isCharging = true;
             b.chargeTimer = 45;
-        } else if (r < 0.35) {
+        } else if (r < rates.rush) {
             // 突進
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
             b.spriteFrame = BOSS_FRAME_RUSH;
-        } else if (r < 0.55) {
+        } else if (r < rates.egg) {
             // 卵3発
             spawnEggProjectiles(b, 3);
             b.spriteFrame = BOSS_FRAME_SUMMON;
             b.spriteResetTimer = 20;
             b.attackTimer = 120;
-        } else if (r < 0.8) {
+        } else if (r < rates.flame) {
             // 闇の炎ブレス
             b.isFlaming = true;
             b.flameTimer = 60; // 1秒間
@@ -6269,25 +6270,25 @@ function updateBossAI_mama(b) {
             b.attackTimer = 90;
         }
     } else { // phase 3
-        if (canFlash && r < 0.15) {
+        if (canFlash && r < rates.flash) {
             // 閃光攻撃（チャージ短い）
             b.isCharging = true;
             b.chargeTimer = 35;
-        } else if (r < 0.3) {
+        } else if (r < rates.rush) {
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
             b.spriteFrame = BOSS_FRAME_RUSH;
-        } else if (r < 0.5) {
+        } else if (r < rates.egg) {
             spawnEggProjectiles(b, 4);
             b.spriteFrame = BOSS_FRAME_SUMMON;
             b.spriteResetTimer = 20;
             b.attackTimer = 90;
-        } else if (r < 0.65) {
+        } else if (r < rates.jump) {
             // ジャンプ攻撃
             b.isJumping = true;
             b.velY = -14;
             b.spriteFrame = BOSS_FRAME_JUMP;
-        } else if (r < 0.85) {
+        } else if (r < rates.flame) {
             // 闇の炎ブレス（Phase3は長い）
             b.isFlaming = true;
             b.flameTimer = 90; // 1.5秒間
@@ -8464,12 +8465,13 @@ function checkOrientation() {
         if (zone) zone.classList.add('active');
     }
 
-    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = 画面幅18%）
+    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = CSS変数 --touch-l と同一値で一元管理）
     var TOUCH_DEADZONE_LEFT = 20; // 左端20pxは拇指球の誤タッチ防止デッドゾーン
+    var TOUCH_BOUNDARY_RATIO = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--touch-l')) || 18) / 100;
     function updateMoveFromTouch(touch) {
         if (moveSwiped) return;
         if (touch.clientX < TOUCH_DEADZONE_LEFT) return;
-        var boundary = window.innerWidth * 0.18;
+        var boundary = window.innerWidth * TOUCH_BOUNDARY_RATIO;
         if (touch.clientX < boundary) {
             gameState.input.left = true; gameState.input.right = false;
             highlightControl(ctrlLeft);
@@ -8678,13 +8680,6 @@ function checkOrientation() {
     });
 
     // ─ デバッグ: ボス戦即開始ボタン ─
-    function canvasCoords(clientX, clientY) {
-        var rect = canvas.getBoundingClientRect();
-        return {
-            x: (clientX - rect.left) * (GAME_WIDTH / rect.width),
-            y: (clientY - rect.top)  * (GAME_HEIGHT / rect.height)
-        };
-    }
     function triggerDebugBoss() {
         if (bossState.active || bossState.bossTriggered) return;
         bossState.bossTriggered = true;
