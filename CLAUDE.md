@@ -14,7 +14,10 @@
 ## プロジェクト構成
 
 - `games/piyo-adventure/` — ぴよアドベンチャーのメインゲーム
-- `games/piyo-adventure/index.html` — ゲーム本体（単一HTMLファイル）
+- `games/piyo-adventure/index.html` — ゲーム本体（メインロジック）
+- `games/piyo-adventure/i18n.js` — 多言語テキスト辞書（ja/en）＋翻訳関数
+- `games/piyo-adventure/audio.js` — SoundManagerクラス（BGM/SE）
+- `games/piyo-adventure/sprites.js` — スプライト定義
 
 ## 操作範囲の制限
 
@@ -39,7 +42,9 @@
 
 ## 開発ルール
 
-- ゲームは単一HTMLファイル（`index.html`）に全コードを含む構成
+- ゲームは `index.html` ＋ 分割jsファイル（`sprites.js` / `i18n.js` / `audio.js`）の構成。ビルドツールは使わず `<script src>` で読み込む
+- **新しいjsファイルを追加したら `sw.js` の `STATIC_ASSETS` に必ず登録する** — 忘れるとオフライン時に壊れる
+- jsファイルの読み込み順序: sprites.js → i18n.js → audio.js → index.html内のメインスクリプト（依存方向は常にメイン側から分割ファイル側へ）
 - 変更後は必ず動作確認の観点を説明すること
 - 貯金システムが実装されるまで、タイトルショップはグレーアウト（無効化）を維持すること
 - **HTMLファイルを1行でも変更したらバージョンを +0.001 上げる** — ユーザーへの確認は不要、自動的に行うこと
