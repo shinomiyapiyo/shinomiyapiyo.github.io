@@ -372,7 +372,7 @@ en: {
     confirm_yes: 'Yes',
     confirm_no: 'No',
     privacy_link: _ic('icon_lock.png', 'ui-icon-sm') + ' Privacy Policy',
-    privacy_url: 'https://nullpoworks.github.io/privacy-policy.html?lang=en',
+    privacy_url: 'https://nullpoworks.github.io/privacy-policy-en.html',
     privacy_link_short: 'Privacy Policy',
     terms_link_short: 'Terms of Service',
     terms_url: 'https://nullpoworks.github.io/terms-piyo-adventure-en.html',
