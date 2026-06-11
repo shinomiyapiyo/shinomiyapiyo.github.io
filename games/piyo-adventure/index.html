@@ -40,6 +40,9 @@
             --sar: env(safe-area-inset-right, 0px);
             --sat: env(safe-area-inset-top, 0px);
             --sab: env(safe-area-inset-bottom, 0px);
+            /* L/R操作エリア幅の単一の正（タッチ領域・表示バー・JS境界判定すべてここを参照） */
+            --touch-l: 18%;
+            --touch-r: 15%;
         }
         html, body {
             margin: 0; padding: 0;
@@ -76,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.271";
+                content: "Ver.1.273";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -277,8 +280,8 @@
             z-index: 5;
             opacity: 0;
         }
-        #leftArea  { left: 0; width: 18%; }
-        #rightArea { left: 18%; width: 15%; }
+        #leftArea  { left: 0; width: var(--touch-l); }
+        #rightArea { left: var(--touch-l); width: var(--touch-r); }
         #jumpArea  { right: 0; width: 30%; }
         /* 中央33-70%はデッドゾーン（ホームインジケータ誤操作防止） */
 
@@ -324,13 +327,13 @@
         }
 
         .control-left {
-            width: 18%;
+            width: var(--touch-l);
             padding-left: env(safe-area-inset-left, 0px);
             background: rgba(100,180,255,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
         .control-right {
-            width: 15%;
+            width: var(--touch-r);
             background: rgba(255,140,60,0.35);
             border-right: 1px solid rgba(255,255,255,0.2);
         }
@@ -660,7 +663,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.271</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.273</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1590,7 +1593,7 @@ function adRevive() {
         gameState.gameStarted = true;
         gameState.gamePaused = false;
         gameState.isInvincible = true;
-        gameState.invincibleTimer = 180; // 3秒間無敵
+        gameState.invincibleTimer = INVINCIBLE_FRAMES; // 3秒間無敵
         gameState.revivalFlashTimer = 90; // 1.5秒の復活演出
         resetPlayerPosition(); // 上空からリスポーン（死因に関わらず統一）
         playStageBGM();
@@ -2594,6 +2597,26 @@ const BOSS_ANGER_DURATION   = 150;    // 2.5s @ 60fps
 const BOSS_SUMMON_INTERVAL  = 300;    // 5s @ 60fps
 const BOSS_COINS_ON_DEFEAT  = 25;
 
+// ─── ボス攻撃選択の累積しきい値（updateBossAI_mamaでMath.random()と比較順に評価） ───
+// 例: AIフェーズ2でr<0.15なら閃光、r<0.35なら突進…最後のしきい値以上は様子見
+var BOSS_ATTACK_RATES = {
+    1: { flash: 0.15 },
+    2: { flash: 0.15, rush: 0.35, egg: 0.55, flame: 0.80 },
+    3: { flash: 0.15, rush: 0.30, egg: 0.50, jump: 0.65, flame: 0.85 }
+};
+
+// ─── パワーアップ持続時間（フレーム @60fps） ───
+var PU_DURATION = {
+    lemon: 300,        // フィールド: レモン缶（5秒）
+    shield: 300,       // フィールド: シールド（5秒）
+    energy: 480,       // フィールド: エナジー（8秒）
+    magnet: 600,       // フィールド: マグネット（10秒）
+    barrierItem: 600,  // ショップ: バリア（10秒）
+    lemonItem: 1200,   // ショップ: レモンスペシャル（20秒）
+    fullCharge: 900,   // ショップ: フルチャージ（15秒）
+    reviveShield: 300  // 復活薬使用時のシールド（5秒）
+};
+
 // ─── キャンバス ───
 const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
@@ -2733,10 +2756,15 @@ class SoundManager {
         o1.stop(start + dur); o2.stop(start + dur);
     }
 
+    // mp3 SE共通再生（頭出しして再生）
+    _playSE(audio) {
+        audio.currentTime = 0;
+        audio.play().catch(function(){});
+    }
+
     playFlash() {
         if (!this.ctx || !gameSettings.soundEnabled) return;
-        this.flashSE.currentTime = 0;
-        this.flashSE.play().catch(function(){});
+        this._playSE(this.flashSE);
     }
 
     playLevelUp() {
@@ -2784,9 +2812,8 @@ class SoundManager {
     playBossWarning() {
         if (!gameSettings.soundEnabled) return;
         try {
-            this.warningSE.currentTime = 0;
-            this.warningSE.play();
-            setTimeout(() => { this.warningSE.pause(); }, 2000);
+            this._playSE(this.warningSE);
+            setTimeout(() => { this.warningSE.pause(); }, 2000); // 2秒で停止
         } catch (_) {}
     }
 
@@ -2829,15 +2856,13 @@ class SoundManager {
     // ─── カーソル移動・クリック音（select.mp3） ───
     playCursorMove() {
         if (!gameSettings.soundEnabled) return;
-        this.selectSE.currentTime = 0;
-        this.selectSE.play().catch(function(){});
+        this._playSE(this.selectSE);
     }
 
     // ─── はい/いいえ決定音（or.mp3） ───
     playConfirmSelect() {
         if (!gameSettings.soundEnabled) return;
-        this.orSE.currentTime = 0;
-        this.orSE.play().catch(function(){});
+        this._playSE(this.orSE);
     }
 }
 
@@ -2929,26 +2954,26 @@ var STAGE_SHOP_ITEMS = [
         icon: '', iconImg: 'images/icon_barrier.png', price: 3000, maxPerVisit: 2,
         stockItem: true,
         stockEffect: function() {
-            gameState.puShield = 600;
+            gameState.puShield = PU_DURATION.barrierItem;
             gameState.isInvincible = true;
-            gameState.invincibleTimer = 600;
+            gameState.invincibleTimer = PU_DURATION.barrierItem;
         }
     },
     {
         id: 'lemon_special', nameKey: 'shop_item_lemon', descKey: 'shop_item_lemon_desc',
         icon: '', iconImg: 'images/icon_lemon_special.png', price: 1200, maxPerVisit: 2,
         stockItem: true,
-        stockEffect: function() { gameState.puLemon = 1200; }
+        stockEffect: function() { gameState.puLemon = PU_DURATION.lemonItem; }
     },
     {
         id: 'full_charge', nameKey: 'shop_item_fullcharge', descKey: 'shop_item_fullcharge_desc',
         icon: '', iconImg: 'images/icon_full_charge.png', price: 5000, maxPerVisit: 1,
         stockItem: true,
         stockEffect: function() {
-            gameState.puLemon = 900;
-            gameState.puShield = 900;
-            gameState.puEnergy = 900;
-            gameState.puMagnet = 900;
+            gameState.puLemon = PU_DURATION.fullCharge;
+            gameState.puShield = PU_DURATION.fullCharge;
+            gameState.puEnergy = PU_DURATION.fullCharge;
+            gameState.puMagnet = PU_DURATION.fullCharge;
         }
     },
     {
@@ -2958,9 +2983,9 @@ var STAGE_SHOP_ITEMS = [
         stockEffect: function() {
             // ストックから手動使用した場合: HP2回復+バリア付与
             gameState.lives = Math.min(gameState.lives + 2, 10);
-            gameState.puShield = 300;
+            gameState.puShield = PU_DURATION.reviveShield;
             gameState.isInvincible = true;
-            gameState.invincibleTimer = 300;
+            gameState.invincibleTimer = PU_DURATION.reviveShield;
         }
     }
 ];
@@ -3536,12 +3561,6 @@ function hideGuide() {
 function closeGuide() {
     if (isInTransitionCooldown()) return;
     history.back();
-}
-
-function hideGuideDirect() {
-    var el = document.getElementById('guideScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
 }
 
 function updateSettingsUI() {
@@ -4267,7 +4286,7 @@ function updateEnemies() {
         var bodyHit  = aabbShrink(player, e, 14, 12);
         if (!stompHit && !bodyHit) continue;
 
-        if (gameState.puShield > 0 || gameState.isInvincible) {
+        if (isPlayerProtected()) {
             spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
             enemies.splice(i, 1);
             registerKill(200, e.x + e.width / 2, e.y);
@@ -4297,7 +4316,7 @@ function updateEnemies() {
         var bodyHitF  = aabbShrink(player, e, 14, 12);
         if (!stompHitF && !bodyHitF) continue;
 
-        if (gameState.puShield > 0 || gameState.isInvincible) {
+        if (isPlayerProtected()) {
             spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
             flyingEnemies.splice(i, 1);
             registerKill(300, e.x + e.width / 2, e.y);
@@ -4506,6 +4525,12 @@ function tryRevive() {
     return false;
 }
 
+// プレイヤーがダメージを受けない状態か（無敵 or シールド中）
+// 敵・ボスの攻撃判定は必ずこの関数を使うこと（個別チェックは漏れバグの元）
+function isPlayerProtected() {
+    return gameState.isInvincible || gameState.puShield > 0;
+}
+
 function takeDamage() {
     if (gameState.isInvincible) return;
     if (!debugMode) gameState.lives--;
@@ -4623,14 +4648,14 @@ function updatePowerUps() {
             else gameState.score += 1000;
             spawnLifeUpEffect(pu.x + pu.width / 2, pu.y);
         } else if (pu.type === 'lemon_can') {
-            gameState.puLemon = 300;
+            gameState.puLemon = PU_DURATION.lemon;
         } else if (pu.type === 'shield') {
-            gameState.puShield = 300;
+            gameState.puShield = PU_DURATION.shield;
         } else if (pu.type === 'energy') {
-            gameState.puEnergy = 480;
+            gameState.puEnergy = PU_DURATION.energy;
             gameState.bulletFireTimer = 0;
         } else if (pu.type === 'magnet') {
-            gameState.puMagnet = 600;
+            gameState.puMagnet = PU_DURATION.magnet;
         }
     }
 }
@@ -4836,15 +4861,20 @@ var shopSellingIndex = null; // 売却確認中のストックインデックス
 var shopSellHighlightIndex = null; // 売却モードでハイライト中のストックインデックス
 var shopConfirmCursor = null; // はい/いいえカーソル位置: null | 'yes' | 'no'
 
-function setKeeperText(key, replacements) {
+// 店員セリフ表示の共通処理（ステージ/タイトルショップ共用）
+function setKeeperTextFor(elementId, key, replacements) {
     var txt = t(key);
     if (replacements) {
         for (var k in replacements) {
             txt = txt.replace('{' + k + '}', replacements[k]);
         }
     }
-    var el = document.getElementById('shopKeeperText');
+    var el = document.getElementById(elementId);
     if (el) el.textContent = txt;
+}
+
+function setKeeperText(key, replacements) {
+    setKeeperTextFor('shopKeeperText', key, replacements);
 }
 
 function showShopConfirm(show) {
@@ -5508,14 +5538,7 @@ function formatTshopPrice(num) {
 }
 
 function setTshopKeeperText(key, replacements) {
-    var txt = t(key);
-    if (replacements) {
-        for (var k in replacements) {
-            txt = txt.replace('{' + k + '}', replacements[k]);
-        }
-    }
-    var el = document.getElementById('tshopKeeperText');
-    if (el) el.textContent = txt;
+    setKeeperTextFor('tshopKeeperText', key, replacements);
 }
 
 function showTshopConfirm(show) {
@@ -5787,23 +5810,6 @@ function updateTitleShopUI() {
     container.innerHTML = html;
 }
 
-function buyTitleUpgrade(upgradeId) {
-    var upgrade = TITLE_SHOP_UPGRADES.find(function(u) { return u.id === upgradeId; });
-    if (!upgrade) return false;
-    if (upgrade.premium && !gameSettings.purchased['starter_pack']) return false;
-    var currentLevel = (gameSettings.upgrades || {})[upgradeId] || 0;
-    if (currentLevel >= upgrade.maxLevel) return false;
-    var price = upgrade.prices[currentLevel];
-    if (gameSettings.savings < price) { if (soundManager) soundManager.playDamage(); return false; }
-    gameSettings.savings -= price;
-    if (!gameSettings.upgrades) gameSettings.upgrades = {};
-    gameSettings.upgrades[upgradeId] = currentLevel + 1;
-    saveSettings();
-    if (soundManager) soundManager.playItem();
-    updateTitleShopUI();
-    return true;
-}
-
 function applyUpgrades() {
     var ups = gameSettings.upgrades || {};
     var coinLv = ups.coin_master || 0;
@@ -6000,9 +6006,9 @@ function updateBoss() {
         // ── 閃光攻撃ダメージ判定 ──
         if (bossState.flashAttackTimer > 0) {
             bossState.flashAttackTimer--;
-            // 発動直後（残り28フレーム）にダメージ判定：地面近くにいたら被弾
+            // 発動直後（残り27フレーム時点）にダメージ判定：地面近くにいたら被弾
             if (bossState.flashAttackTimer === 27) {
-                if (!gameState.isInvincible && gameState.puShield <= 0 && player.y + player.height >= GROUND_Y - 70) {
+                if (!isPlayerProtected() && player.y + player.height >= GROUND_Y - 70) {
                     takeDamage();
                 }
             }
@@ -6236,31 +6242,32 @@ function updateBossAI_mama(b) {
 
     // ── 攻撃選択 ──
     var r = Math.random();
+    var rates = BOSS_ATTACK_RATES[phase];
     var canFlash = gameRound >= 2; // ROUND2以降で閃光攻撃解禁
     if (phase === 1) {
         // Phase1: パトロール＋召喚のみ（ROUND2+は閃光チャンス有り）
-        if (canFlash && r < 0.15) {
+        if (canFlash && r < rates.flash) {
             b.isCharging = true;
             b.chargeTimer = 50; // チャージ時間
         }
         b.attackTimer = 180;
     } else if (phase === 2) {
-        if (canFlash && r < 0.15) {
+        if (canFlash && r < rates.flash) {
             // 閃光攻撃（チャージ開始）
             b.isCharging = true;
             b.chargeTimer = 45;
-        } else if (r < 0.35) {
+        } else if (r < rates.rush) {
             // 突進
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
             b.spriteFrame = BOSS_FRAME_RUSH;
-        } else if (r < 0.55) {
+        } else if (r < rates.egg) {
             // 卵3発
             spawnEggProjectiles(b, 3);
             b.spriteFrame = BOSS_FRAME_SUMMON;
             b.spriteResetTimer = 20;
             b.attackTimer = 120;
-        } else if (r < 0.8) {
+        } else if (r < rates.flame) {
             // 闇の炎ブレス
             b.isFlaming = true;
             b.flameTimer = 60; // 1秒間
@@ -6269,25 +6276,25 @@ function updateBossAI_mama(b) {
             b.attackTimer = 90;
         }
     } else { // phase 3
-        if (canFlash && r < 0.15) {
+        if (canFlash && r < rates.flash) {
             // 閃光攻撃（チャージ短い）
             b.isCharging = true;
             b.chargeTimer = 35;
-        } else if (r < 0.3) {
+        } else if (r < rates.rush) {
             b.isRushing = true;
             b.rushTargetX = player.x + player.width / 2;
             b.spriteFrame = BOSS_FRAME_RUSH;
-        } else if (r < 0.5) {
+        } else if (r < rates.egg) {
             spawnEggProjectiles(b, 4);
             b.spriteFrame = BOSS_FRAME_SUMMON;
             b.spriteResetTimer = 20;
             b.attackTimer = 90;
-        } else if (r < 0.65) {
+        } else if (r < rates.jump) {
             // ジャンプ攻撃
             b.isJumping = true;
             b.velY = -14;
             b.spriteFrame = BOSS_FRAME_JUMP;
-        } else if (r < 0.85) {
+        } else if (r < rates.flame) {
             // 闇の炎ブレス（Phase3は長い）
             b.isFlaming = true;
             b.flameTimer = 90; // 1.5秒間
@@ -6326,7 +6333,7 @@ function updateBossCollision(b) {
             bossState.phase = 4;
             bossState.defeatedTimer = 0;
         }
-    } else if (bodyHit && !gameState.isInvincible && gameState.puShield <= 0 && b.stompCooldown <= 0) {
+    } else if (bodyHit && !isPlayerProtected() && b.stompCooldown <= 0) {
         // ボスが踏みつけ無敵中は体当たりダメージなし / シールド中もダメージなし
         takeDamage();
     }
@@ -6451,7 +6458,7 @@ function updateEggs() {
         }
         // プレイヤー衝突（シールド中は卵を消滅させてダメージなし）
         if (aabb(player, egg)) {
-            if (gameState.isInvincible || gameState.puShield > 0) {
+            if (isPlayerProtected()) {
                 bossState.eggs.splice(i, 1);
             } else {
                 bossState.eggs.splice(i, 1);
@@ -8449,6 +8456,51 @@ function checkOrientation() {
 
 // ─── 入力 ───
 
+// タップボタン共通ヘルパー: touchendで即実行（iOSのclick遅延回避）し、
+// 後続のsynthesized clickを内部フラグで抑止する。
+// opts.guardTouchStart: touchstartで親への伝播を止める（ゲーム中HUD上のボタン用）
+// opts.stopClickPropagation: clickイベントの伝播を止める（オーバーレイ画面内のボタン用）
+function bindTapButton(el, handler, opts) {
+    opts = opts || {};
+    var touchFired = false;
+    if (opts.guardTouchStart) {
+        el.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
+    }
+    el.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        touchFired = true;
+        handler();
+    });
+    el.addEventListener('click', function(e) {
+        if (opts.stopClickPropagation) e.stopPropagation();
+        if (touchFired) { touchFired = false; return; }
+        handler();
+    });
+}
+
+// リスト項目のタップ委譲ヘルパー: コンテナ内の[attrName]属性を持つ要素のタップを検出し、
+// 属性値をhandlerに渡す。タッチは終了座標から要素を特定（指ずれ対策）。
+function bindTapDelegate(container, attrName, handler) {
+    var touchFired = false;
+    container.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        touchFired = true;
+        var touch = e.changedTouches[0];
+        var target = document.elementFromPoint(touch.clientX, touch.clientY);
+        var itemEl = target ? target.closest('[' + attrName + ']') : null;
+        if (!itemEl) return;
+        handler(itemEl.getAttribute(attrName));
+    });
+    container.addEventListener('click', function(e) {
+        if (touchFired) { touchFired = false; return; }
+        var itemEl = e.target.closest('[' + attrName + ']');
+        if (!itemEl) return;
+        handler(itemEl.getAttribute(attrName));
+    });
+}
+
 (function setupInput() {
     var leftArea  = document.getElementById('leftArea');
     var rightArea = document.getElementById('rightArea');
@@ -8464,12 +8516,13 @@ function checkOrientation() {
         if (zone) zone.classList.add('active');
     }
 
-    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = 画面幅18%）
+    // 指の現在X位置から移動方向を判定（L/Rエリア境界 = CSS変数 --touch-l と同一値で一元管理）
     var TOUCH_DEADZONE_LEFT = 20; // 左端20pxは拇指球の誤タッチ防止デッドゾーン
+    var TOUCH_BOUNDARY_RATIO = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--touch-l')) || 18) / 100;
     function updateMoveFromTouch(touch) {
         if (moveSwiped) return;
         if (touch.clientX < TOUCH_DEADZONE_LEFT) return;
-        var boundary = window.innerWidth * 0.18;
+        var boundary = window.innerWidth * TOUCH_BOUNDARY_RATIO;
         if (touch.clientX < boundary) {
             gameState.input.left = true; gameState.input.right = false;
             highlightControl(ctrlLeft);
@@ -8564,103 +8617,14 @@ function checkOrientation() {
         }
     }, { passive: true });
 
-    // ─ ポーズボタン: touchend で即反応（iOS click 遅延回避） ─
-    var pauseBtn = document.getElementById('pauseButton');
-    var pauseTouchFired = false;
-    pauseBtn.addEventListener('touchstart', function(e) {
-        e.stopPropagation();
-    }, { passive: true });
-    pauseBtn.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        pauseTouchFired = true;
-        pauseGame();
-    });
-    pauseBtn.addEventListener('click', function(e) {
-        if (pauseTouchFired) { pauseTouchFired = false; return; }
-        pauseGame();
-    });
-
-    // ─ サウンドボタン: touchend で即反応（iOS click 遅延回避） ─
-    var soundToggleBtn = document.getElementById('soundToggleBtn');
-    var soundTouchFired = false;
-    soundToggleBtn.addEventListener('touchstart', function(e) {
-        e.stopPropagation();
-    }, { passive: true });
-    soundToggleBtn.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        soundTouchFired = true;
-        toggleSound();
-    });
-    soundToggleBtn.addEventListener('click', function(e) {
-        if (soundTouchFired) { soundTouchFired = false; return; }
-        toggleSound();
-    });
-
-    // ─ スコア送信/スキップボタン: touchend で即反応 ─
-    var submitBtnEl = document.getElementById('submitBtn');
-    var skipBtnEl = document.getElementById('skipBtn');
-    var submitTouchFired = false, skipTouchFired = false;
-    submitBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
-    submitBtnEl.addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        submitTouchFired = true;
-        submitScore();
-    });
-    submitBtnEl.addEventListener('click', function(e) {
-        if (submitTouchFired) { submitTouchFired = false; return; }
-        submitScore();
-    });
-    skipBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
-    skipBtnEl.addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        skipTouchFired = true;
-        skipSubmit();
-    });
-    skipBtnEl.addEventListener('click', function(e) {
-        if (skipTouchFired) { skipTouchFired = false; return; }
-        skipSubmit();
-    });
-
-    // ─ ゲームオーバー画面ボタン: touchend で即反応 ─
-    var retryBtnEl = document.getElementById('retryBtn');
-    var toTitleBtnEl = document.getElementById('toTitleBtn');
-    var retryTouchFired = false, toTitleTouchFired = false;
-    retryBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
-    retryBtnEl.addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        retryTouchFired = true;
-        retryGame();
-    });
-    retryBtnEl.addEventListener('click', function(e) {
-        if (retryTouchFired) { retryTouchFired = false; return; }
-        retryGame();
-    });
-    toTitleBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
-    toTitleBtnEl.addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        toTitleTouchFired = true;
-        goToTitle();
-    });
-    toTitleBtnEl.addEventListener('click', function(e) {
-        if (toTitleTouchFired) { toTitleTouchFired = false; return; }
-        goToTitle();
-    });
-
-    // ─ リワード広告: 復活ボタン ─
-    var adReviveBtnEl = document.getElementById('adReviveBtn');
-    var adReviveTouchFired = false;
-    adReviveBtnEl.addEventListener('touchstart', function(e) { e.stopPropagation(); }, { passive: true });
-    adReviveBtnEl.addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        adReviveTouchFired = true;
-        adRevive();
-    });
-    adReviveBtnEl.addEventListener('click', function(e) {
-        if (adReviveTouchFired) { adReviveTouchFired = false; return; }
-        adRevive();
-    });
+    // ─ HUD/オーバーレイ上のボタン群: touchend で即反応（iOS click 遅延回避） ─
+    bindTapButton(document.getElementById('pauseButton'), pauseGame, { guardTouchStart: true });
+    bindTapButton(document.getElementById('soundToggleBtn'), toggleSound, { guardTouchStart: true });
+    bindTapButton(document.getElementById('submitBtn'), submitScore, { guardTouchStart: true });
+    bindTapButton(document.getElementById('skipBtn'), skipSubmit, { guardTouchStart: true });
+    bindTapButton(document.getElementById('retryBtn'), retryGame, { guardTouchStart: true });
+    bindTapButton(document.getElementById('toTitleBtn'), goToTitle, { guardTouchStart: true });
+    bindTapButton(document.getElementById('adReviveBtn'), adRevive, { guardTouchStart: true });
 
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
         if (e.target === document.getElementById('pauseScreen')) pauseGame();
@@ -8678,13 +8642,6 @@ function checkOrientation() {
     });
 
     // ─ デバッグ: ボス戦即開始ボタン ─
-    function canvasCoords(clientX, clientY) {
-        var rect = canvas.getBoundingClientRect();
-        return {
-            x: (clientX - rect.left) * (GAME_WIDTH / rect.width),
-            y: (clientY - rect.top)  * (GAME_HEIGHT / rect.height)
-        };
-    }
     function triggerDebugBoss() {
         if (bossState.active || bossState.bossTriggered) return;
         bossState.bossTriggered = true;
@@ -8813,32 +8770,8 @@ function initialize() {
     var rankingBtn = document.getElementById('rankingButton');
 
     // ボタンはtouchendで即反応（clickより先に発火）+ 二重発火防止
-    var rankingTouchFired = false;
-    rankingBtn.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        rankingTouchFired = true;
-        showRanking();
-    });
-    rankingBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (rankingTouchFired) { rankingTouchFired = false; return; }
-        showRanking();
-    });
-
-    var settingsBtn = document.getElementById('settingsButton');
-    var settingsTouchFired = false;
-    settingsBtn.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        settingsTouchFired = true;
-        showSettings();
-    });
-    settingsBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (settingsTouchFired) { settingsTouchFired = false; return; }
-        showSettings();
-    });
+    bindTapButton(rankingBtn, showRanking, { stopClickPropagation: true });
+    bindTapButton(document.getElementById('settingsButton'), showSettings, { stopClickPropagation: true });
 
     // ショップボタン（タイトル画面）
     var shopBtn = document.getElementById('shopButton');
@@ -8878,23 +8811,7 @@ function initialize() {
 
     // タイトルショップ：アイテム選択（DQ風イベント委譲）
     var tshopList = document.getElementById('titleShopList');
-    var tshopItemTouchFired = false;
-    tshopList.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        tshopItemTouchFired = true;
-        var touch = e.changedTouches[0];
-        var target = document.elementFromPoint(touch.clientX, touch.clientY);
-        var itemEl = target ? target.closest('[data-tshop-id]') : null;
-        if (!itemEl) return;
-        selectTshopItem(itemEl.getAttribute('data-tshop-id'));
-    });
-    tshopList.addEventListener('click', function(e) {
-        if (tshopItemTouchFired) { tshopItemTouchFired = false; return; }
-        var itemEl = e.target.closest('[data-tshop-id]');
-        if (!itemEl) return;
-        selectTshopItem(itemEl.getAttribute('data-tshop-id'));
-    });
+    bindTapDelegate(tshopList, 'data-tshop-id', selectTshopItem);
     var tshopLastHovered = null;
     tshopList.addEventListener('mouseover', function(e) {
         var itemEl = e.target.closest('[data-tshop-id]');
@@ -8907,37 +8824,12 @@ function initialize() {
     tshopList.addEventListener('mouseleave', function() { tshopLastHovered = null; });
 
     // タイトルショップ はい/いいえ確認ボタン
-    var tcfYes = document.getElementById('tshopConfirmYes');
-    var tcfYesTouchFired = false;
-    tcfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); tcfYesTouchFired = true; handleTshopConfirmYes(); });
-    tcfYes.addEventListener('click', function(e) { e.stopPropagation(); if (tcfYesTouchFired) { tcfYesTouchFired = false; return; } handleTshopConfirmYes(); });
-    var tcfNo = document.getElementById('tshopConfirmNo');
-    var tcfNoTouchFired = false;
-    tcfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); tcfNoTouchFired = true; handleTshopConfirmNo(); });
-    tcfNo.addEventListener('click', function(e) { e.stopPropagation(); if (tcfNoTouchFired) { tcfNoTouchFired = false; return; } handleTshopConfirmNo(); });
+    bindTapButton(document.getElementById('tshopConfirmYes'), handleTshopConfirmYes, { stopClickPropagation: true });
+    bindTapButton(document.getElementById('tshopConfirmNo'), handleTshopConfirmNo, { stopClickPropagation: true });
 
     // ── ステージショップ：アイテム選択（イベント委譲 — タッチ・マウス両対応） ──
     var shopItemsContainer = document.getElementById('stageShopItems');
-    var shopItemTouchFired = false;
-    // タッチ操作：touchend で即反応し、synthesized click を抑止
-    shopItemsContainer.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        shopItemTouchFired = true;
-        // タッチ終了座標から実際の要素を取得（指ずれ対策）
-        var touch = e.changedTouches[0];
-        var target = document.elementFromPoint(touch.clientX, touch.clientY);
-        var itemEl = target ? target.closest('[data-item-id]') : null;
-        if (!itemEl) return;
-        selectShopItem(itemEl.getAttribute('data-item-id'));
-    });
-    // マウス／トラックパッド操作
-    shopItemsContainer.addEventListener('click', function(e) {
-        if (shopItemTouchFired) { shopItemTouchFired = false; return; }
-        var itemEl = e.target.closest('[data-item-id]');
-        if (!itemEl) return;
-        selectShopItem(itemEl.getAttribute('data-item-id'));
-    });
+    bindTapDelegate(shopItemsContainer, 'data-item-id', selectShopItem);
     // デスクトップ用ホバープレビュー（mouseover で委譲、mouseenter は非バブルのため不可）
     var shopLastHoveredItem = null;
     shopItemsContainer.addEventListener('mouseover', function(e) {
@@ -8952,27 +8844,13 @@ function initialize() {
         shopLastHoveredItem = null;
     });
 
-    // ステージショップ閉じるボタン
-    var ssClose = document.getElementById('stageShopCloseBtn');
-    var ssCloseTouchFired = false;
-    ssClose.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); ssCloseTouchFired = true; closeStageShop(); });
-    ssClose.addEventListener('click', function(e) { e.stopPropagation(); if (ssCloseTouchFired) { ssCloseTouchFired = false; return; } closeStageShop(); });
-
-    // 貯金ボタン
-    var depBtn = document.getElementById('depositBtn');
-    var depBtnTouchFired = false;
-    depBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); depBtnTouchFired = true; depositScore(); });
-    depBtn.addEventListener('click', function(e) { e.stopPropagation(); if (depBtnTouchFired) { depBtnTouchFired = false; return; } depositScore(); });
+    // ステージショップ閉じるボタン・貯金ボタン
+    bindTapButton(document.getElementById('stageShopCloseBtn'), closeStageShop, { stopClickPropagation: true });
+    bindTapButton(document.getElementById('depositBtn'), depositScore, { stopClickPropagation: true });
 
     // DQ風 はい/いいえ確認ボタン（カーソル合わせ→決定の2ステップ）
-    var cfYes = document.getElementById('shopConfirmYes');
-    var cfYesTouchFired = false;
-    cfYes.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); cfYesTouchFired = true; handleConfirmYes(); });
-    cfYes.addEventListener('click', function(e) { e.stopPropagation(); if (cfYesTouchFired) { cfYesTouchFired = false; return; } handleConfirmYes(); });
-    var cfNo = document.getElementById('shopConfirmNo');
-    var cfNoTouchFired = false;
-    cfNo.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); cfNoTouchFired = true; handleConfirmNo(); });
-    cfNo.addEventListener('click', function(e) { e.stopPropagation(); if (cfNoTouchFired) { cfNoTouchFired = false; return; } handleConfirmNo(); });
+    bindTapButton(document.getElementById('shopConfirmYes'), handleConfirmYes, { stopClickPropagation: true });
+    bindTapButton(document.getElementById('shopConfirmNo'), handleConfirmNo, { stopClickPropagation: true });
 
     // タイトル画面の背景タップでゲーム開始
     startScreen.addEventListener('click', function(e) {
