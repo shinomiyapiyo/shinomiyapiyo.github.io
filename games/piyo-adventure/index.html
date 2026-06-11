@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.275";
+                content: "Ver.1.276";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -663,7 +663,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.275</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.276</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -4297,6 +4297,14 @@ function registerKill(scoreValue, effectX, effectY) {
 
 // ─── 敵更新 ───
 
+// 敵撃破の共通処理（爆発エフェクト + 配列から除去 + スコア/コンボ加算 + 撃破音）
+function killEnemy(arr, index, e, score) {
+    spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
+    arr.splice(index, 1);
+    registerKill(score, e.x + e.width / 2, e.y);
+    if (soundManager) soundManager.playKill();
+}
+
 function updateEnemies() {
     var i, e, stomped;
 
@@ -4311,21 +4319,15 @@ function updateEnemies() {
         if (!stompHit && !bodyHit) continue;
 
         if (isPlayerProtected()) {
-            spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
-            enemies.splice(i, 1);
-            registerKill(200, e.x + e.width / 2, e.y);
-            if (soundManager) soundManager.playKill();
+            killEnemy(enemies, i, e, 200);
             continue;
         }
 
         stomped = player.velY > 0 && player.y + player.height <= e.y + e.height * 0.65;
 
         if (stomped) {
-            spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
-            enemies.splice(i, 1);
+            killEnemy(enemies, i, e, 200);
             player.velY = JUMP_FORCE / 2;
-            registerKill(200, e.x + e.width / 2, e.y);
-            if (soundManager) soundManager.playKill();
         } else if (bodyHit) {
             takeDamage();
         }
@@ -4341,10 +4343,7 @@ function updateEnemies() {
         if (!stompHitF && !bodyHitF) continue;
 
         if (isPlayerProtected()) {
-            spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
-            flyingEnemies.splice(i, 1);
-            registerKill(300, e.x + e.width / 2, e.y);
-            if (soundManager) soundManager.playKill();
+            killEnemy(flyingEnemies, i, e, 300);
             continue;
         }
 
@@ -4352,11 +4351,8 @@ function updateEnemies() {
         stomped = player.y + player.height <= e.y + e.height * 0.7;
 
         if (stomped) {
-            spawnExplosionEffect(e.x + e.width / 2, e.y + e.height / 2);
-            flyingEnemies.splice(i, 1);
+            killEnemy(flyingEnemies, i, e, 300);
             if (player.velY >= 0) player.velY = JUMP_FORCE / 2;
-            registerKill(300, e.x + e.width / 2, e.y);
-            if (soundManager) soundManager.playKill();
         } else if (bodyHitF) {
             flyingEnemies.splice(i, 1);
             takeDamage();
@@ -4731,10 +4727,7 @@ function updateBullets() {
         var hit = false;
         for (var j = enemies.length - 1; j >= 0; j--) {
             if (aabb(b, enemies[j])) {
-                spawnExplosionEffect(enemies[j].x + enemies[j].width / 2, enemies[j].y + enemies[j].height / 2);
-                registerKill(200, enemies[j].x + enemies[j].width / 2, enemies[j].y);
-                enemies.splice(j, 1);
-                if (soundManager) soundManager.playKill();
+                killEnemy(enemies, j, enemies[j], 200);
                 hit = true;
                 break;
             }
@@ -4744,10 +4737,7 @@ function updateBullets() {
         // 飛行敵との衝突
         for (var k = flyingEnemies.length - 1; k >= 0; k--) {
             if (aabb(b, flyingEnemies[k])) {
-                spawnExplosionEffect(flyingEnemies[k].x + flyingEnemies[k].width / 2, flyingEnemies[k].y + flyingEnemies[k].height / 2);
-                registerKill(300, flyingEnemies[k].x + flyingEnemies[k].width / 2, flyingEnemies[k].y);
-                flyingEnemies.splice(k, 1);
-                if (soundManager) soundManager.playKill();
+                killEnemy(flyingEnemies, k, flyingEnemies[k], 300);
                 hit = true;
                 break;
             }
@@ -6965,16 +6955,11 @@ function spawnLifeUpEffect(worldX, worldY) {
     });
 }
 
-function drawFloatEffects() {
-    for (var i = floatEffects.length - 1; i >= 0; i--) {
-        var ef = floatEffects[i];
-        ef.timer++;
-        if (ef.timer > ef.duration) { floatEffects.splice(i, 1); continue; }
-
-        var wx = ef.worldX;
-        var progress = ef.timer / ef.duration;
-
-        if (ef.type === 'lifeup_text') {
+// ─── エフェクト描画関数テーブル ───
+// key: floatEffectsのtype / 値: 描画関数(ef, wx, progress)
+// 新しいエフェクトを追加するときはここに1エントリ追加するだけでよい
+var EFFECT_RENDERERS = {
+    lifeup_text: function(ef, wx, progress) {
             // テキスト浮上 + フェードアウト + スケール
             ef.offsetY += 1.2;
             var alpha = progress < 0.7 ? 1 : (1 - progress) / 0.3;
@@ -6998,9 +6983,8 @@ function drawFloatEffects() {
             ctx.fillStyle = 'rgba(255,70,100,' + alpha + ')';
             drawHeart(ctx, 52, -2, 10);
             ctx.restore();
-        }
-
-        if (ef.type === 'damage_text') {
+        },
+    damage_text: function(ef, wx, progress) {
             // -1 テキスト浮上 + 赤グロー
             ef.offsetY += 1.0;
             var da = progress < 0.6 ? 1 : (1 - progress) / 0.4;
@@ -7018,9 +7002,8 @@ function drawFloatEffects() {
             ctx.fillText('-1', 0, 0);
             ctx.shadowBlur = 0;
             ctx.restore();
-        }
-
-        if (ef.type === 'damage_particle') {
+        },
+    damage_particle: function(ef, wx, progress) {
             ef.worldX += ef.vx;
             ef.worldY += ef.vy;
             ef.vy += 0.07;
@@ -7034,10 +7017,9 @@ function drawFloatEffects() {
             ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.5), 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
-        }
-
-        // ── 復活テキスト ──
-        if (ef.type === 'revival_text') {
+        },
+    // ── 復活テキスト ──
+    revival_text: function(ef, wx, progress) {
             ef.offsetY += 0.8;
             var ra = progress < 0.7 ? 1 : (1 - progress) / 0.3;
             var rs = progress < 0.1 ? 0.5 + progress / 0.1 * 0.8 : (progress < 0.25 ? 1.3 - (progress - 0.1) / 0.15 * 0.3 : 1.0);
@@ -7054,10 +7036,9 @@ function drawFloatEffects() {
             ctx.fillText(t(ef.textKey), 0, 0);
             ctx.shadowBlur = 0;
             ctx.restore();
-        }
-
-        // ── 復活パーティクル（金色） ──
-        if (ef.type === 'revival_particle') {
+        },
+    // ── 復活パーティクル（金色） ──
+    revival_particle: function(ef, wx, progress) {
             ef.worldX += ef.vx;
             ef.worldY += ef.vy;
             ef.vy += 0.05;
@@ -7074,9 +7055,8 @@ function drawFloatEffects() {
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.restore();
-        }
-
-        if (ef.type === 'heart_particle') {
+        },
+    heart_particle: function(ef, wx, progress) {
             ef.worldX += ef.vx;
             ef.worldY += ef.vy;
             ef.vy += 0.06; // 軽い重力
@@ -7088,9 +7068,8 @@ function drawFloatEffects() {
             ctx.fillStyle = hsl;
             drawHeart(ctx, ef.worldX, ef.worldY, ef.size);
             ctx.restore();
-        }
-
-        if (ef.type === 'explosion_ring') {
+        },
+    explosion_ring: function(ef, wx, progress) {
             var erAlpha = 1 - progress;
             var erR1 = 8 + progress * 55;
             ctx.save();
@@ -7110,9 +7089,8 @@ function drawFloatEffects() {
                 ctx.stroke();
             }
             ctx.restore();
-        }
-
-        if (ef.type === 'explosion_particle') {
+        },
+    explosion_particle: function(ef, wx, progress) {
             ef.worldX += ef.vx;
             ef.worldY += ef.vy;
             ef.vy += 0.08;
@@ -7129,9 +7107,8 @@ function drawFloatEffects() {
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.restore();
-        }
-
-        if (ef.type === 'explosion_flash') {
+        },
+    explosion_flash: function(ef, wx, progress) {
             var efA = 1 - progress;
             var efR = 8 + progress * 20;
             ctx.save();
@@ -7145,9 +7122,8 @@ function drawFloatEffects() {
             ctx.arc(wx, ef.worldY, efR, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
-        }
-
-        if (ef.type === 'lifeup_ring') {
+        },
+    lifeup_ring: function(ef, wx, progress) {
             var rAlpha = 1 - progress;
             var rRadius = 10 + progress * 60;
             ctx.save();
@@ -7168,9 +7144,8 @@ function drawFloatEffects() {
                 ctx.stroke();
             }
             ctx.restore();
-        }
-
-        if (ef.type === 'combo_text') {
+        },
+    combo_text: function(ef, wx, progress) {
             ef.offsetY += 1.5;
             var ctAlpha = progress < 0.7 ? 1 : (1 - progress) / 0.3;
             var ctScale = progress < 0.1 ? 0.5 + progress / 0.1 * 0.5 : 1.0;
@@ -7202,9 +7177,8 @@ function drawFloatEffects() {
             ctx.fillStyle = '#fff';
             ctx.fillText('+' + ef.comboScore, 0, 18);
             ctx.restore();
-        }
-
-        if (ef.type === 'combo_spark') {
+        },
+    combo_spark: function(ef, wx, progress) {
             ef.worldX += ef.vx;
             ef.worldY += ef.vy;
             ef.vy += 0.06;
@@ -7218,10 +7192,9 @@ function drawFloatEffects() {
             ctx.arc(ef.worldX, ef.worldY, ef.size * (1 - progress * 0.4), 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
-        }
-
-        // コンボリングエフェクト
-        if (ef.type === 'combo_ring') {
+        },
+    // コンボリングエフェクト
+    combo_ring: function(ef, wx, progress) {
             var crRadius = 10 + progress * (30 + ef.comboCount * 5);
             var crAlpha = (1 - progress) * 0.6;
             var crHue = Math.max(0, 45 - ef.comboCount * 3);
@@ -7242,10 +7215,9 @@ function drawFloatEffects() {
                 ctx.stroke();
             }
             ctx.restore();
-        }
-
-        // ボス撃破テキスト（ワールド座標系）
-        if (ef.type === 'boss_defeated_text') {
+        },
+    // ボス撃破テキスト（ワールド座標系）
+    boss_defeated_text: function(ef, wx, progress) {
             ef.offsetY += 0.5;
             var bdAlpha = progress < 0.8 ? 1 : (1 - progress) / 0.2;
             var bdScale = 1 + Math.sin(ef.timer * 0.1) * 0.05;
@@ -7260,10 +7232,9 @@ function drawFloatEffects() {
             ctx.fillText(t('boss_defeated'), 0, 0);
             ctx.shadowBlur = 0;
             ctx.restore();
-        }
-
-        // ボスジャンプ着地衝撃波
-        if (ef.type === 'boss_shockwave') {
+        },
+    // ボスジャンプ着地衝撃波
+    boss_shockwave: function(ef, wx, progress) {
             var swRadius = progress * 120;
             var swAlpha = (1 - progress) * 0.5;
             ctx.save();
@@ -7274,10 +7245,9 @@ function drawFloatEffects() {
             ctx.ellipse(wx, ef.worldY, swRadius, swRadius * 0.3, 0, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
-        }
-
-        // スコアテキスト（汎用、ボス撃破時も使用）
-        if (ef.type === 'score_text') {
+        },
+    // スコアテキスト（汎用、ボス撃破時も使用）
+    score_text: function(ef, wx, progress) {
             ef.offsetY += 0.8;
             var stAlpha = progress < 0.7 ? 1 : (1 - progress) / 0.3;
             ctx.save();
@@ -7290,6 +7260,15 @@ function drawFloatEffects() {
             ctx.shadowBlur = 0;
             ctx.restore();
         }
+};
+
+function drawFloatEffects() {
+    for (var i = floatEffects.length - 1; i >= 0; i--) {
+        var ef = floatEffects[i];
+        ef.timer++;
+        if (ef.timer > ef.duration) { floatEffects.splice(i, 1); continue; }
+        var renderer = EFFECT_RENDERERS[ef.type];
+        if (renderer) renderer(ef, ef.worldX, ef.timer / ef.duration);
     }
 }
 
