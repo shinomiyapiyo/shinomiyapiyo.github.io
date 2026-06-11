@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.274";
+                content: "Ver.1.275";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -663,7 +663,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.274</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.275</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -4883,7 +4883,66 @@ var shopMode = 'menu'; // 'menu' | 'buy' | 'sell'
 var shopInputCooldown = 0; // タップ貫通防止用タイムスタンプ
 var shopSellingIndex = null; // 売却確認中のストックインデックス
 var shopSellHighlightIndex = null; // 売却モードでハイライト中のストックインデックス
-var shopConfirmCursor = null; // はい/いいえカーソル位置: null | 'yes' | 'no'
+
+// ─── DQ風はい/いいえ確認ボックス共通エンジン（ステージ/タイトルショップ共用） ───
+// 2タップ式: 1回目のタップでカーソル合わせ、同じ選択肢への2回目のタップで決定。
+// カーソル状態は内部に保持する。
+// ids: { box, keeperBox, itemsList, yes, no } 各要素ID
+// onYes / onNo: カーソルが合った状態で再タップされたときの決定処理
+function createConfirmBox(ids, onYes, onNo) {
+    var cursor = null; // null | 'yes' | 'no'
+
+    function updateCursor() {
+        var yesEl = document.getElementById(ids.yes);
+        var noEl = document.getElementById(ids.no);
+        if (yesEl) {
+            yesEl.textContent = (cursor === 'yes' ? '> ' : '　 ') + t('shop_confirm_yes');
+            yesEl.style.background = cursor === 'yes' ? 'rgba(255,255,255,0.15)' : '';
+        }
+        if (noEl) {
+            noEl.textContent = (cursor === 'no' ? '> ' : '　 ') + t('shop_confirm_no');
+            noEl.style.background = cursor === 'no' ? 'rgba(255,255,255,0.15)' : '';
+        }
+    }
+
+    function show(visible) {
+        var box = document.getElementById(ids.box);
+        var keeperBox = document.getElementById(ids.keeperBox);
+        var itemsList = document.getElementById(ids.itemsList);
+        cursor = null;
+        if (box) box.style.display = visible ? 'block' : 'none';
+        if (visible) {
+            if (soundManager) soundManager.playConfirmSelect();
+            updateCursor();
+        }
+        // 確認ボックス表示中はmarginを広げてアイテムリストとの重なりを防止
+        if (keeperBox) {
+            keeperBox.style.marginBottom = visible ? '54px' : '3px';
+            keeperBox.style.zIndex = visible ? '12' : '';
+        }
+        // 確認ダイアログ表示中はアイテムリストのタッチを無効化（タッチ奪取防止）
+        if (itemsList) itemsList.style.pointerEvents = visible ? 'none' : '';
+    }
+
+    function tap(which, action) {
+        if (cursor !== which) {
+            cursor = which;
+            if (soundManager) soundManager.playCursorMove();
+            updateCursor();
+            return;
+        }
+        // カーソルが合った状態で再タップ → 決定
+        cursor = null;
+        if (soundManager) soundManager.playCursorMove();
+        action();
+    }
+
+    return {
+        show: show,
+        tapYes: function() { tap('yes', onYes); },
+        tapNo: function() { tap('no', onNo); }
+    };
+}
 
 // 店員セリフ表示の共通処理（ステージ/タイトルショップ共用）
 function setKeeperTextFor(elementId, key, replacements) {
@@ -4901,67 +4960,15 @@ function setKeeperText(key, replacements) {
     setKeeperTextFor('shopKeeperText', key, replacements);
 }
 
-function showShopConfirm(show) {
-    var box = document.getElementById('shopConfirmBox');
-    var keeperBox = document.getElementById('shopKeeperBox');
-    var itemsList = document.getElementById('stageShopItems');
-    // カーソルリセット
-    shopConfirmCursor = null;
-    if (box) box.style.display = show ? 'block' : 'none';
-    if (show) {
-        if (soundManager) soundManager.playConfirmSelect();
-        updateShopConfirmCursor();
-    }
-    // 確認ボックス表示中はmarginを広げてアイテムリストとの重なりを防止
-    if (keeperBox) {
-        keeperBox.style.marginBottom = show ? '54px' : '3px';
-        keeperBox.style.zIndex = show ? '12' : '';
-    }
-    // 確認ダイアログ表示中はアイテムリストのタッチを無効化（タッチ奪取防止）
-    if (itemsList) itemsList.style.pointerEvents = show ? 'none' : '';
-}
-
-// はい/いいえカーソル表示更新
-function updateShopConfirmCursor() {
-    var yesEl = document.getElementById('shopConfirmYes');
-    var noEl = document.getElementById('shopConfirmNo');
-    if (yesEl) {
-        yesEl.textContent = (shopConfirmCursor === 'yes' ? '> ' : '　 ') + t('shop_confirm_yes');
-        yesEl.style.background = shopConfirmCursor === 'yes' ? 'rgba(255,255,255,0.15)' : '';
-    }
-    if (noEl) {
-        noEl.textContent = (shopConfirmCursor === 'no' ? '> ' : '　 ') + t('shop_confirm_no');
-        noEl.style.background = shopConfirmCursor === 'no' ? 'rgba(255,255,255,0.15)' : '';
-    }
-}
-
-// はいボタンタップ処理（カーソル合わせ→決定の2ステップ）
-function handleConfirmYes() {
-    if (shopConfirmCursor !== 'yes') {
-        shopConfirmCursor = 'yes';
-        if (soundManager) soundManager.playCursorMove();
-        updateShopConfirmCursor();
-        return;
-    }
-    // カーソルが「はい」にある状態で再タップ → 決定
-    shopConfirmCursor = null;
-    if (soundManager) soundManager.playCursorMove();
-    confirmShopBuy();
-}
-
-// いいえボタンタップ処理（カーソル合わせ→決定の2ステップ）
-function handleConfirmNo() {
-    if (shopConfirmCursor !== 'no') {
-        shopConfirmCursor = 'no';
-        if (soundManager) soundManager.playCursorMove();
-        updateShopConfirmCursor();
-        return;
-    }
-    // カーソルが「いいえ」にある状態で再タップ → 決定
-    shopConfirmCursor = null;
-    if (soundManager) soundManager.playCursorMove();
-    cancelShopBuy();
-}
+// ステージショップ用 確認ボックス（決定処理: confirmShopBuy / cancelShopBuy）
+var shopConfirmUI = createConfirmBox(
+    { box: 'shopConfirmBox', keeperBox: 'shopKeeperBox', itemsList: 'stageShopItems', yes: 'shopConfirmYes', no: 'shopConfirmNo' },
+    function() { confirmShopBuy(); },
+    function() { cancelShopBuy(); }
+);
+function showShopConfirm(show) { shopConfirmUI.show(show); }
+function handleConfirmYes() { shopConfirmUI.tapYes(); }
+function handleConfirmNo() { shopConfirmUI.tapNo(); }
 
 function showStageShopScreen() {
     shopState.purchaseCounts = {};
@@ -5550,7 +5557,6 @@ function depositScore() {
 // ── タイトルショップ ──
 var tshopHighlightedItem = null;  // カーソル選択中のアイテムID
 var tshopConfirmingItem = null;   // 購入確認中のアイテムID
-var tshopConfirmCursor = null;    // はい/いいえカーソル: null | 'yes' | 'no'
 var tshopLeaving = false;         // 退店確認中フラグ
 
 function formatTshopPrice(num) {
@@ -5561,59 +5567,15 @@ function setTshopKeeperText(key, replacements) {
     setKeeperTextFor('tshopKeeperText', key, replacements);
 }
 
-function showTshopConfirm(show) {
-    var box = document.getElementById('tshopConfirmBox');
-    var keeperBox = document.getElementById('tshopKeeperBox');
-    var itemsList = document.getElementById('titleShopList');
-    tshopConfirmCursor = null;
-    if (box) box.style.display = show ? 'block' : 'none';
-    if (show) {
-        if (soundManager) soundManager.playConfirmSelect();
-        updateTshopConfirmCursor();
-    }
-    if (keeperBox) {
-        keeperBox.style.marginBottom = show ? '54px' : '3px';
-        keeperBox.style.zIndex = show ? '12' : '';
-    }
-    if (itemsList) itemsList.style.pointerEvents = show ? 'none' : '';
-}
-
-function updateTshopConfirmCursor() {
-    var yesEl = document.getElementById('tshopConfirmYes');
-    var noEl = document.getElementById('tshopConfirmNo');
-    if (yesEl) {
-        yesEl.textContent = (tshopConfirmCursor === 'yes' ? '> ' : '　 ') + t('shop_confirm_yes');
-        yesEl.style.background = tshopConfirmCursor === 'yes' ? 'rgba(255,255,255,0.15)' : '';
-    }
-    if (noEl) {
-        noEl.textContent = (tshopConfirmCursor === 'no' ? '> ' : '　 ') + t('shop_confirm_no');
-        noEl.style.background = tshopConfirmCursor === 'no' ? 'rgba(255,255,255,0.15)' : '';
-    }
-}
-
-function handleTshopConfirmYes() {
-    if (tshopConfirmCursor !== 'yes') {
-        tshopConfirmCursor = 'yes';
-        if (soundManager) soundManager.playCursorMove();
-        updateTshopConfirmCursor();
-        return;
-    }
-    tshopConfirmCursor = null;
-    if (soundManager) soundManager.playCursorMove();
-    confirmTshopBuy();
-}
-
-function handleTshopConfirmNo() {
-    if (tshopConfirmCursor !== 'no') {
-        tshopConfirmCursor = 'no';
-        if (soundManager) soundManager.playCursorMove();
-        updateTshopConfirmCursor();
-        return;
-    }
-    tshopConfirmCursor = null;
-    if (soundManager) soundManager.playCursorMove();
-    cancelTshopBuy();
-}
+// タイトルショップ用 確認ボックス（決定処理: confirmTshopBuy / cancelTshopBuy）
+var tshopConfirmUI = createConfirmBox(
+    { box: 'tshopConfirmBox', keeperBox: 'tshopKeeperBox', itemsList: 'titleShopList', yes: 'tshopConfirmYes', no: 'tshopConfirmNo' },
+    function() { confirmTshopBuy(); },
+    function() { cancelTshopBuy(); }
+);
+function showTshopConfirm(show) { tshopConfirmUI.show(show); }
+function handleTshopConfirmYes() { tshopConfirmUI.tapYes(); }
+function handleTshopConfirmNo() { tshopConfirmUI.tapNo(); }
 
 function requestTshopLeave() {
     if (tshopConfirmingItem || tshopLeaving) return;
@@ -5742,10 +5704,9 @@ function showTitleShop() {
     history.pushState({ screen: 'titleShop' }, '');
     tshopHighlightedItem = null;
     tshopConfirmingItem = null;
-    tshopConfirmCursor = null;
     tshopLeaving = false;
     setTshopKeeperText('tshop_keeper_greet');
-    showTshopConfirm(false);
+    showTshopConfirm(false); // カーソルリセットも内包
     // リワード広告ボタンの表示制御
     var tshopAdBtnEl = document.getElementById('tshopRewardAdBtn');
     if (tshopAdBtnEl) {
