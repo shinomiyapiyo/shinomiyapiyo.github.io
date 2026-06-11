@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.273";
+                content: "Ver.1.274";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -663,7 +663,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.273</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.274</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2875,6 +2875,43 @@ var screenTransitionTime = 0;
 function markScreenTransition() { screenTransitionTime = Date.now(); }
 function isInTransitionCooldown() { return (Date.now() - screenTransitionTime) < 300; }
 
+// ─── 画面表示ユーティリティ ───
+// オーバーレイ画面のDOM表示/非表示（hiddenクラスとdisplayを常にセットで切替）
+// ※storeScreenはhiddenクラスを持たないdisplay制御のみのため対象外
+function showScreenEl(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('hidden'); el.style.display = 'flex'; }
+    return el;
+}
+function hideScreenEl(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
+    return el;
+}
+function isScreenVisible(id) {
+    var el = document.getElementById(id);
+    return !!el && !el.classList.contains('hidden') && el.style.display !== 'none';
+}
+
+// ─── 戻るボタン処理レジストリ ───
+// Android戻るボタン/ブラウザバック時に、先頭から評価して最初に開いている画面を閉じる。
+// 配列の順序＝優先順位（例: ショップ中はショップの退店処理が最優先）。
+// 画面を追加したらここに1エントリ追加すること（popstateハンドラの変更は不要）。
+var BACK_HANDLERS = [
+    { isOpen: function() { return shopState.active; }, onBack: function() { closeStageShop(); } },
+    { isOpen: function() { var el = document.getElementById('storeScreen'); return !!el && el.style.display !== 'none'; },
+      onBack: function() { hideStore(); } },
+    { isOpen: function() { return isScreenVisible('titleShopScreen'); }, onBack: function() { hideTitleShop(); } },
+    { isOpen: function() { return isScreenVisible('guideScreen'); }, onBack: function() { hideGuide(); } },
+    { isOpen: function() { return isScreenVisible('settingsScreen'); }, onBack: function() { hideSettings(); } },
+    { isOpen: function() { var m = document.getElementById('gameModal'); return !!m && m.style.display === 'flex'; },
+      onBack: function() { document.getElementById('gameModal').style.display = 'none'; } },
+    { isOpen: function() { return isScreenVisible('nameInputScreen'); }, onBack: function() { hideNameInputDirect(); resetGame(); } },
+    { isOpen: function() { return isScreenVisible('gameOverScreen'); }, onBack: function() { goToTitle(); } },
+    { isOpen: function() { return isScreenVisible('rankingScreen'); }, onBack: function() { hideRanking(); } },
+    { isOpen: function() { return gameState && gameState.gameStarted && !gameState.gamePaused; }, onBack: function() { pauseGame(); } }
+];
+
 // ─── ゲーム状態 ───
 var gameState = {
     score: 0, lives: 5,
@@ -3490,9 +3527,7 @@ function closeRanking() {
 }
 
 function hideRankingDirect() {
-    var el = document.getElementById('rankingScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
+    hideScreenEl('rankingScreen');
 }
 
 // ─── 設定画面 ───
@@ -3500,18 +3535,14 @@ function hideRankingDirect() {
 function showSettings() {
     if (isInTransitionCooldown()) return;
     markScreenTransition();
-    var el = document.getElementById('settingsScreen');
-    el.classList.remove('hidden');
-    el.style.display = 'flex';
+    showScreenEl('settingsScreen');
     history.pushState({ screen: 'settings' }, '');
     updateSettingsUI();
 }
 
 function hideSettings() {
     markScreenTransition();
-    var el = document.getElementById('settingsScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
+    hideScreenEl('settingsScreen');
 }
 
 function closeSettings() {
@@ -3522,9 +3553,7 @@ function closeSettings() {
 function showGuide() {
     if (isInTransitionCooldown()) return;
     markScreenTransition();
-    var el = document.getElementById('guideScreen');
-    el.classList.remove('hidden');
-    el.style.display = 'flex';
+    showScreenEl('guideScreen');
     history.pushState({ screen: 'guide' }, '');
     // ガイド内容を動的に生成（言語切替対応）
     var sections = ['controls', 'items', 'boss', 'money', 'shop', 'savings', 'titleshop', 'datasave', 'tips'];
@@ -3552,9 +3581,7 @@ function showGuide() {
 
 function hideGuide() {
     markScreenTransition();
-    var el = document.getElementById('guideScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
+    hideScreenEl('guideScreen');
 }
 
 // ボタンから閉じる：history.back()でpopstateハンドラに処理を委任
@@ -3767,9 +3794,7 @@ function showNameInput() {
     gameState.gamePaused  = true;
     history.pushState({ screen: 'nameInput' }, '');
 
-    var el = document.getElementById('nameInputScreen');
-    el.classList.remove('hidden');
-    el.style.display = 'flex';
+    showScreenEl('nameInputScreen');
     document.getElementById('scoreToSubmit').textContent =
         t('gameover_score') + finalGameStats.score + t('ranking_unit_score') + ' | ' + t('gameover_distance') + finalGameStats.distance + 'm';
     
@@ -3783,8 +3808,7 @@ function showNameInput() {
 }
 
 function hideNameInputDirect() {
-    var el = document.getElementById('nameInputScreen');
-    if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
+    hideScreenEl('nameInputScreen');
 }
 
 function checkHighScore(stats) {
@@ -4949,9 +4973,7 @@ function showStageShopScreen() {
     shopDepositing = false;
     shopInputCooldown = Date.now() + 350;
     setShopBg('shop01');
-    var el = document.getElementById('stageShopScreen');
-    el.classList.remove('hidden');
-    el.style.display = 'flex';
+    showScreenEl('stageShopScreen');
     // ゲームHUDを非表示（z-index:100がショップz-index:30の上に出るため）
     var uiEl = document.getElementById('ui');
     if (uiEl) uiEl.style.display = 'none';
@@ -4981,9 +5003,7 @@ function returnToShopMenu() {
 }
 
 function hideStageShopScreen() {
-    var el = document.getElementById('stageShopScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
+    hideScreenEl('stageShopScreen');
     // ゲームHUDを復帰
     var uiEl = document.getElementById('ui');
     if (uiEl) uiEl.style.display = 'block';
@@ -5718,9 +5738,7 @@ function previewTshopItem(upgradeId) {
 }
 
 function showTitleShop() {
-    var el = document.getElementById('titleShopScreen');
-    el.classList.remove('hidden');
-    el.style.display = 'flex';
+    showScreenEl('titleShopScreen');
     history.pushState({ screen: 'titleShop' }, '');
     tshopHighlightedItem = null;
     tshopConfirmingItem = null;
@@ -5738,9 +5756,7 @@ function showTitleShop() {
 }
 
 function hideTitleShop() {
-    var el = document.getElementById('titleShopScreen');
-    el.classList.add('hidden');
-    el.style.display = 'none';
+    hideScreenEl('titleShopScreen');
     tshopHighlightedItem = null;
     tshopConfirmingItem = null;
     if (soundManager) soundManager.playBGM('title');
@@ -6501,7 +6517,6 @@ function gameOver() {
 
 function showGameOverScreen() {
     markScreenTransition();
-    var screen = document.getElementById('gameOverScreen');
     // スタッツ表示
     var statsEl = document.getElementById('gameOverStats');
     statsEl.innerHTML =
@@ -6514,14 +6529,12 @@ function showGameOverScreen() {
     if (adReviveContainer) {
         adReviveContainer.style.display = (!rewardAdState.reviveUsedThisRun && !gameSettings.adFree) ? 'block' : 'none';
     }
-    screen.classList.remove('hidden');
-    screen.style.display = 'flex';
+    showScreenEl('gameOverScreen');
     history.pushState({ screen: 'gameOver' }, '');
 }
 
 function hideGameOverScreen() {
-    var el = document.getElementById('gameOverScreen');
-    if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
+    hideScreenEl('gameOverScreen');
 }
 
 function retryGame() {
@@ -8912,48 +8925,12 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Android戻るボタン対応
+            // Android戻るボタン/ブラウザバック: BACK_HANDLERS（優先順位付きレジストリ）の
+            // 先頭から評価し、最初に「開いている」画面のonBackを1つだけ実行する。
+            // 新しい画面を追加する場合はBACK_HANDLERSに1エントリ追加するだけでよい。
             window.addEventListener('popstate', function() {
-                var ranking = document.getElementById('rankingScreen');
-                var nameInput = document.getElementById('nameInputScreen');
-                var modal = document.getElementById('gameModal');
-                var settings = document.getElementById('settingsScreen');
-                var gameOverEl = document.getElementById('gameOverScreen');
-
-                // ショップ画面の閉じ処理
-                if (shopState.active) {
-                    closeStageShop();
-                    return;
-                }
-                var storeEl = document.getElementById('storeScreen');
-                if (storeEl && storeEl.style.display !== 'none') {
-                    hideStore();
-                    return;
-                }
-                var titleShop = document.getElementById('titleShopScreen');
-                if (titleShop && titleShop.style.display !== 'none' && !titleShop.classList.contains('hidden')) {
-                    hideTitleShop();
-                    return;
-                }
-
-                var guide = document.getElementById('guideScreen');
-                if (guide && !guide.classList.contains('hidden') && guide.style.display !== 'none') {
-                    hideGuide();
-                    return;
-                }
-
-                if (settings && !settings.classList.contains('hidden') && settings.style.display !== 'none') {
-                    hideSettings();
-                } else if (modal && modal.style.display === 'flex') {
-                    modal.style.display = 'none';
-                } else if (nameInput && !nameInput.classList.contains('hidden') && nameInput.style.display !== 'none') {
-                    hideNameInputDirect();
-                    resetGame();
-                } else if (gameOverEl && !gameOverEl.classList.contains('hidden') && gameOverEl.style.display !== 'none') {
-                    goToTitle();
-                } else if (ranking && !ranking.classList.contains('hidden') && ranking.style.display !== 'none') {
-                    hideRanking();
-                } else if (gameState && gameState.gameStarted && !gameState.gamePaused) {
-                    pauseGame();
+                for (var i = 0; i < BACK_HANDLERS.length; i++) {
+                    if (BACK_HANDLERS[i].isOpen()) { BACK_HANDLERS[i].onBack(); return; }
                 }
             });
         } catch (err) {
