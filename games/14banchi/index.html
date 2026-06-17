@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.950';
+const APP_VER='0.951';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -327,6 +327,12 @@ const T={
   resumeProgress:{ja:(n,total)=>`続きから再開（${n}/${total}）`,en:(n,total)=>`Resuming (${n}/${total})`},
   remainingLives:{ja:(n)=>`残りライフ: ${n}`,en:(n)=>`Lives left: ${n}`},
   anonName:{ja:'名無しのぴよ氏',en:'Anonymous Piyo'},
+  // Ranking name report
+  reportHint:{ja:'不適切な名前は旗マークから通報できます',en:'Use the flag to report an inappropriate name'},
+  reportConfirm:{ja:'この名前を通報しますか？',en:'Report this name?'},
+  reportYes:{ja:'通報する',en:'Report'},
+  reportCancel:{ja:'キャンセル',en:'Cancel'},
+  reportDone:{ja:'通報しました',en:'Reported'},
 };
 // Anomaly names & descriptions [ja, en]
 const AN_I18N=[
@@ -412,6 +418,24 @@ function initFirebase(){
 // Try immediately (if SDK loaded before main script), otherwise retry after page load
 if(!initFirebase()){window.addEventListener('load',()=>{setTimeout(()=>{initFirebase();loadRanking()},100)})}
 
+// === Reported ranking names (locally hidden + sent to Firebase 'reports' for review) ===
+function reportedKey(name,score){return (name||'')+'|'+score}
+function getReportedSet(){
+  try{const a=JSON.parse(localStorage.getItem('14b_reported')||'[]');return new Set(Array.isArray(a)?a:[])}catch(e){return new Set()}
+}
+function addReported(name,score){
+  try{
+    const a=JSON.parse(localStorage.getItem('14b_reported')||'[]');
+    const arr=Array.isArray(a)?a:[];
+    const k=reportedKey(name,score);
+    if(!arr.includes(k)){arr.push(k);localStorage.setItem('14b_reported',JSON.stringify(arr.slice(-200)))}
+  }catch(e){console.warn('[14b:report]',e)}
+}
+async function submitReport(name,score){
+  // Send to Firestore 'reports' so the developer can review & remove. Fails silently if blocked.
+  if(db){try{await db.collection('reports').add({name:(name||'').substring(0,16),score:score,ts:Date.now()})}catch(e){console.warn('[14b:report]',e)}}
+}
+
 async function loadRanking(){
   rankData=[];rankLoaded=false;
   if(db){
@@ -426,6 +450,9 @@ async function loadRanking(){
   if(rankData.length===0){
     try{const ls=JSON.parse(localStorage.getItem('14b_rank')||'[]');if(Array.isArray(ls)){rankData=ls.filter(r=>r&&typeof r.name==='string'&&typeof r.score==='number').slice(0,20)}else{rankData=[]}}catch(e){rankData=[]}
   }
+  // Hide entries the user reported on this device
+  const reported=getReportedSet();
+  if(reported.size>0){rankData=rankData.filter(r=>!reported.has(reportedKey(r.name,r.score)))}
   rankLoaded=true;
 }
 let lastRankPos=0;
@@ -1911,6 +1938,10 @@ let rankScrollY=0;
 let rankTouchStartY=0;
 let rankDragging=false;let rankJustOpened=false;
 let rankTotalDrag=0;
+let rankReportConfirm=null;// {name,score} pending report confirmation, or null
+let rankReportedTimer=0;// brief "Reported" toast countdown
+const rankReportBtns=[];// per-row report flag hit areas (rebuilt each frame)
+const rankReportDlgBtns=[];// confirm dialog buttons
 function dRanking(){
   X.fillStyle='#0a0a1a';X.fillRect(0,0,W,H);
   // Decorative border
@@ -1923,6 +1954,10 @@ function dRanking(){
   dI(ICN.trophy,W/2+X.measureText(t('rankingTitle')).width/2+20,H*0.12-4,24);
   X.strokeStyle='#FFD700';X.lineWidth=1;
   X.beginPath();X.moveTo(W*0.15,H*0.16);X.lineTo(W*0.85,H*0.16);X.stroke();
+  // Report hint (subtle)
+  X.fillStyle='rgba(150,170,190,0.5)';X.font='10px sans-serif';X.textAlign='center';
+  X.fillText(t('reportHint'),W/2,H*0.185);
+  rankReportBtns.length=0;// rebuilt while drawing rows
   if(!rankLoaded){X.fillStyle='#888';X.font='14px sans-serif';X.fillText(t('loading'),W/2,H*0.5);return}
   if(rankData.length===0){X.fillStyle='#888';X.font='14px sans-serif';X.fillText(t('noRecords'),W/2,H*0.5)}
   else{
@@ -1954,6 +1989,10 @@ function dRanking(){
       const nm=r.hall?`★${r.name}★`:r.name;
       X.fillText(nm.substring(0,12),W*0.25,ry+16);
       X.textAlign='right';X.fillText(tf('rankBlock',r.score),W*0.75,ry+16);
+      // Record report flag hit area (the flag glyph is drawn later, on top of decorations)
+      if(ry>=listTop+2&&ry+rowH<=listBot+4){
+        rankReportBtns.push({x:W*0.88-16,y:ry,w:34,h:rowH,name:r.name,score:r.score});
+      }
     }
     X.restore();
     // Scroll indicator
@@ -1966,9 +2005,50 @@ function dRanking(){
   }
   // Character decoration (right side)
   if(rankImgOk){X.globalAlpha=0.35;const rh=H*0.55,rw=rh*(rankImg.width/rankImg.height);X.drawImage(rankImg,W*0.88-rw/2,H*0.92-rh,rw,rh);X.globalAlpha=1.0}
+  // Report flags drawn on top of decoration (clipped to list band so they hide when scrolled off)
+  if(rankReportBtns.length>0){
+    const lT=H*0.20,lH=H*0.66;
+    X.save();X.beginPath();X.rect(0,lT,W,lH);X.clip();
+    X.globalAlpha=0.6;X.strokeStyle='#AEC0D0';X.fillStyle='#AEC0D0';X.lineWidth=1;
+    for(const rb of rankReportBtns){
+      const rfx=rb.x+16,rfy=rb.y+7;
+      X.beginPath();X.moveTo(rfx,rfy);X.lineTo(rfx,rfy+13);X.stroke();
+      X.beginPath();X.moveTo(rfx,rfy);X.lineTo(rfx+7,rfy+2.5);X.lineTo(rfx,rfy+5);X.closePath();X.fill();
+    }
+    X.globalAlpha=1;X.restore();
+  }
   // Footer - back button
   const btnX=W/2-80,btnY=H*0.88,btnW2=160,btnH2=40;
   dBtn(btnX,btnY,btnW2,btnH2,t('btnBack'),'#8A7B66',ICN.arrow_left,{dark:true,fontSize:14});
+  // Report confirmation dialog
+  rankReportDlgBtns.length=0;
+  if(rankReportConfirm){
+    X.fillStyle='rgba(0,0,0,0.7)';X.fillRect(0,0,W,H);
+    const dw=300,dh=140,dx=(W-dw)/2,dy=(H-dh)/2;
+    X.fillStyle='rgba(10,10,20,0.97)';X.fillRect(dx,dy,dw,dh);
+    X.strokeStyle='#CC8844';X.lineWidth=2;X.strokeRect(dx,dy,dw,dh);
+    X.fillStyle='#FFCC44';X.font='bold 15px sans-serif';X.textAlign='center';
+    X.fillText(t('reportConfirm'),W/2,dy+34);
+    X.fillStyle='#CCBBAA';X.font='13px sans-serif';
+    X.fillText('「'+String(rankReportConfirm.name||'').substring(0,12)+'」',W/2,dy+58);
+    const cbW=110,cbH=38,by2=dy+dh-cbH-16;
+    const ybx=W/2-cbW-10;
+    rankReportDlgBtns.push({x:ybx,y:by2,w:cbW,h:cbH,id:'yes'});
+    dBtn(ybx,by2,cbW,cbH,t('reportYes'),'#CC4444',null,{dark:true,fontSize:14});
+    const nbx=W/2+10;
+    rankReportDlgBtns.push({x:nbx,y:by2,w:cbW,h:cbH,id:'no'});
+    dBtn(nbx,by2,cbW,cbH,t('reportCancel'),'#667788',null,{dark:true,fontSize:14});
+  }
+  // "Reported" toast
+  if(rankReportedTimer>0){
+    rankReportedTimer--;
+    const al=Math.min(1,rankReportedTimer/30);
+    const mw=170,mh=36;
+    X.fillStyle=`rgba(40,120,60,${(0.9*al).toFixed(3)})`;X.fillRect(W/2-mw/2,H*0.5-mh/2,mw,mh);
+    X.strokeStyle=`rgba(120,220,150,${(0.6*al).toFixed(3)})`;X.lineWidth=1;X.strokeRect(W/2-mw/2,H*0.5-mh/2,mw,mh);
+    X.fillStyle=`rgba(255,255,255,${al.toFixed(3)})`;X.font='bold 14px sans-serif';X.textAlign='center';
+    X.fillText(t('reportDone'),W/2,H*0.5+5);
+  }
 }
 
 // === SETTINGS SCREEN ===
@@ -2781,7 +2861,8 @@ window.onNativeBack=function(){
   if(gs==='tap'||gs==='dying'||gs==='complete_hit')return;// transient states: ignore
   if(gs==='playing'){gs='paused';bL=false;bR=false;retireConfirm=false;return}
   if(gs==='paused'){if(retireConfirm){retireConfirm=false}else{gs='playing'};return}
-  if(gs==='ranking'||gs==='hints'){gs='title';playBgm(bgmTitle);return}
+  if(gs==='ranking'){if(rankReportConfirm){rankReportConfirm=null;return}gs='title';playBgm(bgmTitle);return}
+  if(gs==='hints'){gs='title';playBgm(bgmTitle);return}
   if(gs==='settings'){gs='title';playBgm(bgmTitle);return}
   if(gs==='title'){
     if(compDeleteConfirm){compDeleteConfirm=false;return}
@@ -2839,7 +2920,7 @@ function handleTitleTap(cx,cy){
       if(b.id===0){startGame('normal')}
       else if(b.id===1){startGame('complete')}
       else if(b.id===2){startGame('challenge')}
-      else if(b.id===3){gs='ranking';rankScrollY=0;rankJustOpened=true;playBgm(bgmRanking);loadRanking()}
+      else if(b.id===3){gs='ranking';rankScrollY=0;rankJustOpened=true;rankReportConfirm=null;rankReportedTimer=0;playBgm(bgmRanking);loadRanking()}
       else if(b.id===4){gs='hints';hintsScrollY=0;hintsJustOpened=true}
       return true;
     }
@@ -2875,7 +2956,15 @@ function hS(e){
   if(gs==='ranking'){
     const rc=C.getBoundingClientRect();
     const ts=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
+    const rcx=(ts[0].clientX-rc.left)*(W/rc.width);
     const ry=(ts[0].clientY-rc.top)*(H/rc.height);
+    if(rankReportConfirm){
+      for(const b of rankReportDlgBtns){if(rcx>=b.x&&rcx<=b.x+b.w&&ry>=b.y&&ry<=b.y+b.h){
+        if(b.id==='yes'){const tg=rankReportConfirm;addReported(tg.name,tg.score);submitReport(tg.name,tg.score);rankData=rankData.filter(r=>!(r.name===tg.name&&r.score===tg.score));rankReportedTimer=90}
+        rankReportConfirm=null;return;
+      }}
+      return;// swallow taps outside dialog while open
+    }
     rankTouchStartY=ry;
     rankDragging=true;rankTotalDrag=0;rankJustOpened=false;return;
   }
@@ -2969,7 +3058,7 @@ function hS(e){
   for(let t of ts){if(((t.clientX-rc.left)*(W/rc.width))<W*0.4)bL=true;else bR=true}
 }
 function uT(e){e.preventDefault();lastTouchTime=Date.now();
-  if(gs==='ranking'&&rankDragging){
+  if(gs==='ranking'&&rankDragging&&!rankReportConfirm){
     if(!e.touches||!e.touches.length)return;
     const rc=C.getBoundingClientRect();
     const ty=(e.touches[0].clientY-rc.top)*(H/rc.height);
@@ -2992,10 +3081,13 @@ function hE(e){e.preventDefault();lastTouchTime=Date.now();
   if(gs==='ranking'){
     const wasDrag=rankDragging&&rankTotalDrag>10;
     rankDragging=false;
+    if(rankReportConfirm)return;// dialog taps handled on touchstart
     if(rankJustOpened){rankJustOpened=false;return}
     if(!wasDrag&&e.changedTouches&&e.changedTouches.length>0){
       const rc=C.getBoundingClientRect();
+      const rcx=(e.changedTouches[0].clientX-rc.left)*(W/rc.width);
       const ry=(e.changedTouches[0].clientY-rc.top)*(H/rc.height);
+      for(const b of rankReportBtns){if(rcx>=b.x&&rcx<=b.x+b.w&&ry>=b.y&&ry<=b.y+b.h){rankReportConfirm={name:b.name,score:b.score};return}}
       if(ry>=H*0.88){gs='title';playBgm(bgmTitle)}
     }
     return;
@@ -3020,7 +3112,19 @@ C.addEventListener('mousedown',(e)=>{
   e.preventDefault();touchResume();
   if(gs==='tap'){unlockAudio();gs='title';playBgm(bgmTitle);return}
   if(gs==='title'){const rc=C.getBoundingClientRect();const cx=(e.clientX-rc.left)*(W/rc.width);const cy=(e.clientY-rc.top)*(H/rc.height);handleTitleTap(cx,cy);return}
-  if(gs==='ranking'){const rc8=C.getBoundingClientRect();const my8=(e.clientY-rc8.top)*(H/rc8.height);if(my8>=H*0.88){gs='title';playBgm(bgmTitle)}return}
+  if(gs==='ranking'){
+    const rc8=C.getBoundingClientRect();const mx8=(e.clientX-rc8.left)*(W/rc8.width);const my8=(e.clientY-rc8.top)*(H/rc8.height);
+    if(rankReportConfirm){
+      for(const b of rankReportDlgBtns){if(mx8>=b.x&&mx8<=b.x+b.w&&my8>=b.y&&my8<=b.y+b.h){
+        if(b.id==='yes'){const tg=rankReportConfirm;addReported(tg.name,tg.score);submitReport(tg.name,tg.score);rankData=rankData.filter(r=>!(r.name===tg.name&&r.score===tg.score));rankReportedTimer=90}
+        rankReportConfirm=null;return;
+      }}
+      return;
+    }
+    for(const b of rankReportBtns){if(mx8>=b.x&&mx8<=b.x+b.w&&my8>=b.y&&my8<=b.y+b.h){rankReportConfirm={name:b.name,score:b.score};return}}
+    if(my8>=H*0.88){gs='title';playBgm(bgmTitle)}
+    return;
+  }
   if(gs==='settings'){const rc7=C.getBoundingClientRect();const scx2=(e.clientX-rc7.left)*(W/rc7.width),scy2=(e.clientY-rc7.top)*(H/rc7.height);handleSettingsTap(scx2,scy2);return}
   if(gs==='hints'){const rc5=C.getBoundingClientRect();const my5=(e.clientY-rc5.top)*(H/rc5.height);if(my5>=H*0.88){gs='title'}return}
   if(gs==='clear'){
@@ -3148,10 +3252,10 @@ document.addEventListener('keydown',(e)=>{
     if(e.key==='1'){startGame('normal')}
     else if(e.key==='2'){startGame('complete')}
     else if(e.key==='3'){startGame('challenge')}
-    else if(e.key==='4'){gs='ranking';rankScrollY=0;rankJustOpened=true;playBgm(bgmRanking);loadRanking()}
+    else if(e.key==='4'){gs='ranking';rankScrollY=0;rankJustOpened=true;rankReportConfirm=null;rankReportedTimer=0;playBgm(bgmRanking);loadRanking()}
     else if(e.key==='5'){gs='hints';hintsScrollY=0;hintsJustOpened=true}
   }
-  else if(gs==='ranking'){gs='title';playBgm(bgmTitle)}
+  else if(gs==='ranking'){if(rankReportConfirm){rankReportConfirm=null}else{gs='title';playBgm(bgmTitle)}}
   else if(gs==='settings'){gs='title';playBgm(bgmTitle)}
   else if(gs==='hints'){gs='title'}
   else if(gs==='clear'||gs==='challenge_clear'||gs==='complete_clear'||gs==='gameover'){
