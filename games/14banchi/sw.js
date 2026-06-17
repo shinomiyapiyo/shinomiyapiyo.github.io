@@ -1,7 +1,8 @@
-const CACHE_NAME = '14banchi-v0949';
+const CACHE_NAME = '14banchi-v0950';
 const ASSETS = [
   './',
   './index.html',
+  './manifest.json',
   './icon-192.png',
   './icon-512.png',
   './images/characters/piyo_title.webp',

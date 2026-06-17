@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.github.io/beta-test.html');
   };
 }
-const APP_VER='0.949';
+const APP_VER='0.950';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -639,7 +639,7 @@ function drawPG(cx,cy,scale){
 function dCk(cx,cy,t,s){X.save();X.translate(cx,cy+Math.sin(t)*3);X.scale(s,s);X.fillStyle='#FFEE55';X.beginPath();X.ellipse(0,0,10,9,0,0,Math.PI*2);X.fill();X.beginPath();X.arc(0,-7,7,0,Math.PI*2);X.fill();X.fillStyle='#1a1a1a';X.beginPath();X.arc(-2,-8,1.8,0,Math.PI*2);X.fill();X.fillStyle='#FF8C00';X.beginPath();X.moveTo(5,-7);X.lineTo(9,-6);X.lineTo(5,-5);X.closePath();X.fill();X.fillStyle='#FFD700';X.beginPath();X.ellipse(-7,-1,5,3.5,-0.4,0,Math.PI*2);X.fill();X.restore()}
 function dHt(cx,cy,s,t){X.save();X.translate(cx,cy+Math.sin(t)*4);X.scale(s,s);X.fillStyle='#FFD700';X.beginPath();X.moveTo(0,4);X.bezierCurveTo(-8,-2,-8,-8,0,-4);X.bezierCurveTo(8,-8,8,-2,0,4);X.fill();X.restore()}
 
-// === 40 ANOMALY TYPES ===
+// === 41 ANOMALY TYPES ===
 const AN=[
   'flickerLamp',   // 0: 街灯が明滅する
   'redSky',        // 1: 空が赤い
@@ -2526,6 +2526,7 @@ function dTap(){
 }
 
 // === GAME OVER ===
+let _deathOC=null,_deathW=0,_deathH=0;// cached edge-faded death image (rebuilt only on resize)
 function dGameOver(){
   X.fillStyle='#0A0000';X.fillRect(0,0,W,H);
   // Blood drip effect - left side only
@@ -2546,30 +2547,33 @@ function dGameOver(){
     const iw=ih*(deathImg.naturalWidth/deathImg.naturalHeight);
     const ix=W*0.65-iw/2;
     const iy=H*0.5-ih/2;
-    // Offscreen canvas for masked image (cross-platform reliable)
-    const oc=document.createElement('canvas');
-    oc.width=Math.ceil(iw);oc.height=Math.ceil(ih);
-    const ox=oc.getContext('2d');
-    // Draw image first
-    ox.drawImage(deathImg,0,0,iw,ih);
-    // Erase edges with destination-out gradients (4 sides)
-    ox.globalCompositeOperation='destination-out';
-    const fT=0.25,fB=0.25,fL=0.25,fR=0.25;// fade 25% on each edge
-    const gT=ox.createLinearGradient(0,0,0,ih*fT);
-    gT.addColorStop(0,'rgba(0,0,0,1)');gT.addColorStop(1,'rgba(0,0,0,0)');
-    ox.fillStyle=gT;ox.fillRect(0,0,iw,ih*fT);
-    const gB=ox.createLinearGradient(0,ih*(1-fB),0,ih);
-    gB.addColorStop(0,'rgba(0,0,0,0)');gB.addColorStop(1,'rgba(0,0,0,1)');
-    ox.fillStyle=gB;ox.fillRect(0,ih*(1-fB),iw,ih*fB);
-    const gL=ox.createLinearGradient(0,0,iw*fL,0);
-    gL.addColorStop(0,'rgba(0,0,0,1)');gL.addColorStop(1,'rgba(0,0,0,0)');
-    ox.fillStyle=gL;ox.fillRect(0,0,iw*fL,ih);
-    const gR=ox.createLinearGradient(iw*(1-fR),0,iw,0);
-    gR.addColorStop(0,'rgba(0,0,0,0)');gR.addColorStop(1,'rgba(0,0,0,1)');
-    ox.fillStyle=gR;ox.fillRect(iw*(1-fR),0,iw*fR,ih);
-    ox.globalCompositeOperation='source-over';
-    // Draw masked result onto main canvas
-    X.drawImage(oc,ix,iy);
+    // Build edge-faded masked image once; reuse until screen size changes (avoids per-frame canvas alloc)
+    if(!_deathOC||_deathW!==W||_deathH!==H){
+      _deathOC=document.createElement('canvas');
+      _deathOC.width=Math.ceil(iw);_deathOC.height=Math.ceil(ih);
+      const ox=_deathOC.getContext('2d');
+      // Draw image first
+      ox.drawImage(deathImg,0,0,iw,ih);
+      // Erase edges with destination-out gradients (4 sides)
+      ox.globalCompositeOperation='destination-out';
+      const fT=0.25,fB=0.25,fL=0.25,fR=0.25;// fade 25% on each edge
+      const gT=ox.createLinearGradient(0,0,0,ih*fT);
+      gT.addColorStop(0,'rgba(0,0,0,1)');gT.addColorStop(1,'rgba(0,0,0,0)');
+      ox.fillStyle=gT;ox.fillRect(0,0,iw,ih*fT);
+      const gB=ox.createLinearGradient(0,ih*(1-fB),0,ih);
+      gB.addColorStop(0,'rgba(0,0,0,0)');gB.addColorStop(1,'rgba(0,0,0,1)');
+      ox.fillStyle=gB;ox.fillRect(0,ih*(1-fB),iw,ih*fB);
+      const gL=ox.createLinearGradient(0,0,iw*fL,0);
+      gL.addColorStop(0,'rgba(0,0,0,1)');gL.addColorStop(1,'rgba(0,0,0,0)');
+      ox.fillStyle=gL;ox.fillRect(0,0,iw*fL,ih);
+      const gR=ox.createLinearGradient(iw*(1-fR),0,iw,0);
+      gR.addColorStop(0,'rgba(0,0,0,0)');gR.addColorStop(1,'rgba(0,0,0,1)');
+      ox.fillStyle=gR;ox.fillRect(iw*(1-fR),0,iw*fR,ih);
+      ox.globalCompositeOperation='source-over';
+      _deathW=W;_deathH=H;
+    }
+    // Draw cached masked result onto main canvas
+    X.drawImage(_deathOC,ix,iy);
   }
   // === Flow-based layout (prevents overlap on any screen size) ===
   const cx=W*0.3,pulse=0.7+Math.sin(fc*0.06)*0.3;
