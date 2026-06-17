@@ -41,10 +41,10 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
   const bg=document.getElementById('beta-gate');
   bg.style.display='flex';
   document.getElementById('beta-btn').onclick=function(){
-    location.replace('https://nullpoworks.github.io/beta-test.html');
+    location.replace('https://nullpoworks.pages.dev/beta-test#14banchi');
   };
 }
-const APP_VER='0.951';
+const APP_VER='0.952';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 function resize(){
@@ -2120,12 +2120,12 @@ function toggleLang(){
   try{document.querySelector('#rb .mg').textContent=t('rotateMsg')}catch(e){console.warn('[14b:dom]',e)}
 }
 function openPrivacyPolicy(){
-  const url=lang==='en'?'https://nullpoworks.github.io/privacy-policy-en.html':'https://nullpoworks.github.io/privacy-policy.html';
+  const url=lang==='en'?'https://nullpoworks.pages.dev/privacy-policy-en':'https://nullpoworks.pages.dev/privacy-policy';
   if(typeof window.nativeOpenUrl==='function'){window.nativeOpenUrl(url)}
   else{try{window.open(url,'_blank')}catch(e){console.warn('[14b:nav]',e)}}
 }
 function openTermsOfService(){
-  const url=lang==='en'?'https://nullpoworks.github.io/terms-14banchi-en.html':'https://nullpoworks.github.io/terms-14banchi.html';
+  const url=lang==='en'?'https://nullpoworks.pages.dev/terms-14banchi-en':'https://nullpoworks.pages.dev/terms-14banchi';
   if(typeof window.nativeOpenUrl==='function'){window.nativeOpenUrl(url)}
   else{try{window.open(url,'_blank')}catch(e){console.warn('[14b:nav]',e)}}
 }
