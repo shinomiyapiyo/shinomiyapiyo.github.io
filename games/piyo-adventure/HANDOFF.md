@@ -38,6 +38,11 @@
 
 ## 2. 画像生成（Gemini）— 一貫性を出すための手順
 
+> **生成スクリプトは用意済み: `games/piyo-adventure/tools/generate-boss2.mjs`**
+> ローカルでは `cd tools && npm install && export GEMINI_API_KEY=... && node generate-boss2.mjs` を実行するだけで、
+> 下記の手順（参照画像＋idle先行生成＋128透過後処理）を自動で行い `images/boss2_*.png` を出力する。
+> 詳細は `tools/README.md`。モデルIDは Nano Banana 2（Gemini 3 Pro Image系）を想定。正確なIDは要確認。
+
 初代Nano Bananaで失敗した「ポーズ間で絵が揃わない」問題を避けるため、**やり方が最重要**。
 
 1. **既存ボスを参照画像として渡す。** `images/boss_idle.png` 等を入力に含め、「この巨大な闇の鳥と"同じ画風・同じ世界観"の、別キャラの空中型ボス」として生成させる（完全な別個体だが、画風・解像感・色調を揃える）。
