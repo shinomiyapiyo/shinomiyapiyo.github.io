@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.283";
+                content: "Ver.1.284";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.283</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.284</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -978,14 +978,17 @@
             z-index: 10001;
             padding: env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
             font-family: 'M PLUS Rounded 1c', sans-serif;">
-            <div style="width: 90%; max-width: 420px;
+            <div style="width: 92%; max-width: 540px;
                 background: linear-gradient(180deg, rgba(28,18,56,0.98), rgba(14,8,32,0.98));
                 border: 2px solid rgba(236,58,142,0.9); border-radius: 16px;
-                padding: 18px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.6);">
+                padding: 16px 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+                max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;">
+                <div style="overflow-y:auto; -webkit-overflow-scrolling:touch; min-height:0; flex:1 1 auto;">
                 <div data-i18n="tutorial_title" style="text-align:center; color:#ffe1ef; font-size:clamp(20px,5.5vw,26px); font-weight:800; letter-spacing:0.06em;">あそびかた</div>
-                <div style="height:1px; background:rgba(255,255,255,0.15); margin:12px 4px 16px;"></div>
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                    <div style="flex:0 0 54px; height:44px; border-radius:10px; background:#2d1d4d; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <div style="height:1px; background:rgba(255,255,255,0.15); margin:6px 4px 10px;"></div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(215px,1fr)); gap:9px 18px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:0 0 46px; height:38px; border-radius:9px; background:#2d1d4d; display:flex; align-items:center; justify-content:center; gap:8px;">
                         <span style="color:#9fd6ff; font-size:17px;">&#9664;</span><span style="color:#9fd6ff; font-size:17px;">&#9654;</span>
                     </div>
                     <div>
@@ -993,27 +996,49 @@
                         <div data-i18n="tutorial_move_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">がめんの ひだり</div>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                    <div style="flex:0 0 54px; height:44px; border-radius:10px; background:#2d1d4d; display:flex; align-items:center; justify-content:center;">
-                        <span style="color:#9fffc0; font-size:17px;">&#9650;</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:0 0 46px; height:38px; border-radius:9px; background:#2d1d4d; display:flex; align-items:center; justify-content:center;">
+                        <span style="display:inline-block; width:22px; height:22px; border:3px solid #9fffc0; border-radius:50%; position:relative;"><span style="position:absolute; left:50%; top:50%; width:8px; height:8px; background:#9fffc0; border-radius:50%; transform:translate(-50%,-50%);"></span></span>
                     </div>
                     <div>
                         <div data-i18n="tutorial_jump" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">ジャンプ</div>
                         <div data-i18n="tutorial_jump_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">がめんの みぎ</div>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
-                    <div style="flex:0 0 54px; height:44px; border-radius:10px; background:#2d1d4d; display:flex; align-items:center; justify-content:center;">
-                        <span style="color:#ffb0c0; font-size:17px;">&#9660;</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:0 0 46px; height:38px; border-radius:9px; background:#2d1d4d; display:flex; align-items:center; justify-content:center;">
+                        <span style="position:relative; display:inline-block; width:30px; height:28px;"><span style="position:absolute; left:50%; top:1px; width:13px; height:13px; background:#fff0c0; border-radius:50%; transform:translateX(-50%);"></span><span style="position:absolute; left:4px; bottom:3px; width:22px; height:9px; background:#c0344e; border-radius:3px;"></span></span>
                     </div>
                     <div>
                         <div data-i18n="tutorial_stomp" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">ふむ</div>
-                        <div data-i18n="tutorial_stomp_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">てきを やっつける</div>
+                        <div data-i18n="tutorial_stomp_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">ジャンプで うえから</div>
                     </div>
                 </div>
-                <button class="game-button" onclick="tutorialBegin(true)" data-i18n="tutorial_start" style="width:100%; font-size:clamp(16px,4.5vw,19px); padding:10px;">はじめる</button>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:0 0 46px; height:38px; border-radius:9px; background:#2d1d4d; display:flex; align-items:center; justify-content:center;">
+                        <span style="color:#9fd6ff; font-size:24px; line-height:1; font-weight:700;">&#8595;</span>
+                    </div>
+                    <div>
+                        <div data-i18n="tutorial_drop" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">おりる</div>
+                        <div data-i18n="tutorial_drop_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">ブロックの上で 下にスワイプ</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:0 0 46px; height:38px; border-radius:9px; background:#2d1d4d; display:flex; align-items:center; justify-content:center;">
+                        <span style="color:#ffd24d; font-size:24px; line-height:1; font-weight:700;">&#8593;</span>
+                    </div>
+                    <div>
+                        <div data-i18n="tutorial_shop" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">お店に入る</div>
+                        <div data-i18n="tutorial_shop_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">お店の前で 上にスワイプ</div>
+                    </div>
+                </div>
+                </div>
+                </div>
+                <div style="flex-shrink:0; padding-top:12px;">
+                <button class="game-button" onclick="tutorialBegin(true)" data-i18n="tutorial_start" style="width:100%; font-size:clamp(15px,4vw,18px); padding:8px;">はじめる</button>
                 <div style="text-align:center; margin-top:10px;">
                     <span onclick="tutorialBegin(false)" data-i18n="tutorial_skip" style="color:#9a86b0; font-size:clamp(12px,3.4vw,14px); cursor:pointer; text-decoration:underline;">スキップ</span>
+                </div>
                 </div>
             </div>
         </div>
@@ -1330,7 +1355,7 @@
             <div data-i18n="tutorial_hint_move" style="background:rgba(0,0,0,0.6); color:#fff; font-size:15px; font-weight:700; padding:3px 14px; border-radius:13px;">うごく</div>
         </div>
         <div id="tutHintJump" style="display:none; position:absolute; right:10%; bottom:88px; z-index:200; pointer-events:none; opacity:0; transition:opacity 0.4s; flex-direction:column; align-items:center; gap:5px; font-family:'M PLUS Rounded 1c',sans-serif;">
-            <div style="color:#fff; font-size:28px; text-shadow:0 2px 6px rgba(0,0,0,0.85);">&#9650;</div>
+            <div style="width:30px; height:30px; border:4px solid #fff; border-radius:50%; position:relative; box-shadow:0 2px 6px rgba(0,0,0,0.5);"><span style="position:absolute; left:50%; top:50%; width:10px; height:10px; background:#fff; border-radius:50%; transform:translate(-50%,-50%);"></span></div>
             <div data-i18n="tutorial_hint_jump" style="background:rgba(0,0,0,0.6); color:#fff; font-size:15px; font-weight:700; padding:3px 14px; border-radius:13px;">ジャンプ</div>
         </div>
         <div id="tutHintStomp" style="display:none; position:absolute; left:50%; transform:translateX(-50%); top:84px; z-index:200; pointer-events:none; opacity:0; transition:opacity 0.4s; font-family:'M PLUS Rounded 1c',sans-serif;">
