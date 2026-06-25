@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.288";
+                content: "Ver.1.289";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.288</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.289</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -743,6 +743,7 @@
                     <button class="game-button" id="settingsButton"><img src="images/icon_settings.png" class="ui-icon"> SETTING</button>
                     <button class="game-button" id="rankingButton"><img src="images/icon_trophy.png" class="ui-icon"> RANKING</button>
                     <button class="game-button" id="shopButton"><img src="images/icon_cart.png" class="ui-icon"> SHOP</button>
+                    <button class="game-button" id="missionButton" style="position:relative;"><img src="images/icon_flag.png" class="ui-icon"> MISSION<span id="missionBadge" style="display:none; position:absolute; top:-5px; right:-5px; width:13px; height:13px; background:#ff3344; border:2px solid #fff; border-radius:50%; box-shadow:0 0 6px rgba(255,51,68,0.9);"></span></button>
                     <!-- 課金ストアボタン（課金実装完了時に display:'' に戻す） -->
                     <button class="game-button" id="storeButton" style="
                         display: none;
@@ -1214,6 +1215,39 @@
                 <div style="position: absolute; top: 0; left: 0; width: 25px; height: 100%;
                     background: linear-gradient(90deg, rgba(0,0,30,0.7), transparent);
                     pointer-events: none;"></div>
+            </div>
+        </div>
+
+        <!-- デイリーミッション画面 -->
+        <div id="missionScreen" class="hidden" style="
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            box-sizing: border-box; z-index: 9999;
+            background: linear-gradient(160deg, #1a0d32, #0d0520);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px calc(env(safe-area-inset-right,0px) + 12px) 10px calc(env(safe-area-inset-left,0px) + 12px);
+            overflow: hidden;">
+            <div style="width: min(94vw, 580px); max-height: 94vh; display: flex; flex-direction: column;
+                background: linear-gradient(160deg, rgba(30,15,50,0.97), rgba(15,5,30,0.97));
+                border: 2px solid rgba(255,215,0,0.5); border-radius: 14px;
+                box-shadow: 0 6px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.12);
+                padding: 10px 14px; box-sizing: border-box;">
+                <!-- ヘッダー -->
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0;">
+                    <span id="missionTitle" style="color:#ffd700; font-size:clamp(13px,3vw,20px); font-weight:800;
+                        font-family:'M PLUS Rounded 1c',sans-serif; text-shadow:0 0 10px rgba(255,215,0,0.4);"><img src="images/icon_flag.png" class="ui-icon"> デイリーミッション</span>
+                    <span id="missionSavings" style="color:#fff; font-size:clamp(9px,1.8vw,13px);
+                        font-family:'M PLUS Rounded 1c',sans-serif; background:rgba(255,255,255,0.08);
+                        padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); white-space:nowrap;"><img src="images/icon_bank.png" class="ui-icon ui-icon-sm"> 0円</span>
+                </div>
+                <div id="missionResetHint" style="color:rgba(255,255,255,0.5); font-size:clamp(8px,1.5vw,11px);
+                    font-family:'M PLUS Rounded 1c',sans-serif; margin:3px 0 8px;">毎日 リセットされるよ</div>
+                <!-- ミッションリスト -->
+                <div id="missionList" style="display:flex; flex-direction:column; gap:6px;
+                    overflow-y:auto; -webkit-overflow-scrolling:touch; flex:1 1 auto; min-height:0;"></div>
+                <!-- 戻る -->
+                <button class="game-button" id="missionBackBtn" data-i18n="btn_back" style="margin-top:10px; flex-shrink:0;
+                    min-height:40px; font-size:clamp(11px,2.4vw,16px);"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
             </div>
         </div>
 
@@ -1749,6 +1783,14 @@ var LOGIN_BONUS_REWARDS = [
     { savings: 10000 },
     { savings: 13000 }
 ];
+// ─── デイリーミッション ───
+var DAILY_MISSIONS = [
+    { id: 'play',     type: 'plays',    target: 3,    reward: 2000, objKey: 'mission_obj_play',     iconImg: 'images/icon_play.png' },
+    { id: 'distance', type: 'distance', target: 2000, reward: 3000, objKey: 'mission_obj_distance', iconImg: 'images/icon_distance.png' },
+    { id: 'kills',    type: 'kills',    target: 50,   reward: 3000, objKey: 'mission_obj_kills',    iconImg: 'images/icon_kills.png' }
+];
+var MISSION_ALLCLEAR_BONUS = 3000;
+
 var loginBonusPending = null; // { day, amount } or null
 
 function getDateString() {
@@ -1906,11 +1948,12 @@ function showLoginBonusPopup() {
 
 // ─── ゲーム設定 (localStorage永続化) ───
 var gameSettings = {
-    dataVersion: 1,    // セーブデータ構造バージョン（将来の移行処理用）
+    dataVersion: 2,    // セーブデータ構造バージョン（将来の移行処理用）
     soundEnabled: true, language: 'ja', adFree: false, savings: 0, upgrades: {},
     tutorialSeen: false,   // 初回チュートリアルを表示済みか
     loginStreak: 0, lastLoginDate: '', pendingStockItems: [],
     lastLoginTimestamp: 0, loginBonusHistory: [],
+    dailyMissions: { date: '', plays: 0, distance: 0, kills: 0, claimed: [false, false, false], bonusClaimed: false, ts: 0 },
     tshopAdCooldown: 0,    // タイトルショップ広告のクールダウン（timestamp, 永続化）
     // ── 課金関連 ──
     purchased: {},         // { productId: true } 買い切り商品
@@ -1938,6 +1981,17 @@ var gameSettings = {
             if (Array.isArray(parsed.pendingStockItems)) gameSettings.pendingStockItems = parsed.pendingStockItems;
             if (typeof parsed.lastLoginTimestamp === 'number') gameSettings.lastLoginTimestamp = parsed.lastLoginTimestamp;
             if (Array.isArray(parsed.loginBonusHistory)) gameSettings.loginBonusHistory = parsed.loginBonusHistory;
+            // ── デイリーミッション ──
+            if (parsed.dailyMissions && typeof parsed.dailyMissions === 'object') {
+                var pdm = parsed.dailyMissions;
+                if (typeof pdm.date === 'string') gameSettings.dailyMissions.date = pdm.date;
+                if (typeof pdm.plays === 'number') gameSettings.dailyMissions.plays = pdm.plays;
+                if (typeof pdm.distance === 'number') gameSettings.dailyMissions.distance = pdm.distance;
+                if (typeof pdm.kills === 'number') gameSettings.dailyMissions.kills = pdm.kills;
+                if (Array.isArray(pdm.claimed)) gameSettings.dailyMissions.claimed = pdm.claimed;
+                if (typeof pdm.bonusClaimed === 'boolean') gameSettings.dailyMissions.bonusClaimed = pdm.bonusClaimed;
+                if (typeof pdm.ts === 'number') gameSettings.dailyMissions.ts = pdm.ts;
+            }
             // ── 広告クールダウン ──
             if (typeof parsed.tshopAdCooldown === 'number') gameSettings.tshopAdCooldown = parsed.tshopAdCooldown;
             // ── 課金関連 ──
@@ -1956,6 +2010,190 @@ function saveSettings() {
 }
 
 
+
+// ─── デイリーミッション: ロジック＆UI ───
+function checkDailyMissions() {
+    var dm = gameSettings.dailyMissions;
+    // claimed配列の長さをミッション数に正規化（将来ミッション数を変えても壊れない）
+    if (!Array.isArray(dm.claimed) || dm.claimed.length !== DAILY_MISSIONS.length) {
+        var fixed = [];
+        for (var k = 0; k < DAILY_MISSIONS.length; k++) fixed.push(!!(dm.claimed && dm.claimed[k]));
+        dm.claimed = fixed;
+    }
+    var today = getDateString();
+    if (dm.date === today) return;       // 今日のミッションは設定済み
+    var now = Date.now();
+    if (dm.ts && now < dm.ts) return;    // 時計巻き戻し対策: 前回更新時刻より過去なら無視
+    // 新しい日 → 進捗リセット
+    dm.date = today;
+    dm.plays = 0; dm.distance = 0; dm.kills = 0;
+    dm.claimed = [];
+    for (var i = 0; i < DAILY_MISSIONS.length; i++) dm.claimed.push(false);
+    dm.bonusClaimed = false;
+    dm.ts = now;
+    saveSettings();
+}
+
+function getMissionProgress(type) {
+    var dm = gameSettings.dailyMissions;
+    if (type === 'plays') return dm.plays;
+    if (type === 'distance') return dm.distance;
+    if (type === 'kills') return dm.kills;
+    return 0;
+}
+function isMissionComplete(i) {
+    var m = DAILY_MISSIONS[i];
+    return getMissionProgress(m.type) >= m.target;
+}
+function allMissionsComplete() {
+    for (var i = 0; i < DAILY_MISSIONS.length; i++) if (!isMissionComplete(i)) return false;
+    return true;
+}
+function hasClaimableMission() {
+    var dm = gameSettings.dailyMissions;
+    for (var i = 0; i < DAILY_MISSIONS.length; i++) {
+        if (isMissionComplete(i) && !dm.claimed[i]) return true;
+    }
+    if (allMissionsComplete() && !dm.bonusClaimed) return true;
+    return false;
+}
+
+// ゲームオーバー時に呼ぶ: その日の累計へ差分加算（広告復活で2回gameOverしても二重計上しない）
+function recordMissionProgress() {
+    checkDailyMissions(); // 日付が変わっていたら先にリセット
+    var dm = gameSettings.dailyMissions;
+    var addDist = gameState.distance - (gameState.missionCountedDistance || 0);
+    if (addDist > 0) { dm.distance += addDist; gameState.missionCountedDistance = gameState.distance; }
+    var addKills = gameState.enemyKills - (gameState.missionCountedKills || 0);
+    if (addKills > 0) { dm.kills += addKills; gameState.missionCountedKills = gameState.enemyKills; }
+    if (!gameState.missionPlayCounted) { dm.plays += 1; gameState.missionPlayCounted = true; }
+    dm.ts = Date.now();
+    saveSettings();
+    updateMissionBadge();
+}
+
+function claimMission(i) {
+    var dm = gameSettings.dailyMissions;
+    if (!isMissionComplete(i) || dm.claimed[i]) return;
+    dm.claimed[i] = true;
+    gameSettings.savings += DAILY_MISSIONS[i].reward;
+    dm.ts = Date.now();
+    saveSettings();
+    if (soundManager) soundManager.playCoin();
+    renderMissions();
+    updateMissionBadge();
+}
+function claimMissionBonus() {
+    var dm = gameSettings.dailyMissions;
+    if (!allMissionsComplete() || dm.bonusClaimed) return;
+    dm.bonusClaimed = true;
+    gameSettings.savings += MISSION_ALLCLEAR_BONUS;
+    dm.ts = Date.now();
+    saveSettings();
+    if (soundManager) soundManager.playItem();
+    renderMissions();
+    updateMissionBadge();
+}
+
+function updateMissionBadge() {
+    var badge = document.getElementById('missionBadge');
+    if (badge) badge.style.display = hasClaimableMission() ? 'block' : 'none';
+}
+
+function handleMissionClick(e) {
+    var cb = e.target.closest('[data-mission-claim]');
+    if (cb) { e.stopPropagation(); claimMission(parseInt(cb.getAttribute('data-mission-claim'), 10)); return true; }
+    var bb = e.target.closest('[data-mission-bonus]');
+    if (bb) { e.stopPropagation(); claimMissionBonus(); return true; }
+    return false;
+}
+
+function renderMissionRow(i) {
+    var m = DAILY_MISSIONS[i];
+    var dm = gameSettings.dailyMissions;
+    var cur = Math.min(getMissionProgress(m.type), m.target);
+    var pct = Math.min(100, Math.floor(cur / m.target * 100));
+    var complete = isMissionComplete(i);
+    var claimed = !!dm.claimed[i];
+    var unit = (m.type === 'distance') ? 'm' : '';
+    var stateHtml;
+    if (claimed) {
+        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('mission_claimed') + '</span>';
+    } else if (complete) {
+        stateHtml = '<button class="game-button" data-mission-claim="' + i + '" style="padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
+    } else {
+        stateHtml = '<span style="color:#ffd700; font-weight:800; font-size:clamp(10px,2.2vw,15px); white-space:nowrap;">+' + m.reward.toLocaleString() + t('currency_unit') + '</span>';
+    }
+    var barColor = complete ? '#4CAF50' : '#ffd700';
+    return '<div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,40,0.55); border:1px solid rgba(255,255,255,0.12); border-radius:9px; padding:7px 9px;">' +
+        '<img src="' + m.iconImg + '" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
+        '<div style="flex:1 1 auto; min-width:0;">' +
+            '<div style="color:#fff; font-size:clamp(10px,2.1vw,14px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:3px;">' + escapeHtml(t(m.objKey, { target: m.target.toLocaleString() })) + '</div>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' +
+                '<div style="flex:1 1 auto; height:8px; background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;">' +
+                    '<div style="width:' + pct + '%; height:100%; background:' + barColor + '; border-radius:5px;"></div>' +
+                '</div>' +
+                '<span style="color:rgba(255,255,255,0.75); font-size:clamp(8px,1.6vw,11px); font-weight:700; white-space:nowrap;">' + cur.toLocaleString() + ' / ' + m.target.toLocaleString() + unit + '</span>' +
+            '</div>' +
+        '</div>' +
+        '<div style="flex-shrink:0; text-align:right;">' + stateHtml + '</div>' +
+    '</div>';
+}
+
+function renderMissionBonusRow() {
+    var dm = gameSettings.dailyMissions;
+    var allDone = allMissionsComplete();
+    var doneCount = 0;
+    for (var i = 0; i < DAILY_MISSIONS.length; i++) if (isMissionComplete(i)) doneCount++;
+    var stateHtml;
+    if (dm.bonusClaimed) {
+        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('mission_claimed') + '</span>';
+    } else if (allDone) {
+        stateHtml = '<button class="game-button" data-mission-bonus="1" style="padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
+    } else {
+        stateHtml = '<span style="color:#ffd700; font-weight:800; font-size:clamp(10px,2.2vw,15px); white-space:nowrap;">+' + MISSION_ALLCLEAR_BONUS.toLocaleString() + t('currency_unit') + '</span>';
+    }
+    return '<div style="display:flex; align-items:center; gap:8px; background:rgba(45,30,0,0.6); border:1px solid rgba(255,215,0,0.45); border-radius:9px; padding:7px 9px;">' +
+        '<img src="images/icon_celebrate.png" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
+        '<div style="flex:1 1 auto; min-width:0;">' +
+            '<div style="color:#ffd700; font-size:clamp(10px,2.1vw,14px); font-weight:800; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:3px;">' + escapeHtml(t('mission_allclear_name')) + '</div>' +
+            '<div style="color:rgba(255,255,255,0.7); font-size:clamp(8px,1.6vw,11px); font-weight:700;">' + doneCount + ' / ' + DAILY_MISSIONS.length + '</div>' +
+        '</div>' +
+        '<div style="flex-shrink:0; text-align:right;">' + stateHtml + '</div>' +
+    '</div>';
+}
+
+function renderMissions() {
+    var titleEl = document.getElementById('missionTitle');
+    if (titleEl) titleEl.innerHTML = t('mission_title');
+    var hintEl = document.getElementById('missionResetHint');
+    if (hintEl) hintEl.textContent = t('mission_reset_hint');
+    var savEl = document.getElementById('missionSavings');
+    if (savEl) savEl.innerHTML = _ic('icon_bank.png', 'ui-icon-sm') + ' ' + gameSettings.savings.toLocaleString() + t('currency_unit');
+    var listEl = document.getElementById('missionList');
+    if (!listEl) return;
+    var html = '';
+    for (var i = 0; i < DAILY_MISSIONS.length; i++) html += renderMissionRow(i);
+    html += renderMissionBonusRow();
+    listEl.innerHTML = html;
+}
+
+function showMissionScreen() {
+    checkDailyMissions();
+    showScreenEl('missionScreen');
+    history.pushState({ screen: 'mission' }, '');
+    renderMissions();
+    if (soundManager) soundManager.playConfirmSelect();
+}
+function hideMissionScreen() {
+    hideScreenEl('missionScreen');
+    updateMissionBadge();
+    if (soundManager) soundManager.playCursorMove();
+}
+function closeMissionScreen() {
+    hideMissionScreen();
+    history.back();
+}
 
 function applyLanguage() {
     var els = document.querySelectorAll('[data-i18n]');
@@ -2265,6 +2503,7 @@ var BACK_HANDLERS = [
     { isOpen: function() { var el = document.getElementById('storeScreen'); return !!el && el.style.display !== 'none'; },
       onBack: function() { hideStore(); } },
     { isOpen: function() { return isScreenVisible('titleShopScreen'); }, onBack: function() { hideTitleShop(); } },
+    { isOpen: function() { return isScreenVisible('missionScreen'); }, onBack: function() { hideMissionScreen(); } },
     { isOpen: function() { return isScreenVisible('guideScreen'); }, onBack: function() { hideGuide(); } },
     { isOpen: function() { return isScreenVisible('tutorialScreen'); }, onBack: function() { tutorialCancel(); } },
     { isOpen: function() { return isScreenVisible('settingsScreen'); }, onBack: function() { hideSettings(); } },
@@ -2295,7 +2534,8 @@ var gameState = {
     bulletFireTimer: 0,
     comboCount: 0, comboTimer: 0,
     revivesLeft: 0, revivalFlashTimer: 0,
-    hasRecordedHighScore: false
+    hasRecordedHighScore: false,
+    missionCountedDistance: 0, missionCountedKills: 0, missionPlayCounted: false
 };
 
 var player = {
@@ -2645,6 +2885,9 @@ function startApp() {
     if (loginBonusPending) {
         setTimeout(function() { showLoginBonusPopup(); }, 400);
     }
+    // デイリーミッションの日次チェック＆お知らせバッジ更新
+    checkDailyMissions();
+    updateMissionBadge();
 }
 
 function handleTitleScreenClick(e) {
@@ -2719,6 +2962,7 @@ function showStartScreen() {
     hideRankingDirect();
     hideNameInputDirect();
     hideGameOverScreen();
+    updateMissionBadge();
 
     if (soundManager) { try { soundManager.playBGM('title'); } catch (_) {} }
 }
@@ -2764,6 +3008,9 @@ function resetGame() {
     gameState.revivesLeft = 0;
     gameState.revivalFlashTimer = 0;
     gameState.hasRecordedHighScore = false;
+    gameState.missionCountedDistance = 0;
+    gameState.missionCountedKills = 0;
+    gameState.missionPlayCounted = false;
     floatEffects = [];
     damageFlashTimer = 0;
     screenShake = { intensity: 0, timer: 0 };
@@ -5995,6 +6242,7 @@ function updateEggs() {
 function gameOver() {
     gameState.gameStarted = false;
     gameState.gamePaused = true;
+    recordMissionProgress(); // デイリーミッション進捗を記録（広告復活でも二重計上しない）
     if (soundManager) soundManager.playBGM('gameover');
 
     // 広告表示（インタースティシャル）
@@ -8325,6 +8573,17 @@ function initialize() {
     var shopBtn = document.getElementById('shopButton');
     shopBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showTitleShop(); });
     shopBtn.addEventListener('click', function(e) { e.stopPropagation(); showTitleShop(); });
+
+    // ミッションボタン（タイトル画面）
+    var missionBtn = document.getElementById('missionButton');
+    missionBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showMissionScreen(); });
+    missionBtn.addEventListener('click', function(e) { e.stopPropagation(); showMissionScreen(); });
+    var missionBackBtn = document.getElementById('missionBackBtn');
+    missionBackBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeMissionScreen(); });
+    missionBackBtn.addEventListener('click', function(e) { e.stopPropagation(); closeMissionScreen(); });
+    var missionListEl = document.getElementById('missionList');
+    missionListEl.addEventListener('click', handleMissionClick);
+    missionListEl.addEventListener('touchend', function(e) { if (handleMissionClick(e)) e.preventDefault(); });
 
     // ストアボタン（タイトル画面）
     var storeBtn = document.getElementById('storeButton');
