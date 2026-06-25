@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.281";
+                content: "Ver.1.282";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.281</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.282</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -5411,7 +5411,7 @@ function updateBossAI_hawk(b) {
             b.y = groundSit;
             b.velY = 0;
             b.hawkMode = 'stun';
-            b.stunTimer = (phase === 3 ? 38 : 58); // 瀕死ほど踏める窓が短い
+            b.stunTimer = (phase === 3 ? 70 : 100); // 着地硬直=踏める窓。瀕死ほど短い
             floatEffects.push({ type: 'boss_shockwave', worldX: b.x + b.width / 2, worldY: GROUND_Y, timer: 0, duration: 20 });
         }
         break;
@@ -5700,39 +5700,41 @@ function updateBossCollision(b) {
 }
 
 // 空中ボスの当たり判定:
-// ・滞空/溜め/ダイブ/上昇中 → 本体は踏めない。体当たり/ダイブ被弾は takeDamage（シールドで無効）。
-// ・着地硬直(stun)中のみ → 上から踏める（HP-1）。硬直中の本体接触ではプレイヤーは無傷。
+// ・上から踏める。着地硬直(stun)中=フルダメージ(HP-1) / 空中(滞空/溜め/ダイブ/上昇)=半分(HP-0.5)。
+// ・踏みでない本体接触（特にダイブ）はプレイヤーがダメージ（シールド中は無効）。
+//   踏みつけ直後(stompCooldown中)は本体接触も無効化して連続被弾を防ぐ。
 // ・羽根弾の被弾とシールド判定は updateEggs() 側で処理済み。
 // ・エナジー弾によるHP減少は既存のプレイヤー弾→ボス判定を流用（kind非依存）。
 function updateBossCollision_hawk(b) {
     if (b.stompCooldown > 0) b.stompCooldown--;
 
-    if (b.hawkMode === 'stun') {
-        // 無防備: 上から踏めるチャンス
-        var stompHit = aabbShrink(player, b, 10, 12);
-        if (b.stompCooldown <= 0 && stompHit && player.velY > 0 &&
-            player.y + player.height <= b.y + b.height * 0.45) {
-            b.hp -= 1;
-            player.velY = JUMP_FORCE * 0.5;
-            if (soundManager) soundManager.playKill();
-            spawnExplosionEffect(player.x + player.width / 2, b.y);
-            gameState.score += 500;
-            b.spriteFrame = HAWK_FRAME_DAMAGED;
-            b.spriteResetTimer = 20;
-            b.isAngry = true;
-            b.angerTimer = BOSS_ANGER_DURATION;
-            b.stompCooldown = 50;
-            b.hawkMode = 'rise'; // 踏まれたら硬直を解いて上昇
-            b.stunTimer = 0;
-            if (b.hp <= 0) { bossState.phase = 4; bossState.defeatedTimer = 0; }
-        }
-        return; // 硬直中の本体接触ではプレイヤーにダメージを与えない
+    var grounded = (b.hawkMode === 'stun');
+    // 踏み判定: プレイヤーが上から（落下中＆ボス上部に乗る）
+    var stompHit = aabbShrink(player, b, 10, 12);
+    var stompPose = stompHit && player.velY > 0 && player.y + player.height <= b.y + b.height * 0.45;
+
+    if (b.stompCooldown <= 0 && stompPose) {
+        // 踏みつけ成功（着地硬直中=フル1.0 / 空中=半分0.5）
+        b.hp -= grounded ? 1 : 0.5;
+        player.velY = JUMP_FORCE * 0.5;
+        if (soundManager) soundManager.playKill();
+        spawnExplosionEffect(player.x + player.width / 2, b.y);
+        gameState.score += grounded ? 500 : 300;
+        b.spriteFrame = HAWK_FRAME_DAMAGED;
+        b.spriteResetTimer = 20;
+        b.isAngry = true;
+        b.angerTimer = BOSS_ANGER_DURATION;
+        b.stompCooldown = grounded ? 50 : 40;
+        b.hawkMode = 'rise'; // 踏まれたら硬直/攻撃を解いて上昇へ
+        b.stunTimer = 0;
+        if (b.hp <= 0) { bossState.phase = 4; bossState.defeatedTimer = 0; }
+        return;
     }
 
-    // 滞空/溜め/ダイブ/上昇中: 本体（特にダイブ）接触はダメージ（シールド中は無効）
-    var bodyHit = aabbShrink(player, b, 18, 14);
-    if (bodyHit && !isPlayerProtected()) {
-        takeDamage();
+    // 踏みでない接触: 着地硬直中は無傷。それ以外は本体接触ダメージ（シールド/踏み直後は無効）
+    if (!grounded && b.stompCooldown <= 0) {
+        var bodyHit = aabbShrink(player, b, 18, 14);
+        if (bodyHit && !isPlayerProtected()) takeDamage();
     }
 }
 
