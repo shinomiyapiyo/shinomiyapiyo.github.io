@@ -253,6 +253,16 @@ ja: {
     login_bonus_savings: '貯金残高: {total}円',
     login_bonus_ok: _ic('icon_celebrate.png') + ' うけとる！',
     login_bonus_item_hint: 'つぎのゲーム開始時にストックに入るよ！',
+    // ── デイリーミッション ──
+    mission_title: _ic('icon_flag.png') + ' デイリーミッション',
+    mission_reset_hint: '毎日 リセットされるよ',
+    mission_obj_play: '{target}回 あそぶ',
+    mission_obj_distance: '合計 {target}m すすむ',
+    mission_obj_kills: '合計 {target}体 たおす',
+    mission_allclear_name: 'ぜんぶ クリア ボーナス！',
+    mission_claim: _ic('icon_celebrate.png') + ' うけとる！',
+    mission_claimed: '✓ 受取ずみ',
+    mission_all_done: _ic('icon_celebrate.png') + ' きょうのミッションは ぜんぶ おわり！\nまた あした！',
     // ── 課金ストア ──
     iap_store_title: _ic('icon_money.png') + ' ストア',
     iap_starter_pack: 'スターターパック',
@@ -501,6 +511,16 @@ en: {
     login_bonus_savings: 'Savings: {total}',
     login_bonus_ok: _ic('icon_celebrate.png') + ' Claim!',
     login_bonus_item_hint: 'Will be added to your stock at next game start!',
+    // ── Daily Missions ──
+    mission_title: _ic('icon_flag.png') + ' Daily Missions',
+    mission_reset_hint: 'Resets every day',
+    mission_obj_play: 'Play {target} games',
+    mission_obj_distance: 'Run {target}m total',
+    mission_obj_kills: 'Defeat {target} enemies',
+    mission_allclear_name: 'All Clear Bonus!',
+    mission_claim: _ic('icon_celebrate.png') + ' Claim!',
+    mission_claimed: '✓ Claimed',
+    mission_all_done: _ic('icon_celebrate.png') + ' All missions done for today!\nCome back tomorrow!',
     // ── Store ──
     iap_store_title: _ic('icon_money.png') + ' Store',
     iap_starter_pack: 'Starter Pack',
