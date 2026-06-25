@@ -13,9 +13,13 @@
 //
 //   オプション:
 //     --only=idle,dive      指定ポーズだけ生成（カンマ区切り）
-//     --chroma              背景が透過にならなかった場合、四隅の色をキーにして透過化
+//     --reprocess           API生成せず、既存 _raw/boss2_<pose>_raw.png から透過後処理だけやり直す（--only 併用可）
+//     --no-key              白背景キーイングを無効化（既にアルファ付きの出力向け）
+//     --chroma              白キーの代わりに四隅サンプルのハードキーを使う（白以外の背景向け）
 //     --no-postprocess      128化/透過化をせず、生成された生画像だけ _raw/ に残す
 //     --model=<id>          モデルIDを上書き（環境変数 GEMINI_IMAGE_MODEL でも可）
+//
+//   ※ Gemini は「透過背景」指示でも白背景を返すため、既定でグラデ白キーを掛けて透過化する。
 //
 // 【一貫性のコツ（初代Nano Bananaでポーズが揃わなかった対策）】
 //   - まず idle を生成し、その idle を「キャラ参照」として他ポーズへ渡す（同一個体を維持）。
@@ -36,10 +40,12 @@ const IMAGES_DIR = path.resolve(__dirname, '..', 'images');
 const RAW_DIR    = path.resolve(__dirname, '_raw');
 
 // ── モデルID ───────────────────────────────────────────────────────────────
-// Nano Banana 2 = Gemini 3 Pro Image 系。正確なIDは Google AI Studio / 公式docs で確認し、
-// 違っていればここか --model / GEMINI_IMAGE_MODEL で上書きすること。
-// 動かない場合のフォールバック（初代Nano Banana）: 'gemini-2.5-flash-image-preview'
-const DEFAULT_MODEL = 'gemini-3-pro-image-preview';
+// 2026-06 時点の公式docs確認結果:
+//   Nano Banana Pro = Gemini 3 Pro Image     → 'gemini-3-pro-image'（最高品質・既定。複雑な指示に強い）
+//   Nano Banana 2   = Gemini 3.1 Flash Image → 'gemini-3.1-flash-image'（高速・低コスト）
+//   初代 Nano Banana = Gemini 2.5 Flash Image → 'gemini-2.5-flash-image'（フォールバック）
+// 既定は preview 接尾辞が取れて GA 化済み。違っていれば --model / GEMINI_IMAGE_MODEL で上書きすること。
+const DEFAULT_MODEL = 'gemini-3-pro-image';
 
 // ── 引数パース ───────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -49,6 +55,8 @@ const hasFlag = (name) => args.includes(`--${name}`);
 const MODEL        = getArg('model') || process.env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
 const ONLY         = (getArg('only') || '').split(',').map(s => s.trim()).filter(Boolean);
 const USE_CHROMA   = hasFlag('chroma');
+const NO_KEY       = hasFlag('no-key');
+const REPROCESS    = hasFlag('reprocess');
 const POSTPROCESS  = !hasFlag('no-postprocess');
 const OUT_SIZE     = 128;
 
@@ -149,9 +157,29 @@ async function chromaKeyToAlpha(buf) {
   return sharp(data, { raw: { width, height, channels } }).png().toBuffer();
 }
 
+// 白背景キーイング（グラデ式）: fg = max(暗さ, 彩度) を smoothstep でアルファ化する。
+// 白背景→透明、暗い/鮮やかな前景→不透明。エッジが滑らかでハロー（白ふち）が出にくい。
+// 既存アルファは超えない（＝もともと透明な領域を塗り潰さない）ので、将来モデルが真の透過を返しても安全。
+async function gradedWhiteKey(buf) {
+  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+  const LO = 40, HI = 100;
+  const ss = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  for (let i = 0; i < data.length; i += channels) {
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const mn = Math.min(r, g, b), mx = Math.max(r, g, b);
+    const fg = Math.max(255 - mn, mx - mn); // 暗さ or 彩度が高いほど前景
+    const a = Math.round(ss(LO, HI, fg) * 255);
+    if (a < data[i + 3]) data[i + 3] = a; // 既存アルファを上回って不透明化しない
+  }
+  return sharp(data, { raw: { width, height, channels } }).png().toBuffer();
+}
+
 async function postProcess(rawBuf) {
   let buf = rawBuf;
+  // 透過化: 既定はグラデ白キー。--chroma で四隅ハードキー、--no-key で無効化。
   if (USE_CHROMA) buf = await chromaKeyToAlpha(buf);
+  else if (!NO_KEY) buf = await gradedWhiteKey(buf);
   // 余白をトリムしてから 128×128 の透明キャンバスへ contain 配置
   return sharp(buf)
     .ensureAlpha()
@@ -163,22 +191,22 @@ async function postProcess(rawBuf) {
 
 async function main() {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  if (!apiKey && !REPROCESS) {
     console.error('✗ 環境変数 GEMINI_API_KEY が設定されていません。');
     console.error('  例: export GEMINI_API_KEY="..."  を実行してから再度お試しください。');
     process.exit(1);
   }
 
   await fs.mkdir(RAW_DIR, { recursive: true });
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = REPROCESS ? null : new GoogleGenAI({ apiKey });
 
-  console.log(`モデル: ${MODEL}`);
+  console.log(`モデル: ${REPROCESS ? '(再後処理のみ・API未使用)' : MODEL}`);
   console.log(`出力先: ${IMAGES_DIR}`);
   if (USE_CHROMA) console.log('背景透過: --chroma 有効（四隅サンプルでキーイング）');
 
-  // 画風参照（既存ボス）
+  // 画風参照（既存ボス）※生成時のみ使用
   const styleRefs = [];
-  for (const f of ['boss_idle.png', 'boss_walk.png']) {
+  if (!REPROCESS) for (const f of ['boss_idle.png', 'boss_walk.png']) {
     const p = path.join(IMAGES_DIR, f);
     try { styleRefs.push(await fileToInlinePart(p)); }
     catch { console.warn(`  画風参照 ${f} を読めませんでした（スキップ）`); }
@@ -190,22 +218,27 @@ async function main() {
 
   let charRef = null; // 生成済み idle をここに保持
   // --only で idle を含めない場合、既存の boss2_idle.png があればキャラ参照に使う
-  if (!targets.some(t => t.anchor)) {
+  if (!REPROCESS && !targets.some(t => t.anchor)) {
     const existingIdle = path.join(IMAGES_DIR, 'boss2_idle.png');
     try { charRef = await fileToInlinePart(existingIdle); console.log('  既存 boss2_idle.png をキャラ参照に使用'); }
     catch { /* なければ無し */ }
   }
 
   for (const pose of targets) {
-    console.log(`\n● ${pose.key} を生成中...`);
-    const raw = await generateOne(ai, pose, styleRefs, pose.anchor ? null : charRef);
-
-    // 生画像を保存（後処理前。デバッグ・再利用用）
-    const rawPath = path.join(RAW_DIR, `boss2_${pose.key}_raw.png`);
-    await fs.writeFile(rawPath, raw);
-
-    // idle はキャラ参照として後続に渡す
-    if (pose.anchor) charRef = { inlineData: { mimeType: 'image/png', data: raw.toString('base64') } };
+    let raw;
+    if (REPROCESS) {
+      const rawPath = path.join(RAW_DIR, `boss2_${pose.key}_raw.png`);
+      try { raw = await fs.readFile(rawPath); }
+      catch { console.warn(`\n● ${pose.key}: 既存の生画像が無いためスキップ（${rawPath}）`); continue; }
+      console.log(`\n● ${pose.key} を既存生画像から再後処理...`);
+    } else {
+      console.log(`\n● ${pose.key} を生成中...`);
+      raw = await generateOne(ai, pose, styleRefs, pose.anchor ? null : charRef);
+      // 生画像を保存（後処理前。デバッグ・再利用用）
+      await fs.writeFile(path.join(RAW_DIR, `boss2_${pose.key}_raw.png`), raw);
+      // idle はキャラ参照として後続に渡す
+      if (pose.anchor) charRef = { inlineData: { mimeType: 'image/png', data: raw.toString('base64') } };
+    }
 
     if (POSTPROCESS) {
       const out = await postProcess(raw);
