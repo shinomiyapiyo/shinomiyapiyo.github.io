@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.284";
+                content: "Ver.1.285";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.284</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.285</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1020,7 +1020,7 @@
                     </div>
                     <div>
                         <div data-i18n="tutorial_drop" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">おりる</div>
-                        <div data-i18n="tutorial_drop_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">ブロックの上で 下にスワイプ</div>
+                        <div data-i18n="tutorial_drop_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">ブロックで したに スワイプ</div>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -1028,17 +1028,14 @@
                         <span style="color:#ffd24d; font-size:24px; line-height:1; font-weight:700;">&#8593;</span>
                     </div>
                     <div>
-                        <div data-i18n="tutorial_shop" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">お店に入る</div>
-                        <div data-i18n="tutorial_shop_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">お店の前で 上にスワイプ</div>
+                        <div data-i18n="tutorial_shop" style="color:#fff; font-size:clamp(15px,4vw,18px); font-weight:700;">おみせにはいる</div>
+                        <div data-i18n="tutorial_shop_sub" style="color:#b59cc9; font-size:clamp(11px,3vw,13px);">おみせで うえに スワイプ</div>
                     </div>
                 </div>
                 </div>
                 </div>
                 <div style="flex-shrink:0; padding-top:12px;">
                 <button class="game-button" onclick="tutorialBegin(true)" data-i18n="tutorial_start" style="width:100%; font-size:clamp(15px,4vw,18px); padding:8px;">はじめる</button>
-                <div style="text-align:center; margin-top:10px;">
-                    <span onclick="tutorialBegin(false)" data-i18n="tutorial_skip" style="color:#9a86b0; font-size:clamp(12px,3.4vw,14px); cursor:pointer; text-decoration:underline;">スキップ</span>
-                </div>
                 </div>
             </div>
         </div>
@@ -2684,7 +2681,7 @@ function dismissTutorialHints() {
 }
 
 function startGame() {
-    // 初回のみ: ゲーム開始前に操作カードを表示（はじめる/スキップで実際に開始）
+    // 初回のみ: ゲーム開始前に操作カードを表示（「はじめる」で実際に開始）
     if (!gameSettings.tutorialSeen && !isScreenVisible('tutorialScreen')) { showTutorialCard(); return; }
     if (isInTransitionCooldown()) return;
     markScreenTransition();
