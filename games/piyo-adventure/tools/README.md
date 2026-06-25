@@ -27,9 +27,11 @@ node generate-boss2.mjs
 | `--model=<id>` | モデルIDを上書き（`GEMINI_IMAGE_MODEL` 環境変数でも可） |
 
 ## モデルについて
-- 既定は **Nano Banana 2（Gemini 3 Pro Image 系）**を想定した `gemini-3-pro-image-preview`。
-- **正確なIDは Google AI Studio / 公式docs で確認**し、違っていれば `--model=` で上書きしてください。
-- 動かない場合のフォールバック（初代Nano Banana）: `--model=gemini-2.5-flash-image-preview`
+（2026-06 公式docs確認済み）
+- 既定は **Nano Banana Pro（Gemini 3 Pro Image）= `gemini-3-pro-image`**（GA・最高品質・複雑な指示に強い）。
+- 低コスト/高速にしたい場合: `--model=gemini-3.1-flash-image`（Nano Banana 2 = Gemini 3.1 Flash Image）。
+- フォールバック（初代Nano Banana）: `--model=gemini-2.5-flash-image`。
+- 最新IDは Google AI Studio / 公式docs を確認し、違っていれば `--model=` で上書きしてください。
 
 ## 一貫性のコツ
 スクリプトは「idle を最初に生成 → それをキャラ参照にして他ポーズを生成」「既存ボス画像を画風参照に渡す」ことで、ポーズ間の絵柄ブレを抑えています。詳細は `generate-boss2.mjs` 冒頭コメントと `../HANDOFF.md` を参照。

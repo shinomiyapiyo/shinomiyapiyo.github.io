@@ -61,6 +61,16 @@ var IMAGE_SPRITES = {
         'images/boss_summon.png',
         'images/boss_damaged.png',
         'images/boss_flame.png'
+    ] },
+
+    // ボス2 (128x128, Gemini[gemini-3-pro-image]生成 闇の空中タカ - 5ポーズ)
+    // 0:idle, 1:flap, 2:dive, 3:shoot, 4:damaged
+    boss_hawk:       { files: [
+        'images/boss2_idle.png',
+        'images/boss2_flap.png',
+        'images/boss2_dive.png',
+        'images/boss2_shoot.png',
+        'images/boss2_damaged.png'
     ] }
 };
 

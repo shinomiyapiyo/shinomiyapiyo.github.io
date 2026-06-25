@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.280';
+var CACHE_NAME = 'piyo-adventure-v1.281';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -65,6 +65,11 @@ var STATIC_ASSETS = [
     './images/boss_summon.png',
     './images/boss_damaged.png',
     './images/boss_flame.png',
+    './images/boss2_idle.png',
+    './images/boss2_flap.png',
+    './images/boss2_dive.png',
+    './images/boss2_shoot.png',
+    './images/boss2_damaged.png',
     './images/shop.png',
     './images/shop01.jpg',
     './images/shop02.jpg',

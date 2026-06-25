@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.280";
+                content: "Ver.1.281";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.280</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.281</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -5169,8 +5169,20 @@ function setupBossArena() {
         chargeTimer: 0,
         spriteFrame: 0,
         spriteResetTimer: 0,
-        stompCooldown: 0
+        stompCooldown: 0,
+        // 奇数ラウンド=地上ボス(rooster) / 偶数ラウンド=空中ボス(hawk) を交互に
+        kind: (gameRound % 2 === 1) ? 'rooster' : 'hawk',
+        // 空中ボス(hawk)専用ステート
+        hawkMode: 'hover',   // hover→charge→dive→stun→rise
+        hawkBob: 0,          // 滞空の上下揺れ位相
+        chargeTimer: 0,      // ダイブ前の溜め
+        stunTimer: 0,        // ダイブ着地後の硬直（=踏める窓）
+        diveTargetX: 0
     };
+    // 空中ボスは地面より高い滞空高度から登場させる
+    if (bossState.boss.kind === 'hawk') {
+        bossState.boss.y = GROUND_Y - BOSS_HEIGHT - 80;
+    }
     bossState.phase = 2; // entering
     bossState.summonTimer = BOSS_SUMMON_INTERVAL;
     bossState.itemSpawnTimer = 480; // ボス戦アイテム初回出現まで8秒（ショップ導入で抑制）
@@ -5191,8 +5203,23 @@ function updateBoss() {
         if (bossState.warningTimer <= 0) setupBossArena();
         return;
 
-    case 2: // 登場（右から歩いて入場）
+    case 2: // 登場
         var targetX = gameState.camera.x + GAME_WIDTH * 0.62;
+        if (b.kind === 'hawk') {
+            // 空中ボス: 滞空高度を保ったまま右から飛んで入場（羽ばたき）
+            b.x -= 3;
+            b.animFrame++;
+            b.spriteFrame = (Math.floor(b.animFrame / 8) % 2 === 0) ? HAWK_FRAME_IDLE : HAWK_FRAME_FLAP;
+            if (b.x <= targetX) {
+                b.x = targetX;
+                b.y = GROUND_Y - BOSS_HEIGHT - 80;
+                b.hawkMode = 'hover';
+                b.attackTimer = 80;
+                bossState.phase = 3;
+            }
+            return;
+        }
+        // 地上ボス: 右から歩いて入場
         b.x -= 2;
         b.animFrame++;
         b.spriteFrame = (Math.floor(b.animFrame / 10) % 2 === 0) ? BOSS_FRAME_IDLE : BOSS_FRAME_WALK;
@@ -5329,8 +5356,133 @@ var BOSS_FRAME_SUMMON  = 4;
 var BOSS_FRAME_DAMAGED = 5;
 var BOSS_FRAME_FLAME   = 6;
 
+// 空中ボス(hawk)スプライトフレーム定数（boss_hawk シート: 0:idle 1:flap 2:dive 3:shoot 4:damaged）
+var HAWK_FRAME_IDLE    = 0;
+var HAWK_FRAME_FLAP    = 1;
+var HAWK_FRAME_DIVE    = 2;
+var HAWK_FRAME_SHOOT   = 3;
+var HAWK_FRAME_DAMAGED = 4;
+
 function updateBossAI(b) {
-    updateBossAI_mama(b);
+    if (b.kind === 'hawk') { updateBossAI_hawk(b); }
+    else { updateBossAI_mama(b); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 空中ボス(hawk)のAI: 滞空して左右に漂い、ダイブ爆撃と羽根弾で攻める。
+// 主ダメージ源はエナジー弾（updateBossCollision_hawk参照）、
+// 補助はダイブ着地硬直(stun)中の踏みつけ。滞空中の本体は踏めない設計。
+// ※ updateBossAI_mama は一切変更しないこと（地上ボスの既存挙動を保持）。
+// ─────────────────────────────────────────────────────────────
+function updateBossAI_hawk(b) {
+    var maxHp = bossState.maxHp || BOSS_MAX_HP;
+    var hpRatio = b.hp / maxHp;
+    var phase = hpRatio > 0.7 ? 1 : hpRatio > 0.3 ? 2 : 3; // 3=瀕死で攻撃が速く/連続化
+    var hoverY = GROUND_Y - BOSS_HEIGHT - 80;
+    var groundSit = GROUND_Y - BOSS_HEIGHT;   // ダイブ着地時のY（地面に降りる）
+    var aL = bossState.arenaLeft, aR = bossState.arenaRight;
+
+    // 怒りモード（踏まれた / 瀕死）のカウントダウン
+    if (b.isAngry) { b.angerTimer--; if (b.angerTimer <= 0) b.isAngry = false; }
+    var angryMult = (b.isAngry || phase === 3) ? 1.5 : 1;
+
+    switch (b.hawkMode) {
+    case 'charge': {
+        // プレイヤーの真上へ素早く寄せてからダイブ（溜め）
+        var lockX = Math.max(aL, Math.min(aR - b.width, player.x + player.width / 2 - b.width / 2));
+        if (Math.abs(lockX - b.x) > 1) b.x += Math.sign(lockX - b.x) * Math.min(4.5, Math.abs(lockX - b.x));
+        b.y = hoverY + Math.sin(b.animFrame * 0.5) * 3; // 小刻みに震える
+        b.facing = (b.x + b.width / 2 > player.x + player.width / 2) ? 'left' : 'right';
+        b.spriteFrame = HAWK_FRAME_DIVE;
+        b.chargeTimer--;
+        if (b.chargeTimer <= 0) {
+            b.hawkMode = 'dive';
+            b.velY = 0;
+            if (soundManager) soundManager.playFlash();
+        }
+        break;
+    }
+    case 'dive': {
+        // 真下へ急降下（横移動なし＝横に避ければ回避できる）
+        b.spriteFrame = HAWK_FRAME_DIVE;
+        b.velY += GRAVITY * 1.7;
+        b.y += b.velY;
+        if (b.y >= groundSit) {
+            b.y = groundSit;
+            b.velY = 0;
+            b.hawkMode = 'stun';
+            b.stunTimer = (phase === 3 ? 38 : 58); // 瀕死ほど踏める窓が短い
+            floatEffects.push({ type: 'boss_shockwave', worldX: b.x + b.width / 2, worldY: GROUND_Y, timer: 0, duration: 20 });
+        }
+        break;
+    }
+    case 'stun': {
+        // 着地硬直: 地面に降りて無防備（踏む or エナジー弾で削るチャンス）
+        b.spriteFrame = HAWK_FRAME_DAMAGED;
+        b.stunTimer--;
+        if (b.stunTimer <= 0) b.hawkMode = 'rise';
+        break;
+    }
+    case 'rise': {
+        // 滞空高度まで上昇して滞空へ復帰
+        b.spriteFrame = HAWK_FRAME_FLAP;
+        b.y -= 4.5;
+        if (b.y <= hoverY) {
+            b.y = hoverY;
+            b.hawkMode = 'hover';
+            b.attackTimer = (phase === 3 ? 45 : 85);
+        }
+        break;
+    }
+    case 'hover':
+    default: {
+        // 滞空: 上下に漂いつつプレイヤーのX座標を緩く追う
+        b.hawkBob += 0.06;
+        b.y = hoverY + Math.sin(b.hawkBob) * 12;
+        var tx = Math.max(aL, Math.min(aR - b.width, player.x + player.width / 2 - b.width / 2));
+        var hoverSpeed = (phase === 3 ? 1.7 : phase === 2 ? 1.3 : 1.0) * angryMult;
+        if (Math.abs(tx - b.x) > 1) b.x += Math.sign(tx - b.x) * Math.min(hoverSpeed, Math.abs(tx - b.x));
+        b.facing = (b.x + b.width / 2 > player.x + player.width / 2) ? 'left' : 'right';
+        b.spriteFrame = (Math.floor(b.animFrame / 10) % 2 === 0) ? HAWK_FRAME_IDLE : HAWK_FRAME_FLAP;
+
+        b.attackTimer--;
+        if (b.attackTimer <= 0) {
+            var diveChance = phase === 3 ? 0.6 : phase === 2 ? 0.5 : 0.4;
+            if (Math.random() < diveChance) {
+                // ダイブ爆撃（溜めへ）
+                b.hawkMode = 'charge';
+                b.chargeTimer = (phase === 3 ? 16 : 26);
+            } else {
+                // 羽根弾ばらまき
+                spawnHawkFeathers(b, phase === 3 ? 7 : 5);
+                b.spriteFrame = HAWK_FRAME_SHOOT;
+                b.spriteResetTimer = 20;
+                b.attackTimer = (phase === 3 ? 70 : 110);
+            }
+        }
+        break;
+    }
+    }
+}
+
+// 羽根弾: 滞空位置から扇状に下方へ。bossState.eggs を流用するので
+// updateEggs() のシールド判定・移動・消滅がそのまま効く（isFeather は描画用フラグ）。
+function spawnHawkFeathers(boss, count) {
+    var bx = boss.x + boss.width / 2;
+    var by = boss.y + boss.height * 0.55;
+    var speed = 4.2;
+    for (var i = 0; i < count; i++) {
+        var t = count > 1 ? (i / (count - 1)) : 0.5;             // 0..1
+        var angle = Math.PI * 0.5 + (t - 0.5) * (Math.PI * 0.75); // 真下中心に±約67°の扇
+        bossState.eggs.push({
+            x: bx - 8, y: by,
+            width: 16, height: 16,
+            velX: Math.cos(angle) * speed,
+            velY: Math.sin(angle) * speed,
+            timer: 0, isFeather: true
+        });
+    }
+    if (soundManager) soundManager.playFlash();
 }
 
 function updateBossAI_mama(b) {
@@ -5514,6 +5666,7 @@ function updateBossAI_mama(b) {
 
 function updateBossCollision(b) {
     if (!b || b.hp <= 0) return;
+    if (b.kind === 'hawk') { updateBossCollision_hawk(b); return; }
     // stompCooldownカウントダウン
     if (b.stompCooldown > 0) b.stompCooldown--;
     var stompHit = aabbShrink(player, b, 10, 15);
@@ -5542,6 +5695,43 @@ function updateBossCollision(b) {
         }
     } else if (bodyHit && !isPlayerProtected() && b.stompCooldown <= 0) {
         // ボスが踏みつけ無敵中は体当たりダメージなし / シールド中もダメージなし
+        takeDamage();
+    }
+}
+
+// 空中ボスの当たり判定:
+// ・滞空/溜め/ダイブ/上昇中 → 本体は踏めない。体当たり/ダイブ被弾は takeDamage（シールドで無効）。
+// ・着地硬直(stun)中のみ → 上から踏める（HP-1）。硬直中の本体接触ではプレイヤーは無傷。
+// ・羽根弾の被弾とシールド判定は updateEggs() 側で処理済み。
+// ・エナジー弾によるHP減少は既存のプレイヤー弾→ボス判定を流用（kind非依存）。
+function updateBossCollision_hawk(b) {
+    if (b.stompCooldown > 0) b.stompCooldown--;
+
+    if (b.hawkMode === 'stun') {
+        // 無防備: 上から踏めるチャンス
+        var stompHit = aabbShrink(player, b, 10, 12);
+        if (b.stompCooldown <= 0 && stompHit && player.velY > 0 &&
+            player.y + player.height <= b.y + b.height * 0.45) {
+            b.hp -= 1;
+            player.velY = JUMP_FORCE * 0.5;
+            if (soundManager) soundManager.playKill();
+            spawnExplosionEffect(player.x + player.width / 2, b.y);
+            gameState.score += 500;
+            b.spriteFrame = HAWK_FRAME_DAMAGED;
+            b.spriteResetTimer = 20;
+            b.isAngry = true;
+            b.angerTimer = BOSS_ANGER_DURATION;
+            b.stompCooldown = 50;
+            b.hawkMode = 'rise'; // 踏まれたら硬直を解いて上昇
+            b.stunTimer = 0;
+            if (b.hp <= 0) { bossState.phase = 4; bossState.defeatedTimer = 0; }
+        }
+        return; // 硬直中の本体接触ではプレイヤーにダメージを与えない
+    }
+
+    // 滞空/溜め/ダイブ/上昇中: 本体（特にダイブ）接触はダメージ（シールド中は無効）
+    var bodyHit = aabbShrink(player, b, 18, 14);
+    if (bodyHit && !isPlayerProtected()) {
         takeDamage();
     }
 }
@@ -6880,13 +7070,14 @@ function drawBullet(b) {
 
 function drawBoss(b) {
     ctx.save();
+    var isHawk = b.kind === 'hawk';
     var flipH = b.facing === 'right';
     var bounce = Math.sin(b.animFrame * 0.08) * 3;
     var drawY = b.y + bounce;
-    // 影
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    // 影（空中ボスは高度演出のため薄く小さめ・常に真下の地面に出す）
+    ctx.fillStyle = isHawk ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.3)';
     ctx.beginPath();
-    ctx.ellipse(b.x + b.width / 2, GROUND_Y + 2, b.width * 0.4, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(b.x + b.width / 2, GROUND_Y + 2, b.width * (isHawk ? 0.26 : 0.4), isHawk ? 6 : 8, 0, 0, Math.PI * 2);
     ctx.fill();
     // 踏み無敵時の点滅 + 怒り時の赤点滅
     if (b.stompCooldown > 0 && Math.floor(b.animFrame / 3) % 2 === 0) {
@@ -6894,8 +7085,8 @@ function drawBoss(b) {
     } else if (b.isAngry && Math.floor(b.animFrame / 4) % 2 === 0) {
         ctx.globalAlpha = 0.7;
     }
-    // ボス本体スプライト
-    spriteManager.draw(ctx, 'boss_rooster', b.spriteFrame, b.x, drawY, b.width, b.height, flipH);
+    // ボス本体スプライト（kindでシート切替: 地上=boss_rooster / 空中=boss_hawk）
+    spriteManager.draw(ctx, isHawk ? 'boss_hawk' : 'boss_rooster', b.spriteFrame, b.x, drawY, b.width, b.height, flipH);
     // 怒り赤オーバーレイ（楕円放射グラデーション）
     if (b.isAngry) {
         var acx = b.x + b.width / 2;
@@ -6911,6 +7102,29 @@ function drawBoss(b) {
         ctx.beginPath();
         ctx.ellipse(acx, acy, arx, ary, 0, 0, Math.PI * 2);
         ctx.fill();
+    }
+    // 空中ボス: ダイブ予兆（落下地点を警告して「横に避ける」を促す）
+    if (isHawk && b.hawkMode === 'charge') {
+        var hx = b.x + b.width / 2;
+        var pulse = 0.35 + Math.sin(b.animFrame * 0.4) * 0.25;
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#ff3030';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(hx, drawY + b.height * 0.6);
+        ctx.lineTo(hx, GROUND_Y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = Math.min(1, pulse + 0.3);
+        ctx.fillStyle = '#ff3030';
+        ctx.beginPath();
+        ctx.moveTo(hx - 12, GROUND_Y - 2);
+        ctx.lineTo(hx + 12, GROUND_Y - 2);
+        ctx.lineTo(hx, GROUND_Y + 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
     }
     // 閃光チャージエフェクト（白い光がボスに集まる）
     if (b.isCharging) {
@@ -6983,6 +7197,19 @@ function drawEggProjectiles() {
             ctx.beginPath();
             ctx.arc(fx, fy, 2, 0, Math.PI * 2);
             ctx.fill();
+        } else if (egg.isFeather) {
+            // 羽根弾（進行方向へ向けた暗紫のダート＋赤い先端）
+            var fex = egg.x + egg.width / 2, fey = egg.y + egg.height / 2;
+            ctx.translate(fex, fey);
+            ctx.rotate(Math.atan2(egg.velY, egg.velX));
+            ctx.fillStyle = '#2a1840';
+            ctx.beginPath();
+            ctx.moveTo(9, 0); ctx.lineTo(-7, 4); ctx.lineTo(-4, 0); ctx.lineTo(-7, -4);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#c0344e';
+            ctx.beginPath();
+            ctx.moveTo(9, 0); ctx.lineTo(2, 2); ctx.lineTo(2, -2);
+            ctx.closePath(); ctx.fill();
         } else {
             // 通常の卵弾
             ctx.fillStyle = '#ffe8c0';
