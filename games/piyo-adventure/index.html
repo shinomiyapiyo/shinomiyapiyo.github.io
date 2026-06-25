@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.285";
+                content: "Ver.1.286";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.285</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.286</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2278,7 +2278,7 @@ var BACK_HANDLERS = [
 
 // ─── ゲーム状態 ───
 var gameState = {
-    score: 0, lives: 5,
+    score: 0, rankScore: 0, lives: 5,
     camera: { x: 0, y: 0 },
     input: { left: false, right: false, jump: false, jumpPressed: false, down: false, up: false },
     recentlyDropped: false, dropFromY: 0, time: 0,
@@ -2424,9 +2424,11 @@ function handleDebugTap() {
         if (debugMode) {
             gameState.lives = 99;
             gameState.score = 50000;
+            gameState.rankScore = 50000;
         } else {
             gameState.lives = 5;
             gameState.score = 0;
+            gameState.rankScore = 0;
         }
         // ポーズタイトルに状態表示
         var titleEl = document.getElementById('pauseTitle');
@@ -2721,8 +2723,16 @@ function showStartScreen() {
     if (soundManager) { try { soundManager.playBGM('title'); } catch (_) {} }
 }
 
+// 稼ぐ: 所持金(score)とランキング用スコア(rankScore)を両方加算（比例して上がる）。
+// 支払い/売却/お店ボーナス/貯金は gameState.score（所持金）のみ増減し、rankScoreは不変。
+function gainScore(n) {
+    gameState.score += n;
+    gameState.rankScore += n;
+}
+
 function resetGame() {
     gameState.score = 0;
+    gameState.rankScore = 0;
     gameState.lives = 5;
     gameState.gameStarted = false;
     gameState.gamePaused = false;
@@ -3672,7 +3682,7 @@ function registerKill(scoreValue, effectX, effectY) {
     var idx = Math.min(gameState.comboCount, COMBO_MULTIPLIERS.length) - 1;
     var multiplier = COMBO_MULTIPLIERS[idx];
     var comboScore = Math.floor(scoreValue * multiplier);
-    gameState.score += comboScore;
+    gainScore(comboScore);
     if (gameState.comboCount >= 2) {
         spawnComboEffect(effectX, effectY, gameState.comboCount, comboScore);
     }
@@ -4041,7 +4051,7 @@ function updateCoins() {
 
         if (aabb(player, c)) {
             c.collected = true;
-            gameState.score += Math.floor(150 * (gameState.coinBonus || 1));
+            gainScore(Math.floor(150 * (gameState.coinBonus || 1)));
             if (soundManager) soundManager.playCoin();
         }
     }
@@ -4053,12 +4063,12 @@ function updatePowerUps() {
         if (pu.collected || !aabb(player, pu)) continue;
 
         pu.collected = true;
-        gameState.score += 100;
+        gainScore(100);
         if (soundManager) soundManager.playItem();
 
         if (pu.type === 'heart') {
             if (gameState.lives < 10) gameState.lives++;
-            else gameState.score += 1000;
+            else gainScore(1000);
             spawnLifeUpEffect(pu.x + pu.width / 2, pu.y);
         } else if (pu.type === 'lemon_can') {
             gameState.puLemon = PU_DURATION.lemon;
@@ -5411,7 +5421,7 @@ function updateBoss() {
                     collected: false, animFrame: Math.random() * 20
                 });
             }
-            gameState.score += BOSS_DEFEAT_SCORE;
+            gainScore(BOSS_DEFEAT_SCORE);
             gameState.enemyKills++; // ボス撃破を撃破数に加算
             if (soundManager) soundManager.playBossFanfare();
             floatEffects.push({
@@ -5793,7 +5803,7 @@ function updateBossCollision(b) {
         player.velY = JUMP_FORCE * 0.5; // 低めバウンス（連続踏み防止）
         if (soundManager) soundManager.playKill();
         spawnExplosionEffect(player.x + player.width / 2, b.y);
-        gameState.score += 500; // ボス踏みは撃破数に含めない
+        gainScore(500); // ボス踏みは撃破数に含めない
         // 被弾フレーム表示 + 怒り発動 + 踏みつけ無敵
         b.spriteFrame = BOSS_FRAME_DAMAGED;
         b.spriteResetTimer = 30;
@@ -5834,7 +5844,7 @@ function updateBossCollision_hawk(b) {
         player.velY = JUMP_FORCE * 0.5;
         if (soundManager) soundManager.playKill();
         spawnExplosionEffect(player.x + player.width / 2, b.y);
-        gameState.score += grounded ? 500 : 300;
+        gainScore(grounded ? 500 : 300);
         b.spriteFrame = HAWK_FRAME_DAMAGED;
         b.spriteResetTimer = 20;
         b.isAngry = true;
@@ -5991,7 +6001,7 @@ function gameOver() {
     showAd('interstitial');
 
     finalGameStats = {
-        score: gameState.score,
+        score: gameState.rankScore,
         distance: gameState.distance,
         enemyKills: gameState.enemyKills,
         speedLevel: gameState.speedLevel
