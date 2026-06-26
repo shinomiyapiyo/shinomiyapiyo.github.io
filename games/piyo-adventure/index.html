@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.293";
+                content: "Ver.1.294";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.293</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.294</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -4083,6 +4083,14 @@ function drawSpecialCutin() {
 function updateSpecialMoveUI() {
     var ui = document.getElementById('specialMoveUI');
     if (!ui) return;
+    // ★★★ TEMP（テスト用・テスト後にこのブロックごと削除する）★★★
+    // ぴよフラッシュをいつでもテストできるよう、未所持でも使用可（runtimeのみ・保存データ不変）にし、
+    // ゲージを常に満タンに保つ。カットイン中は除外（発動→0→次フレームで満タン復帰）。
+    if (gameState.gameStarted) {
+        if ((gameState.specialMoveLevel || 0) === 0) gameState.specialMoveLevel = 1;
+        if (gameState.specialCutinTimer <= 0) gameState.specialGauge = 100;
+    }
+    // ★★★ TEMP ここまで ★★★
     var show = (gameState.specialMoveLevel || 0) > 0 && gameState.gameStarted && !gameState.gamePaused;
     if (ui._shown !== show) { ui.style.display = show ? 'flex' : 'none'; ui._shown = show; }
     if (!show) return;
