@@ -13,28 +13,33 @@ class SoundManager {
             this.ctx = null;
         }
 
-        this.titleBGM    = this._createBGM('title.mp3',    0.6);
-        this.stageBGM    = this._createBGM('stage.mp3',    0.5);
-        this.stage2BGM   = this._createBGM('stage2.mp3',   0.5);
-        this.stage3BGM   = this._createBGM('stage3.mp3',   0.5);
-        this.gameoverBGM = this._createBGM('gameover.mp3', 0.7);
-        this.rankingBGM  = this._createBGM('ranking.mp3',  0.6);
-        this.bossBGM     = this._createBGM('boss.mp3',     0.6);
-        this.shopBGM     = this._createBGM('shop.mp3',     0.5);
-        this.winBGM      = new Audio('win.mp3');
+        this.titleBGM    = this._createBGM('sounds/title.mp3',    0.6);
+        this.stageBGM    = this._createBGM('sounds/stage.mp3',    0.5);
+        this.stage2BGM   = this._createBGM('sounds/stage2.mp3',   0.5);
+        this.stage3BGM   = this._createBGM('sounds/stage3.mp3',   0.5);
+        this.gameoverBGM = this._createBGM('sounds/gameover.mp3', 0.7);
+        this.rankingBGM  = this._createBGM('sounds/ranking.mp3',  0.6);
+        this.bossBGM     = this._createBGM('sounds/boss.mp3',     0.6);
+        this.shopBGM     = this._createBGM('sounds/shop.mp3',     0.5);
+        this.winBGM      = new Audio('sounds/win.mp3');
         this.winBGM.loop = false;
         this.winBGM.volume = 0.7;
         this.currentBGM  = null;
 
         // SE（効果音mp3）
-        this.selectSE = new Audio('select.mp3');
+        this.selectSE = new Audio('sounds/select.mp3');
         this.selectSE.volume = 0.5;
-        this.orSE = new Audio('or.mp3');
+        this.orSE = new Audio('sounds/or.mp3');
         this.orSE.volume = 0.5;
-        this.flashSE = new Audio('flash.mp3');
+        this.flashSE = new Audio('sounds/flash.mp3');
         this.flashSE.volume = 0.5;
-        this.warningSE = new Audio('warning.mp3');
+        this.warningSE = new Audio('sounds/warning.mp3');
         this.warningSE.volume = 0.5;
+        // ぴよフラッシュ（必殺技）: チャージ音＋ビーム音
+        this.specialChargeSE = new Audio('sounds/piyoflash_charge.mp3');
+        this.specialChargeSE.volume = 0.6;
+        this.specialFireSE = new Audio('sounds/piyoflash.mp3');
+        this.specialFireSE.volume = 0.6;
     }
 
     _createBGM(src, vol) {
@@ -245,5 +250,19 @@ class SoundManager {
     playConfirmSelect() {
         if (!gameSettings.soundEnabled) return;
         this._playSE(this.orSE);
+    }
+
+    // ─── ぴよフラッシュ: チャージ音（発動演出の頭から） ───
+    playSpecialCharge() {
+        if (!gameSettings.soundEnabled) return;
+        this._playSE(this.specialChargeSE);
+    }
+    stopSpecialCharge() {
+        try { this.specialChargeSE.pause(); this.specialChargeSE.currentTime = 0; } catch (_) {}
+    }
+    // ─── ぴよフラッシュ: ビーム発射音（着弾時） ───
+    playSpecialFire() {
+        if (!gameSettings.soundEnabled) return;
+        this._playSE(this.specialFireSE);
     }
 }
