@@ -106,6 +106,12 @@ ja: {
     submit_btn_sending: '送信中...',
     // 設定
     settings_title: _ic('icon_settings.png') + ' 設定',
+    // タイトル画面ボタン
+    title_settings: '設定',
+    title_ranking: 'ランキング',
+    title_shop: 'ショップ',
+    title_mission: 'ミッション',
+    title_store: 'ストア',
     settings_sound: _ic('icon_sound.png') + ' サウンド',
     settings_adfree: '広告を非表示にする',
     settings_adfree_status: '準備中',
@@ -373,6 +379,12 @@ en: {
     ranking_no_server: 'Cannot connect to ranking server',
     submit_btn_sending: 'Sending...',
     settings_title: _ic('icon_settings.png') + ' Settings',
+    // Title screen buttons
+    title_settings: 'SETTING',
+    title_ranking: 'RANKING',
+    title_shop: 'SHOP',
+    title_mission: 'MISSION',
+    title_store: 'STORE',
     settings_sound: _ic('icon_sound.png') + ' Sound',
     settings_adfree: 'Remove Ads',
     settings_adfree_status: 'Coming Soon',
