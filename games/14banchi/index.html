@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test#14banchi');
   };
 }
-const APP_VER='0.954';
+const APP_VER='0.955';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -803,7 +803,10 @@ function dSky(){
   }
 }
 
-function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;for(let i=-1;i<(W/80)+2;i++){const bx=ox+i*80+((sd+i*73)%20),bw=40+((sd+i*47)%30);if(bx+bw<0||bx>W)continue;const bh=bH+((sd+i*59)%40),by=H*GH-bh;X.fillStyle=col;X.fillRect(bx,by,bw,bh+2);if((sd+i)%3===0){X.beginPath();X.moveTo(bx,by);X.lineTo(bx+bw/2,by-12);X.lineTo(bx+bw,by);X.fill()}for(let wy=0;wy<Math.floor(bh/22);wy++)for(let wx=0;wx<Math.floor(bw/15);wx++){X.fillStyle=((sd+i+wx+wy)%5)>2?wc:'#080808';X.fillRect(bx+6+wx*14,by+8+wy*20,5,7)}}}
+function dBld(ly,sp,bH,col,wc){const sd=cB*7+ly*31,ox=-((camX*sp)%160+160)%160;for(let i=-1;i<(W/80)+2;i++){const bx=ox+i*80+((sd+i*73)%20),bw=40+((sd+i*47)%30);if(bx+bw<0||bx>W)continue;const bh=bH+((sd+i*59)%40),by=H*GH-bh;X.fillStyle=col;X.fillRect(bx,by,bw,bh+2);if((sd+i)%3===0){X.beginPath();X.moveTo(bx,by);X.lineTo(bx+bw/2,by-12);X.lineTo(bx+bw,by);X.fill()}const wyN=Math.floor(bh/22),wxN=Math.floor(bw/15);
+  // 窓を点灯色/消灯色の2パスで描画（fillStyle切替を窓数→2回に削減。同一ビル内なので重なり順不変）
+  X.fillStyle=wc;for(let wy=0;wy<wyN;wy++)for(let wx=0;wx<wxN;wx++){if(((sd+i+wx+wy)%5)>2)X.fillRect(bx+6+wx*14,by+8+wy*20,5,7)}
+  X.fillStyle='#080808';for(let wy=0;wy<wyN;wy++)for(let wx=0;wx<wxN;wx++){if(((sd+i+wx+wy)%5)<=2)X.fillRect(bx+6+wx*14,by+8+wy*20,5,7)}}}
 
 function dBreathingBuilding(){
   if(!hasA||AN[aT]!=='breathingBuilding')return;
@@ -821,10 +824,10 @@ function dBreathingBuilding(){
   const bbw=baseBw+breath,bbh=baseBh+breath*2,bby=gy-bbh;
   X.fillStyle=col;X.fillRect(bbx0,bby,bbw,bbh+2);
   if((sd+bldIdx)%3===0){X.beginPath();X.moveTo(bbx0,bby);X.lineTo(bbx0+bbw/2,bby-12);X.lineTo(bbx0+bbw,bby);X.fill()}
-  for(let wy=0;wy<Math.floor(bbh/22);wy++)for(let wx=0;wx<Math.floor(bbw/15);wx++){
-    X.fillStyle=((sd+bldIdx+wx+wy)%5)>2?wc:'#080808';
-    X.fillRect(bbx0+6+wx*14,bby+8+wy*20,5,7);
-  }
+  const wyN=Math.floor(bbh/22),wxN=Math.floor(bbw/15);
+  // 窓を2パスで描画（dBldと同様、fillStyle切替を2回に削減。重なり順不変）
+  X.fillStyle=wc;for(let wy=0;wy<wyN;wy++)for(let wx=0;wx<wxN;wx++){if(((sd+bldIdx+wx+wy)%5)>2)X.fillRect(bbx0+6+wx*14,bby+8+wy*20,5,7)}
+  X.fillStyle='#080808';for(let wy=0;wy<wyN;wy++)for(let wx=0;wx<wxN;wx++){if(((sd+bldIdx+wx+wy)%5)<=2)X.fillRect(bbx0+6+wx*14,bby+8+wy*20,5,7)}
 }
 
 function dGnd(){
