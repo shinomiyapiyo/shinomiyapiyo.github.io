@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.295';
+var CACHE_NAME = 'piyo-adventure-v1.296';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -124,7 +124,8 @@ var STATIC_ASSETS = [
     './images/icon_second_wind.png',
     './images/icon_fever_boost.png',
     './images/icon_special_move.png',
-    './images/special_cutin.png'
+    './images/special_cutin.png',
+    './images/eyes_closeup.png'
 ];
 
 self.addEventListener('install', function(event) {
