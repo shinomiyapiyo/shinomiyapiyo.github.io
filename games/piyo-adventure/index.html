@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.317";
+                content: "Ver.1.318";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,11 +738,11 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.317</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.318</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
-                <button id="forceUpdateBtn" onclick="forceUpdate()" style="
+                <button id="forceUpdateBtn" style="
                     position: absolute; top: 8px; right: 10px;
                     z-index: 26; padding: 3px 8px;
                     background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.35);
@@ -8782,6 +8782,8 @@ function bindTapDelegate(container, attrName, handler) {
     bindTapButton(document.getElementById('retryBtn'), retryGame, { guardTouchStart: true });
     bindTapButton(document.getElementById('toTitleBtn'), goToTitle, { guardTouchStart: true });
     bindTapButton(document.getElementById('adReviveBtn'), adRevive, { guardTouchStart: true });
+    // UPDATEボタン: 旧onclick(iOSで遅延・指の微動で無効化)→ touchend即時に統一。タイトルの「タップで開始」誤爆も防ぐ。
+    bindTapButton(document.getElementById('forceUpdateBtn'), forceUpdate, { guardTouchStart: true, stopClickPropagation: true });
 
     // ストックアイテム使用: 枠は動的生成のため委譲で touchend 即時反応（onclickのiOS遅延・指の微動での無効化を回避）。
     // ゲーム中の使用可能枠のみ data-idx を持つ（ショップ中の閲覧枠・空枠は対象外）。
