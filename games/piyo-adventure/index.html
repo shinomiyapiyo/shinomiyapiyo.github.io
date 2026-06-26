@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.307";
+                content: "Ver.1.308";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.307</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.308</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -7930,6 +7930,15 @@ function cacheUIElements() {
 }
 var prevUI = {};
 
+// B-2: パワーアップHUDの定義は毎フレーム作り直すとGC負荷になるため、静的データはここで1度だけ確保する。
+// 可変分（残り時間=gameState[key]、ラベル=t(labelKey)）は render 内で都度参照する。
+var PU_HUD_DEFS = [
+    { key: 'puLemon',  max: 300, labelKey: 'hud_jump',   color1: '#44dd44', color2: '#88ff88', text: '#aaffaa', bg: 'rgba(20,60,20,0.85)', border: '#66ff66' },
+    { key: 'puShield', max: 300, labelKey: 'hud_shield', color1: '#4488ff', color2: '#88bbff', text: '#aaccff', bg: 'rgba(20,20,70,0.85)', border: '#66aaff' },
+    { key: 'puEnergy', max: 480, labelKey: 'hud_energy', color1: '#ff6622', color2: '#ffaa44', text: '#ffcc88', bg: 'rgba(70,25,10,0.85)', border: '#ff8844' },
+    { key: 'puMagnet', max: 600, labelKey: 'hud_magnet', color1: '#aa44ff', color2: '#cc88ff', text: '#ddaaff', bg: 'rgba(50,15,70,0.85)', border: '#cc66ff' }
+];
+
 function render() {
     // nearest-neighbor拡大でドット絵くっきり
     ctx.imageSmoothingEnabled = false;
@@ -7981,6 +7990,7 @@ function render() {
     for (var mi = 0; mi < 8; mi++) {
         var mx = (mi * mountainDispW - gameState.camera.x * 0.15) % (mountainDispW * 8);
         if (mx < -mountainDispW) mx += mountainDispW * 8;
+        if (mx > GAME_WIDTH) continue; // B-3: 画面外(右)はスキップ
         spriteManager.draw(ctx, 'bg_mountain', 0, mx, mountainY, mountainDispW, mountainDispH, false);
     }
     ctx.globalAlpha = 1.0;
@@ -7992,6 +8002,7 @@ function render() {
     for (var ti = 0; ti < 12; ti++) {
         var treeX = (ti * treeDispW * 2.5 - gameState.camera.x * 0.25) % (treeDispW * 30);
         if (treeX < -treeDispW) treeX += treeDispW * 30;
+        if (treeX > GAME_WIDTH) continue; // B-3: 画面外(右)はスキップ（木は12本中〜5本が画面外）
         spriteManager.draw(ctx, 'bg_trees', 0, treeX, treeY, treeDispW, treeDispH, false);
     }
     ctx.globalAlpha = 1.0;
@@ -8002,8 +8013,9 @@ function render() {
     ctx.globalAlpha = cloudAlpha;
     for (var i = 0; i < 10; i++) {
         var cx = (i * 280 - gameState.camera.x * 0.3 + gameState.time * 0.2) % (GAME_WIDTH + 200);
-        var cy = 30 + Math.sin(i * 0.7 + gameState.time * 0.01) * 40;
         if (cx < -cloudDispW) cx += GAME_WIDTH + 200;
+        if (cx > GAME_WIDTH) continue; // B-3: 画面外(右)はスキップ
+        var cy = 30 + Math.sin(i * 0.7 + gameState.time * 0.01) * 40;
         spriteManager.draw(ctx, 'bg_cloud', 0, cx, cy, cloudDispW, cloudDispH, false);
     }
     ctx.globalAlpha = 1;
@@ -8119,19 +8131,14 @@ function render() {
     // ぴよフラッシュゲージ(#specialMoveUI: 上部中央 top:8px・高さ~38px)の表示中は、
     // 上部中央のcanvas HUD(無敵/コンボ/スピードアップ通知)を下げて視覚的な重なりを防ぐ
     var hudTopOffset = (gameState.specialMoveLevel > 0) ? 36 : 0;
-    var puList = [
-        { timer: gameState.puLemon,  max: 300, label: t('hud_jump'),   color1: '#44dd44', color2: '#88ff88', text: '#aaffaa', bg: 'rgba(20,60,20,0.85)', border: '#66ff66' },
-        { timer: gameState.puShield, max: 300, label: t('hud_shield'), color1: '#4488ff', color2: '#88bbff', text: '#aaccff', bg: 'rgba(20,20,70,0.85)', border: '#66aaff' },
-        { timer: gameState.puEnergy, max: 480, label: t('hud_energy'), color1: '#ff6622', color2: '#ffaa44', text: '#ffcc88', bg: 'rgba(70,25,10,0.85)', border: '#ff8844' },
-        { timer: gameState.puMagnet, max: 600, label: t('hud_magnet'), color1: '#aa44ff', color2: '#cc88ff', text: '#ddaaff', bg: 'rgba(50,15,70,0.85)', border: '#cc66ff' }
-    ];
     var puBarY = 75;
-    for (var pi = 0; pi < puList.length; pi++) {
-        var pu = puList[pi];
-        if (pu.timer <= 0) continue;
+    for (var pi = 0; pi < PU_HUD_DEFS.length; pi++) {
+        var pu = PU_HUD_DEFS[pi];
+        var puTimer = gameState[pu.key]; // B-2: 残り時間は都度参照（配列・オブジェクトの毎フレーム再生成を廃止）
+        if (puTimer <= 0) continue;
         var puX = GAME_WIDTH - 215;
-        var puRt = Math.ceil(pu.timer / 60);
-        var puRatio = pu.timer / pu.max;
+        var puRt = Math.ceil(puTimer / 60);
+        var puRatio = puTimer / pu.max;
         // Compact bar background
         ctx.fillStyle = pu.bg;
         ctx.strokeStyle = pu.border;
@@ -8143,7 +8150,7 @@ function render() {
         ctx.font = "bold 11px 'M PLUS Rounded 1c', sans-serif";
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillStyle = pu.text;
-        ctx.fillText(pu.label, puX + 6, puBarY + 11);
+        ctx.fillText(t(pu.labelKey), puX + 6, puBarY + 11);
         // Timer
         ctx.font = "bold 10px 'DotGothic16', monospace";
         ctx.fillStyle = '#fff';
