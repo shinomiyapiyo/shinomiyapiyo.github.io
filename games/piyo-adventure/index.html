@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.305";
+                content: "Ver.1.306";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.305</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.306</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -7492,10 +7492,27 @@ function drawShopBuilding() {
     ctx.restore();
 }
 
-function drawTerrain(t) {
-    if (t.type === 'hole') return;
+// ─── 地面タイルの焼き付けキャッシュ ───
+// 地面は毎フレーム34pxタイルを敷き詰めて描画していた（1ブロック約12枚 × 画面内十数ブロック
+// ＝毎フレーム約170 drawImage）。(type, 列数, 土の行数) が同じブロックは描画結果が完全に同一なので、
+// 初回だけオフスクリーンcanvasへ焼き付け、以降は完成画像を1枚blitするだけにする。
+// → 地面のdrawImage回数を約9割削減。見た目は1ピクセルも変わらない。
+// 高台(elev)は連続ランダム高さだが、キーを (type,列,行) にするため行数は離散＝キャッシュは数件で頭打ち。
+var terrainCache = {};
+
+function getTerrainCache(type, width, height) {
+    var TILE = 34, GRASS_OFFSET = 5;
+    // 元のdrawTerrainと同一条件で列数・土の行数を算出（高さが連続値でも行数は離散になる）
+    var cols = 0;
+    for (var xx = 0; xx < width; xx += TILE) cols++;
+    var rows = 0;
+    for (var yy = TILE; yy < height + GRASS_OFFSET; yy += TILE) rows++;
+
+    var key = type + '_' + cols + '_' + rows;
+    if (terrainCache[key]) return terrainCache[key];
+
     var topTile;
-    switch (t.type) {
+    switch (type) {
         case 'elevated':           topTile = 'terrain_elevated_top'; break;
         case 'quicksand':          topTile = 'terrain_quicksand'; break;
         case 'quicksand_elevated': topTile = 'terrain_quicksand'; break;
@@ -7503,17 +7520,32 @@ function drawTerrain(t) {
         case 'ice_elevated':       topTile = 'terrain_ice'; break;
         default:                   topTile = 'terrain_grass_top'; break;
     }
-    var TILE = 34;
-    var GRASS_OFFSET = 5; // 草スプライト上部の透明行を補正 (描画を上にずらす)
 
-    for (var tx = t.x; tx < t.x + t.width; tx += TILE) {
-        spriteManager.draw(ctx, topTile, 0, tx, t.y - GRASS_OFFSET, TILE, TILE, false);
+    var cv = document.createElement('canvas');
+    cv.width = cols * TILE;
+    cv.height = (rows + 1) * TILE; // 上段1行 + 土rows行
+    var cc = cv.getContext('2d');
+    cc.imageSmoothingEnabled = false; // 元描画と同じニアレストネイバー
+
+    // 上段（草/氷/流砂/高台）: localY = 0
+    for (var lx = 0; lx < width; lx += TILE) {
+        spriteManager.draw(cc, topTile, 0, lx, 0, TILE, TILE, false);
     }
-    for (var ty = t.y - GRASS_OFFSET + TILE; ty < t.y + t.height; ty += TILE) {
-        for (var tx2 = t.x; tx2 < t.x + t.width; tx2 += TILE) {
-            spriteManager.draw(ctx, 'terrain_dirt', 0, tx2, ty, TILE, TILE, false);
+    // 土: localY = TILE, 2*TILE, ...（元ループと同じ行数）
+    for (var ly = TILE, r = 0; r < rows; ly += TILE, r++) {
+        for (var lx2 = 0; lx2 < width; lx2 += TILE) {
+            spriteManager.draw(cc, 'terrain_dirt', 0, lx2, ly, TILE, TILE, false);
         }
     }
+
+    terrainCache[key] = cv;
+    return cv;
+}
+
+function drawTerrain(t) {
+    if (t.type === 'hole') return;
+    // 焼き付け済みの地面画像を1枚blitするだけ（原点 = 元コードの (t.x, t.y - GRASS_OFFSET)）
+    ctx.drawImage(getTerrainCache(t.type, t.width, t.height), t.x, t.y - 5);
 }
 
 function drawPlatform(p) {
