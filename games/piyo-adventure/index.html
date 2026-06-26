@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.313";
+                content: "Ver.1.314";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -589,8 +589,8 @@
         }
         .stock-slot:active { transform: scale(0.9); }
         .stock-slot-empty {
-            border-color: rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.08);
             pointer-events: none;
         }
         /* ショップ中の閲覧専用スロット（アイテムは見えるが使用不可） */
@@ -604,6 +604,15 @@
             pointer-events: none;
         }
         .owned-skill-icon { width: 22px; height: 22px; image-rendering: pixelated; }
+        /* ショップ中のみ、枠＋アイコンの背後にパネルを敷いて賑やかな背景でも視認しやすくする。
+           ゲーム中はこのクラスを付けない＝進行方向(右)の視界を塞がない。左の店UI(紺)と統一感。 */
+        .stock-panel {
+            background: rgba(10,5,30,0.62);
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 12px;
+            padding: 8px;
+        }
+        .stock-panel .owned-skills { background: transparent; border-color: transparent; padding: 0; }
 
         /* ── ショップ確認ダイアログ選択肢 ── */
         #shopConfirmYes, #shopConfirmNo {
@@ -729,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.313</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.314</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -5725,6 +5734,7 @@ function updateStockUI() {
     // タイトルショップ(z-index:9999・不透明)中は枠を前面に出す。それ以外は通常の100(ポーズ画面等の下に隠れる)。
     container.style.zIndex = inTitleShop ? '10000' : '100';
     var inShop = shopState.active || inTitleShop; // どちらのショップ中も枠・アイテムを見せるが使用不可（購入判断の参考用）
+    container.classList.toggle('stock-panel', inShop); // ショップ中のみ背景パネルで視認性UP（ゲーム中は付けず視界を塞がない）
     var html = '';
     for (var i = 0; i < stockState.maxSlots; i++) {
         if (i < stockState.items.length) {
