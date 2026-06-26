@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.301";
+                content: "Ver.1.302";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.301</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.302</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -8929,7 +8929,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Service Worker登録
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js');
+                // updateViaCache:'none' で sw.js 自体のHTTPキャッシュ(max-age=600)を無効化し、
+                // 起動時の update() で新バージョンを確実に検知できるようにする
+                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function(reg) {
+                    if (reg) { try { reg.update(); } catch (_) {} }
+                }).catch(function() {});
             }
 
             // 強制アップデート関数
@@ -8956,9 +8960,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }).then(function() {
-                    location.reload(true);
+                    // HTTPキャッシュ(max-age=600)を確実にバイパスするためcache-buster付きで再取得
+                    location.replace(location.pathname + '?u=' + Date.now());
                 }).catch(function() {
-                    location.reload(true);
+                    location.replace(location.pathname + '?u=' + Date.now());
                 });
             };
 

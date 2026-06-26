@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.301';
+var CACHE_NAME = 'piyo-adventure-v1.302';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -131,7 +131,9 @@ var STATIC_ASSETS = [
 self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open(CACHE_NAME).then(function(cache) {
-            return cache.addAll(STATIC_ASSETS);
+            // HTTPキャッシュ(GitHub Pagesは max-age=600)をバイパスして必ず最新を取得する。
+            // これをしないと、更新時に古いファイルがキャッシュへ取り込まれ更新が反映されない。
+            return cache.addAll(STATIC_ASSETS.map(function(u) { return new Request(u, { cache: 'reload' }); }));
         }).then(function() {
             return self.skipWaiting();
         })
