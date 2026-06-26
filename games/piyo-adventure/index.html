@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.299";
+                content: "Ver.1.300";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.299</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.300</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -3672,16 +3672,28 @@ function spawnPowerUp() {
     };
 }
 
+// 画面外オブジェクトをその場で除去（filterの新配列+クロージャ生成を毎フレーム避けてGC負荷を下げる。
+// 残るオブジェクトはfilter版と完全に同一なので描画は不変）
+function cullByX(arr, lb, rb, useWidth) {
+    var w = 0;
+    for (var i = 0; i < arr.length; i++) {
+        var o = arr[i];
+        var keep = useWidth ? (o.x + o.width > lb && o.x < rb) : (o.x > lb && o.x < rb);
+        if (keep) { if (w !== i) arr[w] = o; w++; }
+    }
+    if (w !== arr.length) arr.length = w;
+}
+
 function manageObjects() {
     var lb = gameState.camera.x - 200;
     var rb = gameState.camera.x + GAME_WIDTH + 200;
 
-    enemies       = enemies.filter(function(e) { return e.x > lb && e.x < rb; });
-    flyingEnemies = flyingEnemies.filter(function(e) { return e.x > lb && e.x < rb; });
-    platforms     = platforms.filter(function(p) { return p.x + p.width > lb && p.x < rb; });
-    coins         = coins.filter(function(c) { return c.x > lb && c.x < rb; });
-    powerUps      = powerUps.filter(function(p) { return p.x > lb && p.x < rb; });
-    bullets       = bullets.filter(function(b) { return b.x > lb && b.x < rb; });
+    cullByX(enemies, lb, rb, false);
+    cullByX(flyingEnemies, lb, rb, false);
+    cullByX(platforms, lb, rb, true);
+    cullByX(coins, lb, rb, false);
+    cullByX(powerUps, lb, rb, false);
+    cullByX(bullets, lb, rb, false);
 
     // ボス戦中は通常スポーン停止
     if (bossState.active && bossState.phase >= 2) return;
