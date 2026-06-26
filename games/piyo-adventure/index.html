@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.316";
+                content: "Ver.1.317";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.316</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.317</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2695,7 +2695,7 @@ var STAGE_SHOP_ITEMS = [
     },
     {
         id: 'revive_potion', nameKey: 'shop_item_revive', descKey: 'shop_item_revive_desc',
-        icon: '', iconImg: 'images/icon_revive_potion.png', price: 25000, maxPerVisit: 1,
+        icon: '', iconImg: 'images/icon_revive_potion.png', price: 20000, maxPerVisit: 1,
         stockItem: true,
         stockEffect: function() {
             // ストックから手動使用した場合: HP2回復+バリア付与
@@ -2713,11 +2713,11 @@ var TITLE_SHOP_UPGRADES = [
     { id: 'special_move', nameKey: 'tshop_special_move', descKey: 'tshop_special_move_desc',
       icon: '', iconImg: 'images/icon_special_move.png', maxLevel: 3, prices: [10000, 50000, 150000], effectDesc: ['威力3', '威力5', '威力8'], effectDescEn: ['Power 3', 'Power 5', 'Power 8'] },
     { id: 'toughness', nameKey: 'tshop_toughness', descKey: 'tshop_toughness_desc',
-      icon: '', iconImg: 'images/icon_toughness.png', maxLevel: 3, prices: [20000, 500000, 1000000], effectDesc: ['+1', '+2', '+3'] },
+      icon: '', iconImg: 'images/icon_toughness.png', maxLevel: 3, prices: [20000, 100000, 500000], effectDesc: ['+1', '+2', '+3'] },
     { id: 'stock_expand', nameKey: 'tshop_stock_expand', descKey: 'tshop_stock_expand_desc',
-      icon: '', iconImg: 'images/icon_stock_expand.png', maxLevel: 2, prices: [25000, 500000], effectDesc: ['4枠', '5枠'], effectDescEn: ['4 slots', '5 slots'] },
+      icon: '', iconImg: 'images/icon_stock_expand.png', maxLevel: 3, prices: [25000, 100000, 500000], effectDesc: ['4枠', '5枠', '6枠'], effectDescEn: ['4 slots', '5 slots', '6 slots'] },
     { id: 'magnet_boost', nameKey: 'tshop_magnet_boost', descKey: 'tshop_magnet_boost_desc',
-      icon: '', iconImg: 'images/icon_magnet_boost.png', maxLevel: 2, prices: [50000, 125000], effectDesc: ['+50%', '+100%'] },
+      icon: '', iconImg: 'images/icon_magnet_boost.png', maxLevel: 2, prices: [50000, 125000], effectDesc: ['全範囲', '持続2倍'], effectDescEn: ['Full range', '2x time'] },
     { id: 'combo_master', nameKey: 'tshop_combo_master', descKey: 'tshop_combo_master_desc',
       icon: '', iconImg: 'images/icon_combo_master.png', maxLevel: 1, prices: [50000], effectDesc: ['1.5秒'], effectDescEn: ['1.5s'] },
     { id: 'swift_feet', nameKey: 'tshop_swift_feet', descKey: 'tshop_swift_feet_desc',
@@ -4618,7 +4618,7 @@ function updatePowerUps() {
             gameState.puEnergy = PU_DURATION.energy;
             gameState.bulletFireTimer = 0;
         } else if (pu.type === 'magnet') {
-            gameState.puMagnet = PU_DURATION.magnet;
+            gameState.puMagnet = PU_DURATION.magnet * (gameState.magnetDurMult || 1);
         }
     }
 }
@@ -5694,7 +5694,9 @@ function applyUpgrades() {
     var stockLv = ups.stock_expand || 0;
     stockState.maxSlots = 3 + stockLv;
     var magnetLv = ups.magnet_boost || 0;
-    gameState.magnetRange = 200 * (1 + magnetLv * 0.5);
+    // マグネット強化: L1=コイン吸い寄せを全範囲(画面全体)化、L2=マグネット持続時間2倍
+    gameState.magnetRange = magnetLv >= 1 ? 99999 : 200;
+    gameState.magnetDurMult = magnetLv >= 2 ? 2 : 1;
     var comboLv = ups.combo_master || 0;
     COMBO_TIMEOUT = 60 + comboLv * 30; // コンボマスター: 受付時間延長
     // はやあし: 横移動速度1.3倍
@@ -8207,7 +8209,8 @@ function render() {
         if (puTimer <= 0) continue;
         var puX = GAME_WIDTH - 215;
         var puRt = Math.ceil(puTimer / 60);
-        var puRatio = puTimer / pu.max;
+        var puMax = (pu.key === 'puMagnet') ? pu.max * (gameState.magnetDurMult || 1) : pu.max;
+        var puRatio = puTimer / puMax;
         // Compact bar background
         ctx.fillStyle = pu.bg;
         ctx.strokeStyle = pu.border;
