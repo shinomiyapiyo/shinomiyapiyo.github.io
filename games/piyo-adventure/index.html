@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.315";
+                content: "Ver.1.316";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.315</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.316</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1858,6 +1858,7 @@ var MISSION_ALLCLEAR_BONUS = 3000;
 // ─── ぴよフラッシュ（必殺技・内部ID special_move） ───
 var SPECIAL_MOVE_DAMAGE = [3, 5, 8];   // ボスへのダメージ（L1/L2/L3）
 var SPECIAL_GAUGE_PER_KILL = 4;        // 敵1体で+4% → 25体で満タン
+var SPECIAL_GAUGE_PER_METER = 0.08;    // 走行距離でも加算: 0.08%/m → 距離だけなら約1250mで満タン(高速で倒せなくても貯まる・撃破で更に加速)
 var SPECIAL_CUTIN_FRAMES = 96;         // カットイン演出の長さ（約1.6秒・チャージ音に合わせる）
 var SPECIAL_IMPACT_FRAME = 32;         // 残りフレーム数=この値で効果発動（白フラッシュのピーク＝白→ステージに戻る瞬間）
 var specialCutinImg = new Image();
@@ -3869,6 +3870,15 @@ function updatePlayer() {
     // カメラ・距離
     gameState.camera.x += gameState.gameSpeed;
     gameState.distance = Math.floor(gameState.camera.x / 10);
+
+    // 必殺技ゲージ: 走った距離でも少しずつ加算（高速で敵を倒せなくても貯まる）。所持時のみ。
+    if ((gameState.specialMoveLevel || 0) > 0 && gameState.specialGauge < 100) {
+        var gaugeDist = gameState.distance - (gameState.gaugeDistMark || 0);
+        if (gaugeDist > 0 && gaugeDist < 1000) { // 通常の前進のみ（ワープ等の大ジャンプ・リセットの負値は無視）
+            gameState.specialGauge = Math.min(100, gameState.specialGauge + gaugeDist * SPECIAL_GAUGE_PER_METER);
+        }
+    }
+    gameState.gaugeDistMark = gameState.distance;
 
     // 入力（地形ギミック: 流砂=減速, 氷床=慣性増加）
     var speedMul = gameState.speedMultiplier || 1.0;
