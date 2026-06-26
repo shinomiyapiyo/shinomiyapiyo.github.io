@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.309";
+                content: "Ver.1.310";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.309</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.310</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -3008,6 +3008,7 @@ function startGame() {
     document.getElementById('startMessage').style.display = 'none';
     document.getElementById('ui').style.display = 'block';
     document.getElementById('controlBar').style.display = 'flex';
+    updateStockUI(); // 空でもストック枠を表示（所持可能数の可視化）
 
     window.scrollTo(0, 1);
 }
@@ -5712,7 +5713,9 @@ function useStockItem(index) {
 function updateStockUI() {
     var container = document.getElementById('stockSlots');
     if (!container) return;
-    if (stockState.items.length === 0) {
+    // ゲームプレイ中は、空でも maxSlots ぶんの枠を常に表示する（所持可能数を可視化＋拡張アイテム購入の動機）。
+    // タイトル/ゲームオーバー中(gameStarted=false)は隠す。ショップ中は別途 display:none で隠している(誤タップ防止)。
+    if (!gameState.gameStarted) {
         container.style.display = 'none';
         return;
     }
