@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.310";
+                content: "Ver.1.311";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -593,6 +593,8 @@
             background: rgba(255,255,255,0.05);
             pointer-events: none;
         }
+        /* ショップ中の閲覧専用スロット（アイテムは見えるが使用不可） */
+        .stock-slot-readonly { pointer-events: none; cursor: default; }
 
         /* ── ショップ確認ダイアログ選択肢 ── */
         #shopConfirmYes, #shopConfirmNo {
@@ -719,7 +721,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.310</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.311</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1395,7 +1397,7 @@
 
         <!-- ストックスロット（常時表示、アイテムがあれば使用可能） -->
         <div id="stockSlots" style="
-            position: absolute; top: 50px; right: calc(10px + env(safe-area-inset-right, 0px));
+            position: absolute; top: 60px; right: calc(10px + env(safe-area-inset-right, 0px));
             display: none; flex-direction: column; gap: 4px;
             z-index: 100;"></div>
 
@@ -4731,9 +4733,9 @@ function openStageShop() {
     gameState.gamePaused = true;
     gameState.input.up = false;    // 入力消費（ジャンプ暴発防止）
     gameState.input.jump = false;
-    // ショップ中はストックスロットを非表示（誤タップ防止）
-    var stockEl = document.getElementById('stockSlots');
-    if (stockEl) stockEl.style.display = 'none';
+    // ショップ中もストックを表示（何を持っているか＝購入判断の参考に）。
+    // updateStockUI が shopState.active を見て onclick 無し(使用不可)で描画する。
+    updateStockUI();
     preloadShopImages();
     if (soundManager) soundManager.playBGM('shop');
     showStageShopScreen();
@@ -5720,13 +5722,19 @@ function updateStockUI() {
         return;
     }
     container.style.display = 'flex';
+    var inShop = shopState.active; // ショップ中は枠・アイテムを見せるが使用不可（購入判断の参考用）
     var html = '';
     for (var i = 0; i < stockState.maxSlots; i++) {
         if (i < stockState.items.length) {
             var itm = stockState.items[i];
             var si = STAGE_SHOP_ITEMS.find(function(s) { return s.id === itm.id; });
-            html += '<div class="stock-slot" onclick="useStockItem(' + i + ')">' +
-                (si && si.iconImg ? '<img src="' + si.iconImg + '" class="ui-icon">' : '?') + '</div>';
+            var icon = (si && si.iconImg ? '<img src="' + si.iconImg + '" class="ui-icon">' : '?');
+            if (inShop) {
+                // ショップ中: アイコンは見せるが onclick 無し＋pointer-events:none で使用不可
+                html += '<div class="stock-slot stock-slot-readonly">' + icon + '</div>';
+            } else {
+                html += '<div class="stock-slot" onclick="useStockItem(' + i + ')">' + icon + '</div>';
+            }
         } else {
             html += '<div class="stock-slot stock-slot-empty"></div>';
         }
