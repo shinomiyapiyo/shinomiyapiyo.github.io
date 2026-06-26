@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test#14banchi');
   };
 }
-const APP_VER='0.956';
+const APP_VER='0.957';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -56,6 +56,10 @@ let _gndG=null,_gndGK='';
 let _lmpG=null,_lmpGK='';
 let _uiBcG=null,_uiPbG=null;
 let _signGlowG=null;// 看板グロー（形状固定。alphaのみ毎フレーム変化→globalAlphaで再現）
+// 鳥居の発光グラデ（正規化＝半径/長さ1。translate+scaleで実寸へ、globalAlphaで明滅を再現）
+// color stopは全てpulse等で均一スケールのため globalAlpha と数学的に等価。W/H非依存なので無効化不要
+let _bgGgG=null,_bgPgG=null,_bgAgG=null;// 奥の鳥居（赤）地面/光柱/アーチ
+let _ngGgG=null,_ngPgG=null,_ngAgG=null;// 手前の鳥居（緑）地面/光柱/アーチ
 function invalidateGradCache(){
   _skyG=null;_skyGK='';_moonG=null;_exMoonG=null;
   _gndG=null;_gndGK='';_lmpG=null;_lmpGK='';
@@ -974,32 +978,21 @@ function dBackGate(){
   const img=ICN.torii_back;
   const toriiH=H*0.60,toriiW=toriiH*1.44;
   const pulse=0.5+Math.sin(fc*0.03+1.2)*0.15;
-  // Ground glow — deep red
+  // Ground glow — deep red（正規化グラデをscaleで実半径へ＋globalAlphaで明滅）
   const glowR=toriiW*0.55+Math.sin(fc*0.04)*12;
-  const gg=X.createRadialGradient(cx,gy,0,cx,gy,glowR);
-  gg.addColorStop(0,`rgba(200,40,40,${(pulse*0.25).toFixed(3)})`);
-  gg.addColorStop(0.3,`rgba(160,20,20,${(pulse*0.15).toFixed(3)})`);
-  gg.addColorStop(0.6,`rgba(100,10,10,${(pulse*0.08).toFixed(3)})`);
-  gg.addColorStop(1,'transparent');
-  X.fillStyle=gg;X.fillRect(cx-glowR,gy-glowR*0.5,glowR*2,glowR);
+  if(!_bgGgG){_bgGgG=X.createRadialGradient(0,0,0,0,0,1);_bgGgG.addColorStop(0,'rgba(200,40,40,0.25)');_bgGgG.addColorStop(0.3,'rgba(160,20,20,0.15)');_bgGgG.addColorStop(0.6,'rgba(100,10,10,0.08)');_bgGgG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=pulse;X.translate(cx,gy);X.scale(glowR,glowR);X.fillStyle=_bgGgG;X.fillRect(-1,-0.5,2,1);X.restore();
   // Light pillar — vertical crimson beam from arch
   const archY=gy-toriiH*0.45;
   const pillarAlpha=0.10+Math.sin(fc*0.035+1.5)*0.05;
-  const pg=X.createLinearGradient(cx,gy,cx,archY-toriiH*0.4);
-  pg.addColorStop(0,`rgba(220,50,40,${pillarAlpha.toFixed(3)})`);
-  pg.addColorStop(0.3,`rgba(180,30,30,${(pillarAlpha*0.7).toFixed(3)})`);
-  pg.addColorStop(0.7,`rgba(120,15,15,${(pillarAlpha*0.3).toFixed(3)})`);
-  pg.addColorStop(1,'transparent');
-  X.fillStyle=pg;X.fillRect(cx-toriiW*0.2,archY-toriiH*0.4,toriiW*0.4,gy-archY+toriiH*0.4);
+  const pillarL=toriiH*0.85;
+  if(!_bgPgG){_bgPgG=X.createLinearGradient(0,0,0,-1);_bgPgG.addColorStop(0,'rgba(220,50,40,1)');_bgPgG.addColorStop(0.3,'rgba(180,30,30,0.7)');_bgPgG.addColorStop(0.7,'rgba(120,15,15,0.3)');_bgPgG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=pillarAlpha;X.translate(cx,gy);X.scale(1,pillarL);X.fillStyle=_bgPgG;X.fillRect(-toriiW*0.2,-1,toriiW*0.4,1);X.restore();
   // Arch glow — pulsating crimson
   const archPulse=0.45+Math.sin(fc*0.05+2.0)*0.22;
   const archGlowR=toriiH*0.32+Math.sin(fc*0.07)*6;
-  const ag=X.createRadialGradient(cx,archY,0,cx,archY,archGlowR);
-  ag.addColorStop(0,`rgba(230,60,50,${(archPulse*0.55).toFixed(3)})`);
-  ag.addColorStop(0.35,`rgba(180,30,25,${(archPulse*0.28).toFixed(3)})`);
-  ag.addColorStop(0.7,`rgba(120,15,10,${(archPulse*0.10).toFixed(3)})`);
-  ag.addColorStop(1,'transparent');
-  X.fillStyle=ag;X.fillRect(cx-archGlowR,archY-archGlowR,archGlowR*2,archGlowR*2);
+  if(!_bgAgG){_bgAgG=X.createRadialGradient(0,0,0,0,0,1);_bgAgG.addColorStop(0,'rgba(230,60,50,0.55)');_bgAgG.addColorStop(0.35,'rgba(180,30,25,0.28)');_bgAgG.addColorStop(0.7,'rgba(120,15,10,0.10)');_bgAgG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=archPulse;X.translate(cx,archY);X.scale(archGlowR,archGlowR);X.fillStyle=_bgAgG;X.fillRect(-1,-1,2,2);X.restore();
   // Light rays — thin radial crimson lines from arch center
   X.save();
   const rayAlpha=0.08+Math.sin(fc*0.04+1.0)*0.04;
@@ -1058,32 +1051,21 @@ function dGate(){
   const img=ICN.torii_next;
   const toriiH=H*0.60,toriiW=toriiH*1.44;
   const pulse=0.5+Math.sin(fc*0.03)*0.15;
-  // Ground glow — eerie green-gold
+  // Ground glow — eerie green-gold（正規化グラデをscaleで実半径へ＋globalAlphaで明滅）
   const glowR=toriiW*0.55+Math.sin(fc*0.04)*12;
-  const gg=X.createRadialGradient(cx,gy,0,cx,gy,glowR);
-  gg.addColorStop(0,`rgba(120,200,80,${(pulse*0.25).toFixed(3)})`);
-  gg.addColorStop(0.3,`rgba(160,180,40,${(pulse*0.15).toFixed(3)})`);
-  gg.addColorStop(0.6,`rgba(80,120,20,${(pulse*0.08).toFixed(3)})`);
-  gg.addColorStop(1,'transparent');
-  X.fillStyle=gg;X.fillRect(cx-glowR,gy-glowR*0.5,glowR*2,glowR);
+  if(!_ngGgG){_ngGgG=X.createRadialGradient(0,0,0,0,0,1);_ngGgG.addColorStop(0,'rgba(120,200,80,0.25)');_ngGgG.addColorStop(0.3,'rgba(160,180,40,0.15)');_ngGgG.addColorStop(0.6,'rgba(80,120,20,0.08)');_ngGgG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=pulse;X.translate(cx,gy);X.scale(glowR,glowR);X.fillStyle=_ngGgG;X.fillRect(-1,-0.5,2,1);X.restore();
   // Light pillar — vertical mystical beam from arch
   const archY=gy-toriiH*0.45;
   const pillarAlpha=0.10+Math.sin(fc*0.035)*0.05;
-  const pg=X.createLinearGradient(cx,gy,cx,archY-toriiH*0.4);
-  pg.addColorStop(0,`rgba(140,220,80,${pillarAlpha.toFixed(3)})`);
-  pg.addColorStop(0.3,`rgba(100,180,60,${(pillarAlpha*0.7).toFixed(3)})`);
-  pg.addColorStop(0.7,`rgba(60,140,40,${(pillarAlpha*0.3).toFixed(3)})`);
-  pg.addColorStop(1,'transparent');
-  X.fillStyle=pg;X.fillRect(cx-toriiW*0.2,archY-toriiH*0.4,toriiW*0.4,gy-archY+toriiH*0.4);
+  const pillarL=toriiH*0.85;
+  if(!_ngPgG){_ngPgG=X.createLinearGradient(0,0,0,-1);_ngPgG.addColorStop(0,'rgba(140,220,80,1)');_ngPgG.addColorStop(0.3,'rgba(100,180,60,0.7)');_ngPgG.addColorStop(0.7,'rgba(60,140,40,0.3)');_ngPgG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=pillarAlpha;X.translate(cx,gy);X.scale(1,pillarL);X.fillStyle=_ngPgG;X.fillRect(-toriiW*0.2,-1,toriiW*0.4,1);X.restore();
   // Arch glow — supernatural green-gold pulsating
   const archPulse=0.45+Math.sin(fc*0.05+0.8)*0.22;
   const archGlowR=toriiH*0.32+Math.sin(fc*0.07)*6;
-  const ag=X.createRadialGradient(cx,archY,0,cx,archY,archGlowR);
-  ag.addColorStop(0,`rgba(150,230,100,${(archPulse*0.55).toFixed(3)})`);
-  ag.addColorStop(0.35,`rgba(180,200,60,${(archPulse*0.28).toFixed(3)})`);
-  ag.addColorStop(0.7,`rgba(80,160,40,${(archPulse*0.10).toFixed(3)})`);
-  ag.addColorStop(1,'transparent');
-  X.fillStyle=ag;X.fillRect(cx-archGlowR,archY-archGlowR,archGlowR*2,archGlowR*2);
+  if(!_ngAgG){_ngAgG=X.createRadialGradient(0,0,0,0,0,1);_ngAgG.addColorStop(0,'rgba(150,230,100,0.55)');_ngAgG.addColorStop(0.35,'rgba(180,200,60,0.28)');_ngAgG.addColorStop(0.7,'rgba(80,160,40,0.10)');_ngAgG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=archPulse;X.translate(cx,archY);X.scale(archGlowR,archGlowR);X.fillStyle=_ngAgG;X.fillRect(-1,-1,2,2);X.restore();
   // Light rays — thin radial lines from arch center
   X.save();
   const rayAlpha=0.08+Math.sin(fc*0.04)*0.04;
