@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.300";
+                content: "Ver.1.301";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.300</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.301</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -3893,6 +3893,36 @@ function updatePlayer() {
             player.x = t.x + t.width; player.velX = 0;
         } else if (player.velY < 0 && player.y - player.velY >= t.y + t.height) {
             player.y = t.y + t.height; player.velY = 0;
+        }
+    }
+
+    // 段差地面でのめり込み落下を防ぐ救済スナップ:
+    // 高い地形へ横から乗り移る際、着地条件も壁条件も満たさず地形内へ沈み落下する
+    // ケースを救う。落下/静止中(velY>=0)かつ未接地で、水平に半分以上重なり、足が
+    // 地形上端を超えてめり込み、かつ深く潜り込んでいない場合のみ、最も高い重なり
+    // 地形の上端へスナップして接地させる（既存の着地/壁/天井判定は変更しない）。
+    if (!player.onGround && player.velY >= 0) {
+        var feetY = player.y + player.height;
+        var snapTop = Infinity, snapType = null;
+        for (var si = 0; si < terrain.length; si++) {
+            var st = terrain[si];
+            if (st.type === 'hole') continue;
+            var ox = Math.min(player.x + player.width, st.x + st.width) - Math.max(player.x, st.x);
+            if (ox >= player.width * 0.5 && feetY > st.y &&
+                player.y < st.y + Math.min(st.height, player.height) && st.y < snapTop) {
+                snapTop = st.y;
+                snapType = st.type;
+            }
+        }
+        if (snapTop !== Infinity) {
+            player.y = snapTop - player.height;
+            player.velY = 0;
+            player.onGround = true;
+            var sgt = snapType || 'normal';
+            if (sgt === 'quicksand_elevated') sgt = 'quicksand';
+            else if (sgt === 'ice_elevated') sgt = 'ice';
+            player.groundType = sgt;
+            if (gameState.isRespawning) gameState.isRespawning = false;
         }
     }
 
@@ -8041,6 +8071,9 @@ function render() {
     if (shaking) ctx.restore();
 
     // ─── HUDオーバーレイ (複数パワーアップ対応) ───
+    // ぴよフラッシュゲージ(#specialMoveUI: 上部中央 top:8px・高さ~38px)の表示中は、
+    // 上部中央のcanvas HUD(無敵/コンボ/スピードアップ通知)を下げて視覚的な重なりを防ぐ
+    var hudTopOffset = (gameState.specialMoveLevel > 0) ? 36 : 0;
     var puList = [
         { timer: gameState.puLemon,  max: 300, label: t('hud_jump'),   color1: '#44dd44', color2: '#88ff88', text: '#aaffaa', bg: 'rgba(20,60,20,0.85)', border: '#66ff66' },
         { timer: gameState.puShield, max: 300, label: t('hud_shield'), color1: '#4488ff', color2: '#88bbff', text: '#aaccff', bg: 'rgba(20,20,70,0.85)', border: '#66aaff' },
@@ -8086,7 +8119,7 @@ function render() {
     if (gameState.isInvincible) {
         var ri = Math.ceil(gameState.invincibleTimer / 60);
         var iRatio = gameState.invincibleTimer / INVINCIBLE_FRAMES;
-        var ix = GAME_WIDTH / 2 - 110, iy = 14;
+        var ix = GAME_WIDTH / 2 - 110, iy = 14 + hudTopOffset;
         // Gold panel
         drawHudPanel(ix, iy, 220, 52, 'rgba(80,60,10,0.9)', 'rgba(50,35,5,0.92)', '#ffd700', 'rgba(255,215,0,0.4)');
         // Star icon shimmer
@@ -8129,7 +8162,7 @@ function render() {
 
     // コンボHUD（色エスカレーション＋強化パルス）
     if (gameState.comboCount >= 2) {
-        var comboY = gameState.isInvincible ? 72 : 14;
+        var comboY = (gameState.isInvincible ? 72 : 14) + hudTopOffset;
         var comboAlpha = gameState.comboTimer / COMBO_TIMEOUT;
         var cc = gameState.comboCount;
         // パルス強度: コンボ数に応じて増加
@@ -8188,7 +8221,7 @@ function render() {
         var sp = Math.min(MAX_SPEED_PERCENT, 100 + (gameState.speedLevel - 1) * 20);
         ctx.save();
         ctx.globalAlpha = a;
-        var sx2 = GAME_WIDTH / 2 - 150, sy2 = 68;
+        var sx2 = GAME_WIDTH / 2 - 150, sy2 = 68 + hudTopOffset;
         drawHudPanel(sx2, sy2, 300, 52, 'rgba(100,20,60,0.9)', 'rgba(60,10,35,0.92)', '#ff69b4', 'rgba(255,100,180,0.4)');
         // Rocket + text
         ctx.font = "bold 18px 'M PLUS Rounded 1c', sans-serif";
