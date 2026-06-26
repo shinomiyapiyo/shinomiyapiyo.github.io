@@ -264,10 +264,10 @@ ja: {
     mission_claimed: '✓ 受取ずみ',
     mission_all_done: _ic('icon_celebrate.png') + ' きょうのミッションは ぜんぶ おわり！\nまた あした！',
     // ── 必殺技 ──
-    tshop_special_move: 'ひっさつわざ',
+    tshop_special_move: 'ぴよフラッシュ',
     tshop_special_move_desc: '画面の敵を一掃＋ボスに大ダメージ',
-    hud_special_ready: 'ひっさつ!',
-    special_cutin_text: 'ひっさつ！',
+    hud_special_ready: 'ぴよフラッシュ!',
+    special_cutin_text: 'ぴよフラッシュ！',
     // ── 課金ストア ──
     iap_store_title: _ic('icon_money.png') + ' ストア',
     iap_starter_pack: 'スターターパック',
@@ -527,10 +527,10 @@ en: {
     mission_claimed: '✓ Claimed',
     mission_all_done: _ic('icon_celebrate.png') + ' All missions done for today!\nCome back tomorrow!',
     // ── Special Move ──
-    tshop_special_move: 'Special Move',
+    tshop_special_move: 'Piyo Flash',
     tshop_special_move_desc: 'Wipe out enemies + big boss damage',
-    hud_special_ready: 'SPECIAL!',
-    special_cutin_text: 'SPECIAL!',
+    hud_special_ready: 'PIYO FLASH!',
+    special_cutin_text: 'PIYO FLASH!',
     // ── Store ──
     iap_store_title: _ic('icon_money.png') + ' Store',
     iap_starter_pack: 'Starter Pack',
