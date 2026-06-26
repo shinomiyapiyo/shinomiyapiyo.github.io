@@ -44,9 +44,22 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test#14banchi');
   };
 }
-const APP_VER='0.953';
+const APP_VER='0.954';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
+// === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
+// 画面サイズ依存の座標を含むため resize() で invalidateGradCache() により破棄する
+let _skyG=null,_skyGK='';
+let _moonG=null;
+let _exMoonG=null;
+let _gndG=null,_gndGK='';
+let _lmpG=null,_lmpGK='';
+let _uiBcG=null,_uiPbG=null;
+function invalidateGradCache(){
+  _skyG=null;_skyGK='';_moonG=null;_exMoonG=null;
+  _gndG=null;_gndGK='';_lmpG=null;_lmpGK='';
+  _uiBcG=null;_uiPbG=null;
+}
 function resize(){
   const s=getComputedStyle(document.documentElement);
   saL=parseFloat(s.getPropertyValue('--sal'))||0;
@@ -56,6 +69,7 @@ function resize(){
   W=window.innerWidth-saL-saR;
   H=window.innerHeight-saT-saB;
   C.width=W;C.height=H;
+  invalidateGradCache();// 画面サイズ変更でキャッシュ済みグラデの座標が無効になるため破棄
 }
 resize();window.addEventListener('resize',resize);
 
@@ -751,7 +765,9 @@ function dSky(){
   let c1,c2;
   if(hasA&&AN[aT]==='redSky'){const rv=30+Math.sin(fc*0.04)*15|0;c1=`rgb(${rv*dm|0},${4*dm|0},${8*dm|0})`;c2=`rgb(${26*dm|0},${5*dm|0},${8*dm|0})`}
   else{c1=`rgb(${10*dm|0},${10*dm|0},${32*dm|0})`;c2=`rgb(${20*dm|0},${20*dm|0},${48*dm|0})`}
-  const g=X.createLinearGradient(0,0,0,H*GH);g.addColorStop(0,c1);g.addColorStop(1,c2);X.fillStyle=g;X.fillRect(0,0,W,H*GH);
+  const skyK=c1+'|'+c2;
+  if(!_skyG||_skyGK!==skyK){_skyG=X.createLinearGradient(0,0,0,H*GH);_skyG.addColorStop(0,c1);_skyG.addColorStop(1,c2);_skyGK=skyK}
+  X.fillStyle=_skyG;X.fillRect(0,0,W,H*GH);
   if(!(hasA&&AN[aT]==='missingStars')){
     X.fillStyle='#FFF';for(const s of stars){const sx=((s.x-camX*0.05)%W+W)%W;X.globalAlpha=(0.35+Math.sin(fc*0.02+s.b*10)*0.3)*dm;X.fillRect(sx,s.y*H,s.s,s.s)}X.globalAlpha=1
   }
@@ -761,8 +777,8 @@ function dSky(){
     X.fillStyle=mg;X.beginPath();X.arc(mx,my,mr,0,Math.PI*2);X.fill();
   }else{
     const mx=W*0.85,my=H*0.1,mr=15;
-    const mg=X.createRadialGradient(mx-2,my-2,0,mx,my,mr);mg.addColorStop(0,'#EEEEDD');mg.addColorStop(0.8,'#AAAA88');mg.addColorStop(1,'transparent');
-    X.fillStyle=mg;X.beginPath();X.arc(mx,my,mr,0,Math.PI*2);X.fill();
+    if(!_moonG){_moonG=X.createRadialGradient(mx-2,my-2,0,mx,my,mr);_moonG.addColorStop(0,'#EEEEDD');_moonG.addColorStop(0.8,'#AAAA88');_moonG.addColorStop(1,'transparent')}
+    X.fillStyle=_moonG;X.beginPath();X.arc(mx,my,mr,0,Math.PI*2);X.fill();
     if(hasA&&AN[aT]==='wrongMoon'){
       X.fillStyle='rgba(60,60,40,0.5)';
       X.beginPath();X.arc(mx-4,my-3,2.5,0,Math.PI*2);X.fill();
@@ -782,8 +798,8 @@ function dSky(){
   // extraMoon - a second smaller moon in a different position
   if(hasA&&AN[aT]==='extraMoon'){
     const mx2=W*0.35,my2=H*0.18,mr2=11;
-    const mg2=X.createRadialGradient(mx2-1,my2-1,0,mx2,my2,mr2);mg2.addColorStop(0,'#EEEEDD');mg2.addColorStop(0.8,'#AAAA88');mg2.addColorStop(1,'transparent');
-    X.fillStyle=mg2;X.beginPath();X.arc(mx2,my2,mr2,0,Math.PI*2);X.fill();
+    if(!_exMoonG){_exMoonG=X.createRadialGradient(mx2-1,my2-1,0,mx2,my2,mr2);_exMoonG.addColorStop(0,'#EEEEDD');_exMoonG.addColorStop(0.8,'#AAAA88');_exMoonG.addColorStop(1,'transparent')}
+    X.fillStyle=_exMoonG;X.beginPath();X.arc(mx2,my2,mr2,0,Math.PI*2);X.fill();
   }
 }
 
@@ -815,8 +831,9 @@ function dGnd(){
   const gy=H*GH;let c1='#1A1A24',c2='#121218';
   if(hasA&&AN[aT]==='weirdGround'){c1='#181010';c2='#120808'}
   if(hasA&&AN[aT]==='blueGround'){c1='#0A1030';c2='#081028'}
-  const g=X.createLinearGradient(0,gy,0,H);g.addColorStop(0,c1);g.addColorStop(0.1,'#16161E');g.addColorStop(1,c2);
-  X.fillStyle=g;X.fillRect(0,gy,W,H-gy);
+  const gndK=c1+'|'+c2;
+  if(!_gndG||_gndGK!==gndK){_gndG=X.createLinearGradient(0,gy,0,H);_gndG.addColorStop(0,c1);_gndG.addColorStop(0.1,'#16161E');_gndG.addColorStop(1,c2);_gndGK=gndK}
+  X.fillStyle=_gndG;X.fillRect(0,gy,W,H-gy);
   const dashSp=80;const dashLen=(hasA&&AN[aT]==='wideDash')?55:30;
   X.fillStyle='rgba(60,60,40,0.25)';const mo=-(camX%dashSp+dashSp)%dashSp;
   for(let i=-1;i<W/dashSp+2;i++)X.fillRect(mo+i*dashSp,gy+14,dashLen,2);
@@ -863,7 +880,9 @@ function dLmp(){
   let lCol=`rgba(255,200,100,${(0.5*ldm).toFixed(2)})`,bCol='#FFD880';
   if(hasA&&AN[aT]==='whiteLamp'){lCol=`rgba(220,225,255,${(0.4*ldm).toFixed(2)})`;bCol='#DDE0FF'}
   if(hasA&&AN[aT]==='orangeLamp'){lCol=`rgba(255,160,40,${(0.4*ldm).toFixed(2)})`;bCol='#FFA028'}
-  const lg=X.createRadialGradient(0,0,0,0,0,lgR);lg.addColorStop(0,lCol);lg.addColorStop(1,'transparent');
+  const lmpK=lgR+'|'+lCol;
+  if(!_lmpG||_lmpGK!==lmpK){_lmpG=X.createRadialGradient(0,0,0,0,0,lgR);_lmpG.addColorStop(0,lCol);_lmpG.addColorStop(1,'transparent');_lmpGK=lmpK}
+  const lg=_lmpG;
   for(let i=-1;i<(W/sp)+2;i++){
     const lx=ox+i*sp+(isTooMany?40:150);
     X.fillStyle='#2A2A30';X.fillRect(lx,gy-lampH,3,lampH+2);X.fillRect(lx-5,gy-lampH,13,3);
@@ -1515,9 +1534,8 @@ function dUI(){
   const uiTop=4+saT;
   // Block counter with gradient background
   const bcX=W/2-58,bcW=116,bcH=26;
-  const bcBg=X.createLinearGradient(bcX,uiTop,bcX,uiTop+bcH);
-  bcBg.addColorStop(0,'rgba(10,10,20,0.85)');bcBg.addColorStop(1,'rgba(20,15,30,0.75)');
-  X.fillStyle=bcBg;X.fillRect(bcX,uiTop,bcW,bcH);
+  if(!_uiBcG){_uiBcG=X.createLinearGradient(bcX,uiTop,bcX,uiTop+bcH);_uiBcG.addColorStop(0,'rgba(10,10,20,0.85)');_uiBcG.addColorStop(1,'rgba(20,15,30,0.75)')}
+  X.fillStyle=_uiBcG;X.fillRect(bcX,uiTop,bcW,bcH);
   X.strokeStyle='#FFD700';X.lineWidth=1;X.strokeRect(bcX,uiTop,bcW,bcH);
   // Corner accents (L-shaped gold marks)
   const cLen=5;X.strokeStyle='rgba(255,215,0,0.6)';X.lineWidth=1;
@@ -1533,9 +1551,8 @@ function dUI(){
   // Pause button (left of block counter) with gradient
   const px=W/2-58-66,py=6+saT,pw=44,ph=30;
   pauseBtn.x=px;pauseBtn.y=py;pauseBtn.w=pw;pauseBtn.h=ph;
-  const pbBg=X.createLinearGradient(px,py,px,py+ph);
-  pbBg.addColorStop(0,'rgba(10,10,20,0.7)');pbBg.addColorStop(1,'rgba(20,15,30,0.55)');
-  X.fillStyle=pbBg;X.fillRect(px,py,pw,ph);
+  if(!_uiPbG){_uiPbG=X.createLinearGradient(px,py,px,py+ph);_uiPbG.addColorStop(0,'rgba(10,10,20,0.7)');_uiPbG.addColorStop(1,'rgba(20,15,30,0.55)')}
+  X.fillStyle=_uiPbG;X.fillRect(px,py,pw,ph);
   X.strokeStyle='rgba(255,255,255,0.3)';X.lineWidth=1;X.strokeRect(px,py,pw,ph);
   X.save();X.shadowColor='rgba(255,255,255,0.5)';X.shadowBlur=3;
   X.fillStyle='rgba(255,255,255,0.7)';
