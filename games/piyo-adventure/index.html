@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.306";
+                content: "Ver.1.307";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -719,7 +719,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.306</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.307</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2756,8 +2756,12 @@ var biomeState = {
     previous: 0,
     transition: 0,       // 0=完了, 0-1=遷移中
     transitionDir: 1,
-    stars: []             // 夜バイオームの星
+    stars: [],            // 夜バイオームの星
+    _lastStep: -1         // A-1: 遷移中スプライト再構築の最後のステップ番号
 };
+// A-1: バイオーム遷移(約2秒)中のスプライト/背景の再構築回数を間引く段数。
+// 毎フレーム(約125回)は低スペック機で重いので、この段数だけ再構築する（色のクロスフェードは段階的になるが約2秒で十数段なら滑らか）。
+var BIOME_TRANSITION_STEPS = 16;
 
 // 決定論的な星の位置を生成
 (function() {
@@ -2826,6 +2830,9 @@ function rebuildTerrainSprites(palette) {
         fc.drawImage(canvas, 0, 0);
         spriteManager.cache[name] = [{ normal: canvas, flipped: flipped, w: w, h: h }];
     }
+    // A-2: 地形スプライトの色が変わったので、焼き付け済みの地面キャッシュを破棄して次回再焼き付けさせる。
+    // （これが無いと砂漠/雪山の地面が遷移時の中間色のまま固定される＝Ver.1.306で発生した色バグ）
+    terrainCache = {};
 }
 
 function applyBiomePalette(idx) {
@@ -2856,6 +2863,7 @@ function updateBiome() {
         biomeState.previous = biomeState.current;
         biomeState.current = newIdx;
         biomeState.transition = 0.001; // 遷移開始
+        biomeState._lastStep = -1;     // A-1: 段階再構築のステップ管理をリセット
         bgCache = null;
         weatherParticles = []; // バイオーム切替時に天候パーティクルクリア
         // 既存地形のtypeを新バイオームに一括変換（地面も雲と同様に瞬時切替）
@@ -2864,21 +2872,26 @@ function updateBiome() {
 
     if (biomeState.transition > 0 && biomeState.transition < 1) {
         biomeState.transition += 0.008; // ~125フレーム (約2秒) で遷移完了
-        bgCache = null; // 遷移中は毎フレーム再生成
         if (biomeState.transition >= 1) {
             biomeState.transition = 0;
-            applyBiomePalette(biomeState.current);
+            applyBiomePalette(biomeState.current); // 最終パレットへ（terrainCacheもクリアされる）
             bgCache = null;
         } else {
-            // 遷移中: 中間パレットを計算してスプライト再構築
-            var prevPal = BIOME_CONFIGS[biomeState.previous].terrainPalette;
-            var nextPal = BIOME_CONFIGS[biomeState.current].terrainPalette;
-            var lerpPal = [];
-            for (var i = 0; i < prevPal.length; i++) {
-                if (i === 0) { lerpPal.push('transparent'); continue; }
-                lerpPal.push(lerpColor(prevPal[i], nextPal[i], biomeState.transition));
+            // A-1: 毎フレームの全スプライト再構築は重いので、遷移を BIOME_TRANSITION_STEPS 段階に間引く。
+            // ステップが変わった時だけスプライト・背景・地面キャッシュを更新（再構築 約125→約16回）。
+            var step = Math.floor(biomeState.transition * BIOME_TRANSITION_STEPS);
+            if (step !== biomeState._lastStep) {
+                biomeState._lastStep = step;
+                var prevPal = BIOME_CONFIGS[biomeState.previous].terrainPalette;
+                var nextPal = BIOME_CONFIGS[biomeState.current].terrainPalette;
+                var lerpPal = [];
+                for (var i = 0; i < prevPal.length; i++) {
+                    if (i === 0) { lerpPal.push('transparent'); continue; }
+                    lerpPal.push(lerpColor(prevPal[i], nextPal[i], biomeState.transition));
+                }
+                rebuildTerrainSprites(lerpPal); // 地形スプライト再構築＋terrainCacheクリア(A-2)
+                bgCache = null;                 // 背景もこのステップでのみ再生成
             }
-            rebuildTerrainSprites(lerpPal);
         }
     }
 }
