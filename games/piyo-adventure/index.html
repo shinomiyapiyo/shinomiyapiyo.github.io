@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.314";
+                content: "Ver.1.315";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.314</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.315</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -5742,10 +5742,11 @@ function updateStockUI() {
             var si = STAGE_SHOP_ITEMS.find(function(s) { return s.id === itm.id; });
             var icon = (si && si.iconImg ? '<img src="' + si.iconImg + '" class="ui-icon">' : '?');
             if (inShop) {
-                // ショップ中: アイコンは見せるが onclick 無し＋pointer-events:none で使用不可
+                // ショップ中: アイコンは見せるが操作不可（pointer-events:none）
                 html += '<div class="stock-slot stock-slot-readonly">' + icon + '</div>';
             } else {
-                html += '<div class="stock-slot" onclick="useStockItem(' + i + ')">' + icon + '</div>';
+                // ゲーム中: data-idx で識別。委譲タップ(touchend)で即使用（onclickのiOS遅延/指の微動での無効化を回避）
+                html += '<div class="stock-slot" data-idx="' + i + '">' + icon + '</div>';
             }
         } else {
             html += '<div class="stock-slot stock-slot-empty"></div>';
@@ -8768,6 +8769,27 @@ function bindTapDelegate(container, attrName, handler) {
     bindTapButton(document.getElementById('retryBtn'), retryGame, { guardTouchStart: true });
     bindTapButton(document.getElementById('toTitleBtn'), goToTitle, { guardTouchStart: true });
     bindTapButton(document.getElementById('adReviveBtn'), adRevive, { guardTouchStart: true });
+
+    // ストックアイテム使用: 枠は動的生成のため委譲で touchend 即時反応（onclickのiOS遅延・指の微動での無効化を回避）。
+    // ゲーム中の使用可能枠のみ data-idx を持つ（ショップ中の閲覧枠・空枠は対象外）。
+    (function bindStockTaps() {
+        var sc = document.getElementById('stockSlots');
+        if (!sc) return;
+        var fired = false;
+        function slotOf(e) { return (e.target && e.target.closest) ? e.target.closest('.stock-slot[data-idx]') : null; }
+        sc.addEventListener('touchstart', function(e) { if (slotOf(e)) e.stopPropagation(); }, { passive: true });
+        sc.addEventListener('touchend', function(e) {
+            var el = slotOf(e); if (!el) return;
+            e.preventDefault(); e.stopPropagation();
+            fired = true;
+            useStockItem(parseInt(el.getAttribute('data-idx'), 10));
+        });
+        sc.addEventListener('click', function(e) {
+            var el = slotOf(e); if (!el) return;
+            if (fired) { fired = false; return; }
+            useStockItem(parseInt(el.getAttribute('data-idx'), 10));
+        });
+    })();
 
     document.getElementById('pauseScreen').addEventListener('click', function(e) {
         if (e.target === document.getElementById('pauseScreen')) pauseGame();
