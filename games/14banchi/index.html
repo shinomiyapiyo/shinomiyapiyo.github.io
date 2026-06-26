@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test#14banchi');
   };
 }
-const APP_VER='0.955';
+const APP_VER='0.956';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -55,6 +55,7 @@ let _exMoonG=null;
 let _gndG=null,_gndGK='';
 let _lmpG=null,_lmpGK='';
 let _uiBcG=null,_uiPbG=null;
+let _signGlowG=null;// 看板グロー（形状固定。alphaのみ毎フレーム変化→globalAlphaで再現）
 function invalidateGradCache(){
   _skyG=null;_skyGK='';_moonG=null;_exMoonG=null;
   _gndG=null;_gndGK='';_lmpG=null;_lmpGK='';
@@ -931,10 +932,11 @@ function dSignBoard(sx,gy,inverted){
     X.strokeStyle='#444';X.lineWidth=1;X.strokeRect(sx-18,gy-56,38,18);
   }
   // Subtle warm glow behind sign
+  // 形状固定のグラデを原点に一度だけ生成し、毎フレームは translate+globalAlpha で再現
+  // （stop0 alpha=glowA → alpha=1×globalAlpha=glowA と等価。RGB補間・最終alphaとも一致）
   const glowA=0.12+Math.sin(fc*0.03)*0.04;
-  const sg=X.createRadialGradient(signCX,signY+sH/2,0,signCX,signY+sH/2,sW*0.6);
-  sg.addColorStop(0,`rgba(200,170,100,${glowA.toFixed(3)})`);sg.addColorStop(1,'transparent');
-  X.fillStyle=sg;X.fillRect(signCX-sW*0.6,signY-sW*0.2,sW*1.2,sH+sW*0.4);
+  if(!_signGlowG){_signGlowG=X.createRadialGradient(0,0,0,0,0,sW*0.6);_signGlowG.addColorStop(0,'rgba(200,170,100,1)');_signGlowG.addColorStop(1,'transparent')}
+  X.save();X.globalAlpha=glowA;X.translate(signCX,signY+sH/2);X.fillStyle=_signGlowG;X.fillRect(-sW*0.6,-sW*0.2-sH/2,sW*1.2,sH+sW*0.4);X.restore();
   // Number text
   if(inverted){
     X.save();X.translate(signCX,signY+sH/2);X.scale(1,-1);
