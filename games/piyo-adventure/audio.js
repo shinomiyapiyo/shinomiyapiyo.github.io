@@ -81,6 +81,9 @@ class SoundManager {
     playKill() {
         if (!this.ctx || !gameSettings.soundEnabled) return;
         var t = this.ctx.currentTime;
+        // 連打スロットル: 50ms以内の連続呼び出しは無視（敵を一度に複数撃破した際のoscillator大量生成による処理落ちを防ぐ）
+        if (this._killT && t - this._killT < 0.05) return;
+        this._killT = t;
         var o = this.ctx.createOscillator();
         var g = this.ctx.createGain();
         o.connect(g); g.connect(this.ctx.destination);
@@ -113,6 +116,10 @@ class SoundManager {
 
     playCoin() {
         if (!this.ctx) return;
+        // 連打スロットル: 50ms以内の連続呼び出しは無視（マグネットでコイン列を一気取得した際のoscillator大量生成による処理落ちを防ぐ）
+        var t = this.ctx.currentTime;
+        if (this._coinT && t - this._coinT < 0.05) return;
+        this._coinT = t;
         this._osc(2093, 0.0625, 'sine', 0.1);
         var self = this;
         setTimeout(function() { self._osc(2637, 0.25, 'sine', 0.1); }, 63);
