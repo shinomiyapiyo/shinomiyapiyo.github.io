@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.312";
+                content: "Ver.1.313";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -595,6 +595,15 @@
         }
         /* ショップ中の閲覧専用スロット（アイテムは見えるが使用不可） */
         .stock-slot-readonly { pointer-events: none; cursor: default; }
+        /* 所持している永久型アップグレードのアイコン（ストック枠の下にまとめて表示） */
+        .owned-skills {
+            display: flex; flex-wrap: wrap; justify-content: flex-end;
+            gap: 3px; max-width: 100px; margin-top: 2px;
+            padding: 4px 5px; border-radius: 9px;
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12);
+            pointer-events: none;
+        }
+        .owned-skill-icon { width: 22px; height: 22px; image-rendering: pixelated; }
 
         /* ── ショップ確認ダイアログ選択肢 ── */
         #shopConfirmYes, #shopConfirmNo {
@@ -639,7 +648,6 @@
             <div><img src="images/icon_kills.png" class="ui-icon"> <span id="enemyKills">0</span><span data-i18n="hud_kills_suffix">体撃破</span></div>
             <div><img src="images/icon_level.png" class="ui-icon"> <span data-i18n="hud_level_prefix">レベル</span><span id="speedLevel">1</span> (<span id="speedPercent">100</span>%)</div>
             <div><img src="images/icon_progress.png" class="ui-icon"> <span data-i18n="hud_next_prefix">次まで</span><span id="nextSpeedUp">300</span>m</div>
-            <div id="skillIcons" style="display:none; padding-top:2px;"></div>
             <div id="debugBossBtn" style="display:none; margin-top:4px; background:rgba(100,0,180,0.85); color:#ffcc00; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(180,100,255,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">BOSS FIGHT</div>
             <div id="debugShopBtn" style="display:none; margin-top:4px; background:rgba(0,120,80,0.85); color:#88ffcc; font-weight:bold; font-size:12px; padding:4px 10px; border-radius:6px; cursor:pointer; text-align:center; border:1px solid rgba(100,255,180,0.5); text-shadow:0 1px 2px rgba(0,0,0,0.8);">SHOP WARP</div>
         </div>
@@ -721,7 +729,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.312</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.313</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1398,7 +1406,7 @@
         <!-- ストックスロット（常時表示、アイテムがあれば使用可能） -->
         <div id="stockSlots" style="
             position: absolute; top: 60px; right: calc(10px + env(safe-area-inset-right, 0px));
-            display: none; flex-direction: column; gap: 4px;
+            display: none; flex-direction: column; align-items: flex-end; gap: 4px;
             z-index: 100;"></div>
 
         <!-- 必殺技ゲージ＆発動ボタン（上部中央・デッドゾーンには触れない） -->
@@ -5678,22 +5686,8 @@ function applyUpgrades() {
     gameState.revivesLeft = revivalLv;
     // 必殺技: 所持レベル（ボスへのダメージ量が上がる）
     gameState.specialMoveLevel = ups.special_move || 0;
-    // HUDスキルアイコン表示（購入済みの非表示系スキル）
-    var skillEl = document.getElementById('skillIcons');
-    if (skillEl) {
-        var icons = [];
-        if (coinLv > 0) icons.push('<img src="images/icon_coin_master.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="' + t('tshop_coin_master') + ' Lv' + coinLv + '">');
-        if (magnetLv > 0) icons.push('<img src="images/icon_magnet_boost.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="' + t('tshop_magnet_boost') + ' Lv' + magnetLv + '">');
-        if (comboLv > 0) icons.push('<img src="images/icon_combo_master.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="' + t('tshop_combo_master') + ' Lv' + comboLv + '">');
-        if (swiftLv > 0) icons.push('<img src="images/icon_swift_feet.png" width="20" height="20" style="vertical-align:middle; image-rendering:pixelated;" title="' + t('tshop_swift_feet') + '">');
-        if (icons.length > 0) {
-            skillEl.innerHTML = icons.join(' ');
-            skillEl.style.display = 'block';
-        } else {
-            skillEl.style.display = 'none';
-        }
-    }
-    updateStockUI(); // maxSlots変更(stock_expand購入)を即ストック表示へ反映＝タイトルショップで枠が増える
+    // 永久型アップグレードの所持アイコンは updateStockUI 内でストック枠の下に表示する（旧 #skillIcons は撤廃）
+    updateStockUI(); // 効果反映＋所持永久型アイコンの更新（stock_expand購入で枠も即増える）
 }
 
 // ── ストックシステム ──
@@ -5747,6 +5741,17 @@ function updateStockUI() {
             html += '<div class="stock-slot stock-slot-empty"></div>';
         }
     }
+    // 所持している永久型アップグレードのアイコンを枠の下にまとめて表示（ゲーム中・両ショップで一貫表示）
+    var ownedHtml = '';
+    var ownedUps = gameSettings.upgrades || {};
+    for (var u = 0; u < TITLE_SHOP_UPGRADES.length; u++) {
+        var up = TITLE_SHOP_UPGRADES[u];
+        if ((ownedUps[up.id] || 0) > 0 && up.iconImg) {
+            var nm = up.nameKey ? escapeHtml(t(up.nameKey)) : '';
+            ownedHtml += '<img src="' + up.iconImg + '" class="owned-skill-icon" title="' + nm + '">';
+        }
+    }
+    if (ownedHtml) html += '<div class="owned-skills">' + ownedHtml + '</div>';
     container.innerHTML = html;
 }
 
