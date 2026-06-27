@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.969';
+const APP_VER='0.970';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -322,7 +322,8 @@ const T={
   misjudgeMsg:{ja:'異変の判断を間違えた',en:'Misjudged the anomaly'},
   lifeRecovery:{ja:'ライフ回復！',en:'Life recovered!'},
   warnRun:{ja:'逃げろ！',en:'RUN!'},
-  tutStep1:{ja:'異変なし。右に進もう',en:'All normal. Go right'},
+  tutStep1:{ja:'ここは異変のない正常な番地',en:'This block has NO anomaly'},
+  tutStep1b:{ja:'この景色が判断の基準。右へ進もう',en:'This is your baseline. Go right'},
   tutStep2:{ja:'異変だ…！左へ引き返そう',en:'Anomaly! Go back left'},
   tutDoneTitle:{ja:'遊び方マスター！',en:'You got it!'},
   tutDoneMsg:{ja:'異変を見つけたら引き返そう',en:'Spot an anomaly? Turn back!'},
@@ -673,6 +674,7 @@ let lastDeathCause='';// death cause for game over screen
 let heartItemX=-999;let heartItemActive=false;
 // 対話型チュートリアル（初回のイージー/ノーマルのみ）
 let tutActive=false,tutDoneTimer=0;const tutSkipBtn={x:0,y:0,w:0,h:0};
+let blockStartFc=0;const TUT_GUIDE_DELAY=120;// 番地開始フレーム / 2番地誘導の遅延(約2秒)
 function finishTut(){tutActive=false;tutDoneTimer=0;try{localStorage.setItem('14b_tut_done','1')}catch(e){}}
 let stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*6000,y:Math.random()*0.38,b:Math.random(),s:0.5+Math.random()*1.5});
 
@@ -1595,30 +1597,37 @@ function dUI(){
     X.fillText(t('warnRun'),W/2,H*0.33);
     X.globalAlpha=1;X.shadowBlur=0;X.restore();
   }
-  // 対話型チュートリアル: 1番地=右に進む / 2番地=左に引き返す を誘導（ハイライト＋矢印＋指示）
+  // 対話型チュートリアル: 1番地=基準の説明＋右へ / 2番地=2秒観察させてから「左へ引き返そう」をフェードイン
   tutSkipBtn.w=0;
   if(tutActive&&(cB===1||cB===2)&&tTm===0&&btTimer===0){
     const fwd=(cB===1);
-    // 正しい側を淡くハイライト
-    const hp=0.10+Math.abs(Math.sin(fc*0.06))*0.10;
-    X.save();X.fillStyle=`rgba(255,220,90,${hp.toFixed(3)})`;
-    if(fwd)X.fillRect(W*0.4,0,W*0.6,H);else X.fillRect(0,0,W*0.4,H);
-    X.restore();
-    // 大きな矢印（点滅）
-    X.save();X.textAlign='center';
-    const ap=0.7+Math.abs(Math.sin(fc*0.08))*0.3;
-    X.globalAlpha=ap;X.fillStyle='#FFD24A';X.shadowColor='#000';X.shadowBlur=8;
-    X.font='bold '+Math.round(Math.min(64,W*0.1))+'px sans-serif';
-    X.fillText(fwd?'→':'←',fwd?W*0.72:W*0.22,H*0.52);
-    // 指示テキスト（上部・帯付き）
-    X.globalAlpha=1;X.shadowBlur=0;
-    const msg=fwd?t('tutStep1'):t('tutStep2');
-    X.font='bold 17px sans-serif';const tw=X.measureText(msg).width;
-    X.fillStyle='rgba(0,0,0,0.6)';X.fillRect(W/2-tw/2-12,H*0.20-17,tw+24,27);
-    X.fillStyle='#FFF';X.shadowColor='#000';X.shadowBlur=3;
-    X.fillText(msg,W/2,H*0.20+2);X.shadowBlur=0;
-    X.restore();
-    // スキップボタン（右下）
+    // 2番地は約2秒間プレイヤー自身に観察させてから誘導をフェードイン
+    let ga=1;
+    if(!fwd){const el=fc-blockStartFc;ga=el<TUT_GUIDE_DELAY?0:Math.min(1,(el-TUT_GUIDE_DELAY)/25)}
+    if(ga>0){
+      // 正しい側を淡くハイライト
+      const hp=(0.10+Math.abs(Math.sin(fc*0.06))*0.10)*ga;
+      X.save();X.fillStyle=`rgba(255,220,90,${hp.toFixed(3)})`;
+      if(fwd)X.fillRect(W*0.4,0,W*0.6,H);else X.fillRect(0,0,W*0.4,H);
+      X.restore();
+      // 大きな矢印（点滅）
+      X.save();X.textAlign='center';
+      const ap=(0.7+Math.abs(Math.sin(fc*0.08))*0.3)*ga;
+      X.globalAlpha=ap;X.fillStyle='#FFD24A';X.shadowColor='#000';X.shadowBlur=8;
+      X.font='bold '+Math.round(Math.min(64,W*0.1))+'px sans-serif';
+      X.fillText(fwd?'→':'←',fwd?W*0.72:W*0.22,H*0.52);
+      X.shadowBlur=0;X.restore();
+      // 指示テキスト（1番地=基準の説明2行 / 2番地=1行）
+      const lines=fwd?[t('tutStep1'),t('tutStep1b')]:[t('tutStep2')];
+      X.save();X.textAlign='center';X.globalAlpha=ga;X.font='bold 16px sans-serif';
+      let mw=0;for(const ln of lines)mw=Math.max(mw,X.measureText(ln).width);
+      const bh=lines.length*22+12,by=H*0.15;
+      X.fillStyle='rgba(0,0,0,0.62)';X.fillRect(W/2-mw/2-14,by,mw+28,bh);
+      X.fillStyle='#FFF';X.shadowColor='#000';X.shadowBlur=3;
+      lines.forEach((ln,i)=>X.fillText(ln,W/2,by+23+i*22));
+      X.shadowBlur=0;X.globalAlpha=1;X.restore();
+    }
+    // スキップボタン（観察中も常に表示）
     const sbw=86,sbh=26,sbx=W-sbw-12,sby=H-sbh-12;
     tutSkipBtn.x=sbx;tutSkipBtn.y=sby;tutSkipBtn.w=sbw;tutSkipBtn.h=sbh;
     X.save();X.fillStyle='rgba(20,20,30,0.7)';X.fillRect(sbx,sby,sbw,sbh);
@@ -2626,7 +2635,7 @@ function completeDie(){
   gs='complete_hit';completeHitTimer=0;bL=false;bR=false;pMov=false;
   return true;// handled, skip dying
 }
-function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;pDir=1;efStart=null;stopQuakeSe();bsphReady=false}
+function sB(){bsX=0;pX=bsX+120;camX=pX-W*0.3;pDir=1;efStart=null;stopQuakeSe();bsphReady=false;blockStartFc=fc}
 function sM(t,s){mTx=t;mSb=s||'';mTm=90}
 
 // === AD HOOK ===
