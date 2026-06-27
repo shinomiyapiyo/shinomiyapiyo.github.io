@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.962';
+const APP_VER='0.963';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -1712,7 +1712,7 @@ const titleBtns=[];// populated in dTitle
 let compDeleteConfirm=false;// show complete save delete confirmation
 function dTitle(){
   // Background: dark night street
-  if(titleBgOk){X.drawImage(titleBgImg,0,0,W,H)}else{X.fillStyle='#0a0a20';X.fillRect(0,0,W,H)}
+  if(titleBgOk){drawCover(titleBgImg)}else{X.fillStyle='#0a0a20';X.fillRect(0,0,W,H)}
   // Subtle gold particles
   for(let i=0;i<12;i++){const sx=((fc*0.5+i*137)%(W*0.25))+(i%2?0:W*0.75),sy=((fc*0.3+i*97)%H);X.fillStyle=`rgba(255,215,0,${0.15+Math.sin(fc*0.05+i)*0.15})`;X.beginPath();X.arc(sx,sy,1.5,0,Math.PI*2);X.fill()}
   // Character image (left side, smaller)
@@ -1823,19 +1823,21 @@ function dTitle(){
 }
 
 // === CLEAR ===
+// 背景画像をアスペクト比を保って画面いっぱいに描画（cover）。はみ出しはクロップ。
+// ay=縦のアンカー(0=上/0.5=中央/1=下)。横は常に中央。引き伸ばし歪みを防ぐ。
+function drawCover(img,ay){
+  const iw=img.naturalWidth||W,ih=img.naturalHeight||H;
+  const sc=Math.max(W/iw,H/ih),dw=iw*sc,dh=ih*sc;
+  X.drawImage(img,(W-dw)/2,(H-dh)*(ay==null?0.5:ay),dw,dh);
+}
 const clearBtns=[];
 const completeClearBtns=[];
 const challengeClearBtns=[];
 const easyClearBtns=[];
 // イージーモード専用クリア画面（ぴよ氏入りの生成画像＋Canvasテキスト）
 function dEasyClear(){
-  // 背景（夜明けの商店街にぴよ氏。生成画像）
-  if(easyClearBgOk){
-    // アスペクト比を保って画面を覆う(cover)。横中央・下端揃えで、余白のある上の空だけを切る
-    const iw=easyClearBgImg.naturalWidth||1376,ih=easyClearBgImg.naturalHeight||768;
-    const sc=Math.max(W/iw,H/ih),dw=iw*sc,dh=ih*sc;
-    X.drawImage(easyClearBgImg,(W-dw)/2,H-dh,dw,dh);
-  }
+  // 背景（夜明けの商店街にぴよ氏。生成画像）。下端揃え(ay=1)で足元を残し上の空を切る
+  if(easyClearBgOk){drawCover(easyClearBgImg,1)}
   else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FCE0CE');bg.addColorStop(1,'#F6C9B0');X.fillStyle=bg;X.fillRect(0,0,W,H)}
   // 上空に舞う桜＋光の粒（軽め）
   for(let i=0;i<22;i++){
@@ -1888,7 +1890,7 @@ function dEasyClear(){
 }
 function dClear(){
   // Background image or warm gradient fallback
-  if(clearBgOk){X.drawImage(clearBgImg,0,0,W,H)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FFF8E8');bg.addColorStop(1,'#FFE8D0');X.fillStyle=bg;X.fillRect(0,0,W,H)}
+  if(clearBgOk){drawCover(clearBgImg)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FFF8E8');bg.addColorStop(1,'#FFE8D0');X.fillStyle=bg;X.fillRect(0,0,W,H)}
   // Soft radial glow overlay
   const cGlow=X.createRadialGradient(W*0.33,H*0.35,0,W*0.33,H*0.35,W*0.4);
   cGlow.addColorStop(0,'rgba(255,220,120,0.15)');cGlow.addColorStop(1,'transparent');
@@ -1953,7 +1955,7 @@ function dClear(){
 
 // === CHALLENGE CLEAR (500番地到達) ===
 function dChallengeClear(){
-  if(challengeBgOk){X.drawImage(challengeBgImg,0,0,W,H)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1a0a2e');bg.addColorStop(1,'#0a0a14');X.fillStyle=bg;X.fillRect(0,0,W,H)}
+  if(challengeBgOk){drawCover(challengeBgImg)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1a0a2e');bg.addColorStop(1,'#0a0a14');X.fillStyle=bg;X.fillRect(0,0,W,H)}
   const cGlow=X.createRadialGradient(W/2,H*0.35,0,W/2,H*0.35,W*0.4);cGlow.addColorStop(0,'rgba(255,215,0,0.10)');cGlow.addColorStop(1,'transparent');X.fillStyle=cGlow;X.fillRect(0,0,W,H);
   for(let i=0;i<80;i++){const sx=((fc*0.8+i*97)%W),sy=((fc*0.5+i*131)%H);X.fillStyle=['#FFD700','#FFA500','#FFEE55'][i%3];X.globalAlpha=0.5+Math.sin(fc*0.03+i)*0.3;X.beginPath();X.arc(sx,sy,1+Math.random()*2,0,Math.PI*2);X.fill()}X.globalAlpha=1;
   X.save();X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=6;X.shadowOffsetX=1;X.shadowOffsetY=1;
@@ -1985,7 +1987,7 @@ function dChallengeClear(){
 // === RANKING SCREEN ===
 // === COMPLETE CLEAR ===
 function dCompleteClear(){
-  if(completeBgOk){X.drawImage(completeBgImg,0,0,W,H)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0a2e1a');bg.addColorStop(1,'#0a0a14');X.fillStyle=bg;X.fillRect(0,0,W,H)}
+  if(completeBgOk){drawCover(completeBgImg)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0a2e1a');bg.addColorStop(1,'#0a0a14');X.fillStyle=bg;X.fillRect(0,0,W,H)}
   const cGlow=X.createRadialGradient(W*0.33,H*0.35,0,W*0.33,H*0.35,W*0.4);cGlow.addColorStop(0,'rgba(255,200,100,0.12)');cGlow.addColorStop(1,'transparent');X.fillStyle=cGlow;X.fillRect(0,0,W,H);
   for(let i=0;i<80;i++){const sx=((fc*0.8+i*97)%W),sy=((fc*0.5+i*131)%H);X.fillStyle=['#22AA66','#44CC88','#88EEBB'][i%3];X.globalAlpha=0.5+Math.sin(fc*0.03+i)*0.3;X.beginPath();X.arc(sx,sy,1+Math.random()*2,0,Math.PI*2);X.fill()}X.globalAlpha=1;
   const pulse=0.8+Math.sin(fc*0.05)*0.2;
