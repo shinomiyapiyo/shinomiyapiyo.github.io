@@ -1,4 +1,4 @@
-const CACHE_NAME = '14banchi-v0959';
+const CACHE_NAME = '14banchi-v0960';
 const ASSETS = [
   './',
   './index.html',
@@ -76,7 +76,8 @@ const ASSETS = [
   './images/title_bg_night.webp',
   './images/clear_bg.webp',
   './images/complete_bg.webp',
-  './images/challenge_bg.webp'
+  './images/challenge_bg.webp',
+  './images/easy_clear_bg.jpg'
 ];
 
 self.addEventListener('install', e => {
