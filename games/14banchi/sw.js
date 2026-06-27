@@ -1,7 +1,8 @@
-const CACHE_NAME = '14banchi-v0972';
+const CACHE_NAME = '14banchi-v0973';
 const ASSETS = [
   './',
   './index.html',
+  './native-bridge.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

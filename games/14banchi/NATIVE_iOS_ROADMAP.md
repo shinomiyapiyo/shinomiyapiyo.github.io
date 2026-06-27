@@ -18,15 +18,19 @@
 
 > これらは順番待ちが発生するので、先に着手しておくと後がスムーズ。
 
-- [ ] **【あなた】Apple Developer Program 登録**（年 $99）。審査に1日〜数日かかることあり → 最優先で開始。 https://developer.apple.com/programs/
+- [x] **【あなた】Apple Developer Program 登録**（完了）。
 - [ ] **【あなた】Mac に Xcode をインストール**（App Store から。数GB・時間がかかる）。
 - [ ] **【あなた】Node.js（LTS）+ npm をインストール**（Capacitor CLI 用）。 https://nodejs.org/
-- [ ] **【あなた】Google AdMob アカウント作成**。 https://admob.google.com/
-- [ ] **【あなた】AdMob で iOS アプリを登録**し、**広告ユニットを2つ作成**：
-  - リワード広告（復活用） … ユニットIDをメモ
-  - インタースティシャル広告（遷移時用） … ユニットIDをメモ
-  - **AdMob アプリID**（`ca-app-pub-XXXX~YYYY`）もメモ
+- [x] **【あなた】Google AdMob アカウント作成**（完了）。
+- [x] **【あなた】AdMob で iOS アプリ「14番地」登録 + 広告ユニット2つ作成**（完了）。下記ID取得済み。
 - [ ] **【あなた】CocoaPods をインストール**（`sudo gem install cocoapods`。iOSの依存管理に必要）。
+
+### 取得済みの値（コードに設定済み / Info.plistに使用）
+- バンドルID：`com.nullpoworks.banchi14`（capacitor.config.json に設定済み）
+- AdMob **アプリID**（`~`）：`ca-app-pub-4148293353679224~5712611505` ← **iOSの Info.plist の `GADApplicationIdentifier` に入れる**
+- リワード広告ユニット：`ca-app-pub-4148293353679224/2368262869`（native-bridge.js に設定済み）
+- インタースティシャル広告ユニット：`ca-app-pub-4148293353679224/8545824256`（native-bridge.js に設定済み）
+- ※開発中は `native-bridge.js` の `USE_TEST_ADS=true`（Googleテスト広告）。本番ビルド時に `false` に。
 
 ---
 
@@ -120,11 +124,42 @@ npx cap open ios   # Xcodeが開く
 
 ## 6. 進捗（このファイルで管理）
 
-- [ ] Step 1: Capacitor導入
+- [~] Step 1: Capacitor導入 … **Claude側ファイル作成済み**（下記）。あとは【あなた】が `npm install` 等を実行。
 - [ ] Step 2: iOSプロジェクト生成
-- [ ] Step 3: AdMob統合
+- [ ] Step 3: AdMob統合 … ブリッジ `native-bridge.js` 雛形作成済み（実機でAPI微調整が必要）
 - [ ] Step 4: ライフサイクル/向き/アイコン
 - [ ] Step 5: 実機テスト/TestFlight
 - [ ] Step 6: App Store申請
 
-> 次アクション：**セクション1の準備（特にApple Developer登録）** を開始。並行して、決め事（バンドルID・アプリ名・広告頻度・ATT方針）が決まればClaudeがStep 1の設定ファイルから着手する。
+---
+
+## 7. 現在の状態（Claude実装済み Ver.0.973）
+
+`games/14banchi/` に作成済み：
+- `capacitor.config.json`（appId=com.nullpoworks.banchi14, appName=14番地, webDir=www）
+- `package.json`（Capacitor依存＋`copy:web`/`sync`スクリプト）
+- `native-bridge.js`（AdMobブリッジ：リワード/インタースティシャルのユニットID設定済み・Web/PWAでは無効化）
+- `.gitignore`（node_modules/www/ios を除外）
+- `index.html` に `<script src="native-bridge.js" defer>` 追加（Webでは no-op を確認済み）
+
+### 次に【あなた】がターミナルで実行（Mac・Xcode・Node・CocoaPods 導入後）
+```bash
+cd games/14banchi
+npm install                          # 依存インストール
+npm run copy:web                     # 配信用ファイルを www/ にコピー
+npx cap add ios                      # iOSプロジェクト(ios/)生成
+npm run sync                         # www更新＋ネイティブ同期
+npx cap open ios                     # Xcodeが開く
+```
+Xcode側でやること（Step 3〜4）：
+1. Signing & Capabilities に Apple Developer アカウント設定。
+2. `ios/App/App/Info.plist` に **AdMobアプリID** を追加：
+   - キー `GADApplicationIdentifier` = `ca-app-pub-4148293353679224~5712611505`
+   - （ATT採用時のみ）`NSUserTrackingUsageDescription` = 説明文
+3. 画面の向きを **横向き固定**（Deployment Info → Device Orientation で Landscape のみ）。
+4. アプリアイコン/起動画面を設定。
+
+### 本番ビルド前の切り替え
+- `native-bridge.js` の `USE_TEST_ADS = true` → **`false`**（実広告ID・実広告に切替）。
+
+> ⚠ `native-bridge.js` のAdMobメソッド/イベント名は @capacitor-community/admob のバージョン依存。`npm install` 後、実機ビルドで動作確認し、必要ならClaudeが微調整する。

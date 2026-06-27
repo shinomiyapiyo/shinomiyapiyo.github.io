@@ -1,0 +1,5 @@
+# Capacitor / native build artifacts (do not deploy to GitHub Pages)
+node_modules/
+www/
+ios/
+.DS_Store
