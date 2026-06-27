@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.960';
+const APP_VER='0.961';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -1827,7 +1827,12 @@ const easyClearBtns=[];
 // イージーモード専用クリア画面（ぴよ氏入りの生成画像＋Canvasテキスト）
 function dEasyClear(){
   // 背景（夜明けの商店街にぴよ氏。生成画像）
-  if(easyClearBgOk){X.drawImage(easyClearBgImg,0,0,W,H)}
+  if(easyClearBgOk){
+    // アスペクト比を保って画面を覆う(cover)。横中央・下端揃えで、余白のある上の空だけを切る
+    const iw=easyClearBgImg.naturalWidth||1376,ih=easyClearBgImg.naturalHeight||768;
+    const sc=Math.max(W/iw,H/ih),dw=iw*sc,dh=ih*sc;
+    X.drawImage(easyClearBgImg,(W-dw)/2,H-dh,dw,dh);
+  }
   else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FCE0CE');bg.addColorStop(1,'#F6C9B0');X.fillStyle=bg;X.fillRect(0,0,W,H)}
   // 上空に舞う桜＋光の粒（軽め）
   for(let i=0;i<22;i++){
