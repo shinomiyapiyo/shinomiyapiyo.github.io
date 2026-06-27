@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.966';
+const APP_VER='0.967';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -230,11 +230,11 @@ const T={
   modeEasy:{ja:'イージーモード',en:'Easy Mode'},
   menuRanking:{ja:'ランキング',en:'Ranking'},
   menuHints:{ja:'ヒント（異変一覧）',en:'Hints (Anomaly List)'},
-  descNormal:{ja:'全14番地を脱出せよ',en:'Escape all 14 blocks'},
-  descCompleteAll:{ja:(n)=>`全${n}種の異変を制覇せよ`,en:(n)=>`Master all ${n} anomalies`},
+  descNormal:{ja:'全異変・ミスは1番地へ',en:'All anomalies, miss → Block 1'},
+  descCompleteAll:{ja:(n)=>`全${n}種収集・ライフ制`,en:(n)=>`Collect all ${n}, lives system`},
   descChallenge1:{ja:'1ミスで即終了',en:'One miss and you\'re out'},
   descChallenge2:{ja:'ランキングに名を刻め！',en:'Leave your mark on the ranking!'},
-  descEasy:{ja:'やさしい異変・1つ戻るだけ',en:'Gentle anomalies, fall back one'},
+  descEasy:{ja:'やさしい異変だけ・無死',en:'Easy anomalies only, no death'},
   // In-game HUD
   blockNum:{ja:(n)=>`${n}番地`,en:(n)=>`Block ${n}`},
   blockProgress:{ja:(c,m)=>`${c} / ${m} 番地`,en:(c,m)=>`${c} / ${m} Blocks`},
@@ -2833,12 +2833,31 @@ function render(){
   dSky();dTkyTower();dBld(0,0.12,H*0.22,'#0C0C14','#22200E');dBld(1,0.3,H*0.17,'#101018','#24220C');
   dBreathingBuilding();
   dPol();dGnd();dLmp();dSign();dBackGate();dGate();dAnom();
-  // Heart item (complete mode life recovery)
+  // Heart item (complete mode life recovery) — 「回復アイテム」と一目で分かる見た目に
   if(heartItemActive){
     const hix=heartItemX-camX,hiy=H*GH-20+Math.sin(fc*0.06)*4;
-    if(hix>-20&&hix<W+20){
-      X.save();X.globalAlpha=0.8+Math.sin(fc*0.08)*0.2;
+    if(hix>-30&&hix<W+30){
+      X.save();
+      // 安心感のある緑のグロー（異変の赤と対照的＝「良いもの」と伝える）
+      const gr=20+Math.sin(fc*0.08)*3;
+      const gg=X.createRadialGradient(hix,hiy,0,hix,hiy,gr);
+      gg.addColorStop(0,'rgba(130,255,160,0.40)');gg.addColorStop(0.55,'rgba(90,230,130,0.14)');gg.addColorStop(1,'transparent');
+      X.fillStyle=gg;X.beginPath();X.arc(hix,hiy,gr,0,Math.PI*2);X.fill();
+      // 上昇するキラキラ
+      for(let i=0;i<3;i++){
+        const tp=(fc*0.6+i*23)%50;
+        const sxp=hix+Math.sin(fc*0.07+i*2.1)*9,syp=hiy-4-tp*0.5;
+        X.globalAlpha=Math.max(0,1-tp/50)*0.8;X.fillStyle='#DFFFE6';
+        const ss=1+Math.sin(fc*0.12+i)*0.5;
+        X.beginPath();X.arc(sxp,syp,ss,0,Math.PI*2);X.fill();
+      }
+      // ハート本体
+      X.globalAlpha=0.85+Math.sin(fc*0.08)*0.15;
       dI(ICN.lives,hix,hiy,22);
+      // 「+1」表示で回復アイテムと明示
+      X.globalAlpha=0.95;X.fillStyle='#AFFFC0';X.font='bold 12px sans-serif';X.textAlign='left';
+      X.shadowColor='rgba(0,40,10,0.6)';X.shadowBlur=3;
+      X.fillText('+1',hix+12,hiy-7);X.shadowBlur=0;
       X.restore();
     }
   }
