@@ -162,3 +162,38 @@ npx cap open ios   # Xcodeが開く
 ### 参考：ロケール問題（解決済み）
 `pod install` が `Unicode Normalization ... ASCII-8BIT` で失敗する場合はシェルのロケールが非UTF-8。
 `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` を付けて実行（`npm run sync` は対策済み）。
+
+---
+
+## 8. Android（クローズドテスト更新）
+
+### 方針（2026-06-27 ユーザー決定）
+- **Android本番申請は「iOSが正式リリースされた後」**。iOS優先は維持。
+- ただし **クローズドテスト版は今から最新（Ver.0.974）に更新**しておく。
+- 最終申請の少し前に、ユーザーが実プレイユーザーに呼びかける（実稼働ユーザー確保）。
+
+### 重要な前提（Google Play Console で確認済み）
+- 既存Androidアプリ **「14番地 〜ぴよ氏の怪異街歩き〜」**、パッケージ **`com.nullpoworks.banchi14`** ＝ Capacitorと一致 ✅
+- **クローズドテストの要件（12人以上×14日以上）は達成済み**（製品版アクセス申請が可能な段階）。前回「実稼働ユーザーがいない」却下は別アプリの件。
+
+### ✅ Claudeが実行・設定済み（このMac上）
+- `npm i @capacitor/android` → `npx cap add android`（`android/` 生成・Gradle同期OK）
+- `native-bridge.js` を **iOS/Android別の広告ID出し分け**に修正（`Capacitor.getPlatform()`）。Android本番ユニットは未作成のため `PROD_ANDROID` は仮(0埋め)。
+- `android/app/src/main/AndroidManifest.xml`：AdMob App ID（**Google公式テスト用** `ca-app-pub-3940256099942544~3347511713`）＋ **横向き固定**（`configure-android.sh` で再現可）
+- `npx cap copy` で最新Web資産を ios/android 両方へ反映
+
+### ▶ 次に【あなた】がやること（Androidクローズドテスト更新）
+1. `cd games/14banchi && npx cap open android`（Android Studioが開く）
+2. Android Studioで **アプリアイコン**（`res/mipmap`）を設定（PWA用 icon-512.png を元に生成可）
+3. **署名付きAAB（App Bundle）を生成**：Build → Generate Signed Bundle / APK → **既存Playアプリと同じアップロード鍵**で署名（最初にアップした時の鍵）
+4. Play Console → テストとリリース → **クローズドテスト** → 新しいリリースで AAB をアップロード（versionCodeは既存より大きく）
+5. 反映を確認（テスターで実機確認）
+
+### ⚠ Android本番（iOSリリース後）に必要なこと
+- **AdMobで「Androidアプリ」＋広告ユニット2つ作成** → `native-bridge.js` の `PROD_ANDROID` と AndroidManifest の App ID を**実IDに差し替え**（Claude対応）＋ `USE_TEST_ADS=false`
+- 本番リリース申請（「本番環境へのアクセスを申請」）
+
+### 進捗
+- [x] Android: `cap add android`／Manifest設定／ブリッジのプラットフォーム別ID対応
+- [ ] Android: アイコン設定・署名AAB生成・クローズドテストへアップロード（あなた）
+- [ ] Android: 本番用 実広告ユニット差し替え＋本番申請（iOSリリース後）

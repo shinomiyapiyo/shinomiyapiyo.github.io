@@ -23,16 +23,31 @@
   // ATT(トラッキング許可)。初回は非パーソナライズ広告で回避(案A)＝false。採用時は true。
   var REQUEST_ATT = false;
 
-  // 本番ID（AdMob発行 / アプリID ca-app-pub-4148293353679224~5712611505 は Info.plist 側）
-  var PROD = {
+  // プラットフォーム判定（iOS / Android で広告ユニットIDは別）
+  var platform = (typeof Cap.getPlatform === 'function') ? Cap.getPlatform() : 'ios';
+  var isAndroid = (platform === 'android');
+
+  // 本番ID（AdMob発行）。iOSアプリID=…~5712611505 は Info.plist 側、AndroidアプリID は AndroidManifest 側。
+  var PROD_IOS = {
     rewarded: 'ca-app-pub-4148293353679224/2368262869',
     interstitial: 'ca-app-pub-4148293353679224/8545824256'
   };
-  // Google公式テストID（開発用）
-  var TEST = {
+  var PROD_ANDROID = {
+    // TODO: AdMobで「Androidアプリ」＋広告ユニット作成後に実IDへ差し替え（本番ビルド前）
+    rewarded: 'ca-app-pub-4148293353679224/0000000000',
+    interstitial: 'ca-app-pub-4148293353679224/0000000000'
+  };
+  // Google公式テストID（開発/クローズドテスト用・プラットフォーム別）
+  var TEST_IOS = {
     rewarded: 'ca-app-pub-3940256099942544/1712485313',
     interstitial: 'ca-app-pub-3940256099942544/4411468910'
   };
+  var TEST_ANDROID = {
+    rewarded: 'ca-app-pub-3940256099942544/5224354917',
+    interstitial: 'ca-app-pub-3940256099942544/1033173712'
+  };
+  var PROD = isAndroid ? PROD_ANDROID : PROD_IOS;
+  var TEST = isAndroid ? TEST_ANDROID : TEST_IOS;
   var IDS = USE_TEST_ADS ? TEST : PROD;
 
   var AdMob = Cap.registerPlugin('AdMob');

@@ -2,18 +2,22 @@
   "name": "banchi14",
   "version": "1.0.0",
   "private": true,
-  "description": "14番地 (iOS native via Capacitor)",
+  "description": "14番地 (iOS/Android native via Capacitor)",
   "scripts": {
     "copy:web": "rm -rf www && mkdir -p www && cp index.html sw.js native-bridge.js manifest.json icon-192.png icon-512.png www/ && cp -R images audio www/",
-    "sync": "npm run copy:web && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx cap sync ios",
+    "copy": "npm run copy:web && npx cap copy",
+    "sync": "npm run copy:web && JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ANDROID_HOME=\"$HOME/Library/Android/sdk\" LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx cap sync",
     "configure:ios": "bash configure-ios.sh",
-    "open:ios": "npx cap open ios"
+    "configure:android": "bash configure-android.sh",
+    "open:ios": "npx cap open ios",
+    "open:android": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^6.0.0",
+    "@capacitor/android": "^6.2.1",
     "@capacitor/app": "^6.0.0",
     "@capacitor/core": "^6.0.0",
-    "@capacitor/ios": "^6.0.0",
-    "@capacitor-community/admob": "^6.0.0"
+    "@capacitor/ios": "^6.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0"
