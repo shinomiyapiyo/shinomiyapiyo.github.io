@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.959';
+const APP_VER='0.960';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -87,6 +87,7 @@ const titleBgImg=loadImg('images/title_bg_night.webp');let titleBgOk=false;title
 const clearBgImg=loadImg('images/clear_bg.webp');let clearBgOk=false;clearBgImg.onload=()=>{clearBgOk=true};
 const completeBgImg=loadImg('images/complete_bg.webp');let completeBgOk=false;completeBgImg.onload=()=>{completeBgOk=true};
 const challengeBgImg=loadImg('images/challenge_bg.webp');let challengeBgOk=false;challengeBgImg.onload=()=>{challengeBgOk=true};
+const easyClearBgImg=loadImg('images/easy_clear_bg.jpg');let easyClearBgOk=false;easyClearBgImg.onload=()=>{easyClearBgOk=true};
 const deathImg=loadImg('images/characters/piyo_death.webp');let deathImgOk=false;deathImg.onload=()=>{deathImgOk=true};
 const clearImg=loadImg('images/characters/piyo_clear.webp');let clearImgOk=false;clearImg.onload=()=>{clearImgOk=true};
 const rankImg=loadImg('images/characters/piyo_ranking.webp');let rankImgOk=false;rankImg.onload=()=>{rankImgOk=true};
@@ -254,6 +255,8 @@ const T={
   clearCongrats:{ja:'おめでとうございます！',en:'Congratulations!'},
   btnRetry:{ja:'もう一度',en:'Play Again'},
   btnTitle:{ja:'タイトルへ',en:'Title'},
+  easyClearNext:{ja:'次はノーマルモードに挑戦しよう！',en:'Next, take on Normal Mode!'},
+  btnTryNormal:{ja:'ノーマルに挑戦',en:'Try Normal'},
   // Challenge clear
   hallOfFame:{ja:'殿 堂 入 り',en:'Hall of Fame'},
   hallReached:{ja:(n)=>`${n}番地 到達！`,en:(n)=>`Reached Block ${n}!`},
@@ -1820,6 +1823,51 @@ function dTitle(){
 const clearBtns=[];
 const completeClearBtns=[];
 const challengeClearBtns=[];
+const easyClearBtns=[];
+// イージーモード専用クリア画面（ぴよ氏入りの生成画像＋Canvasテキスト）
+function dEasyClear(){
+  // 背景（夜明けの商店街にぴよ氏。生成画像）
+  if(easyClearBgOk){X.drawImage(easyClearBgImg,0,0,W,H)}
+  else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FCE0CE');bg.addColorStop(1,'#F6C9B0');X.fillStyle=bg;X.fillRect(0,0,W,H)}
+  // 上空に舞う桜＋光の粒（軽め）
+  for(let i=0;i<22;i++){
+    X.fillStyle=i%2?'#FFD86A':'#FFB0CE';
+    X.globalAlpha=0.22+Math.sin(fc*0.04+i*0.7)*0.18;
+    const px=((fc*0.8+i*151)%W),py=((fc*0.5+i*89)%(H*0.55)),pr=1.2+((i*5)%3);
+    X.beginPath();X.arc(px,py,pr,0,Math.PI*2);X.fill();
+  }
+  X.globalAlpha=1;
+  // 上部タイトル（空の余白）：脱出成功！
+  const pulse=0.85+Math.sin(fc*0.05)*0.12;
+  X.save();X.textAlign='center';
+  X.shadowColor='rgba(120,60,20,0.55)';X.shadowBlur=6;
+  X.fillStyle='#FFEFA0';X.font='bold '+Math.round(Math.min(34,W*0.05))+'px sans-serif';
+  X.globalAlpha=pulse;
+  X.fillText(t('clearHeader'),W*0.5,H*0.13);
+  X.globalAlpha=1;X.shadowBlur=0;X.restore();
+  // 下部メッセージ帯（ぴよ氏の顔を避けて下側に）
+  X.save();X.textAlign='center';
+  const mbW=Math.min(580,W*0.94),mbH=Math.max(58,H*0.155),mbY=H*0.62;
+  X.fillStyle='rgba(20,10,5,0.42)';X.beginPath();X.roundRect(W*0.5-mbW/2,mbY,mbW,mbH,10);X.fill();
+  X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=4;
+  X.fillStyle='#FFFFFF';X.font='bold 16px sans-serif';
+  X.fillText(t('clearMsg'),W*0.5,mbY+mbH*0.40);
+  X.fillStyle='#FFE0A0';X.font='bold 15px sans-serif';
+  X.fillText(t('easyClearNext'),W*0.5,mbY+mbH*0.80);
+  X.shadowBlur=0;X.restore();
+  // ボタン（最下部）：ノーマルに挑戦 / もう一度 / タイトルへ
+  easyClearBtns.length=0;
+  const bH=Math.max(36,Math.min(44,H*0.11)),gap=10;
+  const b1W=Math.min(172,W*0.30),b2W=Math.min(128,W*0.22),b3W=Math.min(128,W*0.22);
+  const totalW=b1W+b2W+b3W+gap*2;
+  let bx=W*0.5-totalW/2;const byB=H*0.86;
+  easyClearBtns.push({x:bx,y:byB,w:b1W,h:bH,id:'normal'});
+  dBtn(bx,byB,b1W,bH,t('btnTryNormal'),'#CC2222',ICN.play);bx+=b1W+gap;
+  easyClearBtns.push({x:bx,y:byB,w:b2W,h:bH,id:'replay'});
+  dBtn(bx,byB,b2W,bH,t('btnRetry'),'#3399DD',ICN.retry);bx+=b2W+gap;
+  easyClearBtns.push({x:bx,y:byB,w:b3W,h:bH,id:'title'});
+  dBtn(bx,byB,b3W,bH,t('btnTitle'),'#887766',ICN.home);
+}
 function dClear(){
   // Background image or warm gradient fallback
   if(clearBgOk){X.drawImage(clearBgImg,0,0,W,H)}else{const bg=X.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#FFF8E8');bg.addColorStop(1,'#FFE8D0');X.fillStyle=bg;X.fillRect(0,0,W,H)}
@@ -2565,7 +2613,8 @@ function update(){
   if(tTm>0){tTm--;if(tTm===0){if(tTp==='a'){
     // Queue block advance with blackout transition
     const nb=cB+1;
-    if((gameMode==='normal'||gameMode==='easy')&&nb>14){cB++;gs='clear';playBgm(bgmGoal);return}
+    if(gameMode==='normal'&&nb>14){cB++;gs='clear';playBgm(bgmGoal);return}
+    if(gameMode==='easy'&&nb>14){cB++;gs='easy_clear';playBgm(bgmGoal);return}
     if(gameMode==='challenge'&&nb>CHALLENGE_MAX){cB++;gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
     btLabel=tf('blockNum',nb);btAction=()=>{cB++;
       if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){clearCompleteProgress();gs='complete_clear';playBgm(bgmGoal);return}
@@ -2747,7 +2796,7 @@ function dGameOver(){
 function render(){
   X.clearRect(0,0,W,H);
   if(gs==='tap'){dTap();return}
-  if(gs==='title'){dTitle();return}if(gs==='clear'){dClear();return}
+  if(gs==='title'){dTitle();return}if(gs==='clear'){dClear();return}if(gs==='easy_clear'){dEasyClear();return}
   if(gs==='ranking'){dRanking();return}
   if(gs==='hints'){dHints();return}
   if(gs==='settings'){dSettings();return}
@@ -2897,7 +2946,7 @@ window.onNativeBack=function(){
     if(compDeleteConfirm){compDeleteConfirm=false;return}
     exitConfirm=!exitConfirm;return;
   }
-  if(gs==='gameover'||gs==='clear'||gs==='challenge_clear'||gs==='complete_clear'){
+  if(gs==='gameover'||gs==='clear'||gs==='easy_clear'||gs==='challenge_clear'||gs==='complete_clear'){
     if(showNameEntry)return;// name entry active: ignore back
     showAdThenTitle(goToTitle);return;
   }
@@ -3015,6 +3064,15 @@ function hS(e){
     const tcx=(ts[0].clientX-rc.left)*(W/rc.width),tcy=(ts[0].clientY-rc.top)*(H/rc.height);
     for(const b of clearBtns){if(tcx>=b.x&&tcx<=b.x+b.w&&tcy>=b.y&&tcy<=b.y+b.h){
       if(b.id==='replay'){showAdThenTitle(()=>startGame('normal'));return}
+      if(b.id==='title'){showAdThenTitle(goToTitle);return}
+    }}return;
+  }
+  if(gs==='easy_clear'){
+    const rcE=C.getBoundingClientRect();const tsE=e.touches||[{clientX:e.clientX,clientY:e.clientY}];
+    const tcxE=(tsE[0].clientX-rcE.left)*(W/rcE.width),tcyE=(tsE[0].clientY-rcE.top)*(H/rcE.height);
+    for(const b of easyClearBtns){if(tcxE>=b.x&&tcxE<=b.x+b.w&&tcyE>=b.y&&tcyE<=b.y+b.h){
+      if(b.id==='normal'){showAdThenTitle(()=>startGame('normal'));return}
+      if(b.id==='replay'){showAdThenTitle(()=>startGame('easy'));return}
       if(b.id==='title'){showAdThenTitle(goToTitle);return}
     }}return;
   }
@@ -3168,6 +3226,14 @@ C.addEventListener('mousedown',(e)=>{
       if(b.id==='title'){showAdThenTitle(goToTitle);return}
     }}return;
   }
+  if(gs==='easy_clear'){
+    const rcE=C.getBoundingClientRect();const mcxE=(e.clientX-rcE.left)*(W/rcE.width),mcyE=(e.clientY-rcE.top)*(H/rcE.height);
+    for(const b of easyClearBtns){if(mcxE>=b.x&&mcxE<=b.x+b.w&&mcyE>=b.y&&mcyE<=b.y+b.h){
+      if(b.id==='normal'){showAdThenTitle(()=>startGame('normal'));return}
+      if(b.id==='replay'){showAdThenTitle(()=>startGame('easy'));return}
+      if(b.id==='title'){showAdThenTitle(goToTitle);return}
+    }}return;
+  }
   if(gs==='complete_clear'){
     const rc8=C.getBoundingClientRect();const mcx8=(e.clientX-rc8.left)*(W/rc8.width),mcy8=(e.clientY-rc8.top)*(H/rc8.height);
     for(const b of completeClearBtns){if(mcx8>=b.x&&mcx8<=b.x+b.w&&mcy8>=b.y&&mcy8<=b.y+b.h){
@@ -3293,7 +3359,7 @@ document.addEventListener('keydown',(e)=>{
   else if(gs==='ranking'){if(rankReportConfirm){rankReportConfirm=null}else if(rankReportMode){rankReportMode=false}else{gs='title';playBgm(bgmTitle)}}
   else if(gs==='settings'){gs='title';playBgm(bgmTitle)}
   else if(gs==='hints'){gs='title'}
-  else if(gs==='clear'||gs==='challenge_clear'||gs==='complete_clear'||gs==='gameover'){
+  else if(gs==='clear'||gs==='easy_clear'||gs==='challenge_clear'||gs==='complete_clear'||gs==='gameover'){
     if(!showNameEntry){showAdThenTitle(goToTitle)}
   }
 });
