@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.967';
+const APP_VER='0.968';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -321,6 +321,7 @@ const T={
   returnedMsgEasy:{ja:'1つ前の番地に戻された…',en:'Knocked back one block...'},
   misjudgeMsg:{ja:'異変の判断を間違えた',en:'Misjudged the anomaly'},
   lifeRecovery:{ja:'ライフ回復！',en:'Life recovered!'},
+  warnRun:{ja:'逃げろ！',en:'RUN!'},
   lifeCount:{ja:(c,m)=>`ライフ: ${c}/${m}`,en:(c,m)=>`Lives: ${c}/${m}`},
   rotateMsg:{ja:'画面ロックを解除して\n横向きにしてプレイしてください',en:'Unlock screen rotation and\nplay in landscape mode'},
   saveMark:{ja:(n,m)=>`${n}/${m}`,en:(n,m)=>`${n}/${m}`},
@@ -1569,6 +1570,18 @@ function dUI(){
   X.fillRect(px+13,py+6,5,18);X.fillRect(px+25,py+6,5,18);
   X.shadowBlur=0;X.restore();
   if(mTm>0){const al=Math.min(1,mTm/20),mw=230,mh=mSb?46:32;X.fillStyle=`rgba(0,0,0,${al*0.8})`;X.fillRect(W/2-mw/2,H*0.12,mw,mh);X.strokeStyle=`rgba(255,215,0,${al*0.5})`;X.lineWidth=1;X.strokeRect(W/2-mw/2,H*0.12,mw,mh);X.fillStyle=`rgba(255,255,255,${al})`;X.font='bold 14px sans-serif';X.textAlign='center';X.fillText(mTx,W/2,H*0.12+20);if(mSb){X.fillStyle=`rgba(200,200,200,${al*0.8})`;X.font='11px sans-serif';X.fillText(mSb,W/2,H*0.12+36)}}
+  // bugaSphere警告: 金属球が出現したら、その番地を出るまで「逃げろ！」を点滅表示
+  if(hasA&&AN[aT]==='bugaSphere'&&bsphReady){
+    const blink=0.55+Math.abs(Math.sin(fc*0.18))*0.45;
+    X.save();X.textAlign='center';X.lineJoin='round';
+    X.font='bold '+Math.round(Math.min(34,W*0.06))+'px sans-serif';
+    X.lineWidth=5;X.strokeStyle='rgba(60,0,0,0.9)';
+    X.strokeText(t('warnRun'),W/2,H*0.33);
+    X.shadowColor='#FF0000';X.shadowBlur=14*blink;
+    X.globalAlpha=blink;X.fillStyle='#FF3A2A';
+    X.fillText(t('warnRun'),W/2,H*0.33);
+    X.globalAlpha=1;X.shadowBlur=0;X.restore();
+  }
   // Block 1 tutorial hints
   if(cB===1&&tTm===0){
     const hints=[t('hint1'),t('hint2'),t('hint3'),t('hint4')];
