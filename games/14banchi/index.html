@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.968';
+const APP_VER='0.969';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -322,6 +322,11 @@ const T={
   misjudgeMsg:{ja:'異変の判断を間違えた',en:'Misjudged the anomaly'},
   lifeRecovery:{ja:'ライフ回復！',en:'Life recovered!'},
   warnRun:{ja:'逃げろ！',en:'RUN!'},
+  tutStep1:{ja:'異変なし。右に進もう',en:'All normal. Go right'},
+  tutStep2:{ja:'異変だ…！左へ引き返そう',en:'Anomaly! Go back left'},
+  tutDoneTitle:{ja:'遊び方マスター！',en:'You got it!'},
+  tutDoneMsg:{ja:'異変を見つけたら引き返そう',en:'Spot an anomaly? Turn back!'},
+  tutSkip:{ja:'スキップ ▶▶',en:'Skip ▶▶'},
   lifeCount:{ja:(c,m)=>`ライフ: ${c}/${m}`,en:(c,m)=>`Lives: ${c}/${m}`},
   rotateMsg:{ja:'画面ロックを解除して\n横向きにしてプレイしてください',en:'Unlock screen rotation and\nplay in landscape mode'},
   saveMark:{ja:(n,m)=>`${n}/${m}`,en:(n,m)=>`${n}/${m}`},
@@ -666,6 +671,9 @@ let completeLives=getMaxLives();
 let lastDeathCause='';// death cause for game over screen
 // Complete mode: heart item drop
 let heartItemX=-999;let heartItemActive=false;
+// 対話型チュートリアル（初回のイージー/ノーマルのみ）
+let tutActive=false,tutDoneTimer=0;const tutSkipBtn={x:0,y:0,w:0,h:0};
+function finishTut(){tutActive=false;tutDoneTimer=0;try{localStorage.setItem('14b_tut_done','1')}catch(e){}}
 let stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*6000,y:Math.random()*0.38,b:Math.random(),s:0.5+Math.random()*1.5});
 
 // === DRAW PLAYER ===
@@ -743,6 +751,11 @@ const AN=[
 const EASY_AN=[1,2,3,4,6,7,8,9,10,11,12,14,15,17,18,19,20,21,22,23,24,26,34,37,38,39];
 function genA(){
   BW=BW_NORMAL;runnerActive=false;
+  // チュートリアル: 1番地=正常(通常ロジックでhasA=false)、2番地=赤い空を強制、3番地到達で完了
+  if(tutActive){
+    if(cB>=3){finishTut();tutDoneTimer=200;}// 2番地を正しく越えた＝完了。以降は通常生成へ
+    else if(cB===2){hasA=true;aT=AN.indexOf('redSky');const ifn=ANOM_INIT[AN[aT]];if(ifn)ifn();heartItemActive=false;return}
+  }
   if(gameMode==='normal'){
     if(cB<=1||cB>=14){hasA=false;return}
     hasA=Math.random()<0.70;
@@ -1582,8 +1595,51 @@ function dUI(){
     X.fillText(t('warnRun'),W/2,H*0.33);
     X.globalAlpha=1;X.shadowBlur=0;X.restore();
   }
-  // Block 1 tutorial hints
-  if(cB===1&&tTm===0){
+  // 対話型チュートリアル: 1番地=右に進む / 2番地=左に引き返す を誘導（ハイライト＋矢印＋指示）
+  tutSkipBtn.w=0;
+  if(tutActive&&(cB===1||cB===2)&&tTm===0&&btTimer===0){
+    const fwd=(cB===1);
+    // 正しい側を淡くハイライト
+    const hp=0.10+Math.abs(Math.sin(fc*0.06))*0.10;
+    X.save();X.fillStyle=`rgba(255,220,90,${hp.toFixed(3)})`;
+    if(fwd)X.fillRect(W*0.4,0,W*0.6,H);else X.fillRect(0,0,W*0.4,H);
+    X.restore();
+    // 大きな矢印（点滅）
+    X.save();X.textAlign='center';
+    const ap=0.7+Math.abs(Math.sin(fc*0.08))*0.3;
+    X.globalAlpha=ap;X.fillStyle='#FFD24A';X.shadowColor='#000';X.shadowBlur=8;
+    X.font='bold '+Math.round(Math.min(64,W*0.1))+'px sans-serif';
+    X.fillText(fwd?'→':'←',fwd?W*0.72:W*0.22,H*0.52);
+    // 指示テキスト（上部・帯付き）
+    X.globalAlpha=1;X.shadowBlur=0;
+    const msg=fwd?t('tutStep1'):t('tutStep2');
+    X.font='bold 17px sans-serif';const tw=X.measureText(msg).width;
+    X.fillStyle='rgba(0,0,0,0.6)';X.fillRect(W/2-tw/2-12,H*0.20-17,tw+24,27);
+    X.fillStyle='#FFF';X.shadowColor='#000';X.shadowBlur=3;
+    X.fillText(msg,W/2,H*0.20+2);X.shadowBlur=0;
+    X.restore();
+    // スキップボタン（右下）
+    const sbw=86,sbh=26,sbx=W-sbw-12,sby=H-sbh-12;
+    tutSkipBtn.x=sbx;tutSkipBtn.y=sby;tutSkipBtn.w=sbw;tutSkipBtn.h=sbh;
+    X.save();X.fillStyle='rgba(20,20,30,0.7)';X.fillRect(sbx,sby,sbw,sbh);
+    X.strokeStyle='rgba(255,255,255,0.35)';X.lineWidth=1;X.strokeRect(sbx,sby,sbw,sbh);
+    X.fillStyle='rgba(230,230,240,0.9)';X.font='bold 12px sans-serif';X.textAlign='center';
+    X.fillText(t('tutSkip'),sbx+sbw/2,sby+17);X.restore();
+  }
+  // チュートリアル完了バナー
+  if(tutDoneTimer>0){
+    const al=Math.min(1,tutDoneTimer/40);
+    X.save();X.textAlign='center';X.globalAlpha=al;
+    const bw2=Math.min(520,W*0.86);
+    X.fillStyle='rgba(0,0,0,0.62)';X.fillRect(W/2-bw2/2,H*0.40,bw2,58);
+    X.strokeStyle='rgba(255,215,80,0.5)';X.lineWidth=1;X.strokeRect(W/2-bw2/2,H*0.40,bw2,58);
+    X.fillStyle='#FFD24A';X.font='bold 18px sans-serif';X.shadowColor='#000';X.shadowBlur=4;
+    X.fillText(t('tutDoneTitle'),W/2,H*0.40+24);
+    X.fillStyle='#FFF';X.font='14px sans-serif';X.fillText(t('tutDoneMsg'),W/2,H*0.40+46);
+    X.shadowBlur=0;X.globalAlpha=1;X.restore();
+  }
+  // Block 1 tutorial hints（チュートリアル中は新誘導が代替するため抑制）
+  if(cB===1&&tTm===0&&!tutActive){
     const hints=[t('hint1'),t('hint2'),t('hint3'),t('hint4')];
     const hIdx=Math.floor(fc/120)%hints.length;
     const hFade=Math.sin((fc%120)/120*Math.PI);
@@ -2643,6 +2699,7 @@ function update(){
   if(gs==='complete_clear')return;
   if(gs!=='playing')return;
   if(mTm>0)mTm--;
+  if(tutDoneTimer>0)tutDoneTimer--;
   // [DEBUG OFF] if(debugTapTimer>0){debugTapTimer--;if(debugTapTimer===0)debugTapCount=0}
   // [DEBUG OFF] if(debugNotify>0)debugNotify--;
   // Block transition blackout timer
@@ -3024,6 +3081,10 @@ function startGame(mode){
   challengeScore=0;showNameEntry=false;nameInputActive=false;nameInput='';lastRankPos=0;chAnomRate=0.50;
   // [DEBUG OFF] debugMode=0;debugTapCount=0;debugTapTimer=0;debugNotify=0;
   rewardAdOffered=false;
+  // 対話型チュートリアル: 初回のイージー/ノーマルのみ起動
+  tutActive=false;tutDoneTimer=0;
+  let tutSeen=false;try{tutSeen=localStorage.getItem('14b_tut_done')==='1'}catch(e){}
+  if((mode==='easy'||mode==='normal')&&!tutSeen)tutActive=true;
   // Complete mode: restore saved progress
   let resumed=false;
   if(mode==='complete'){resumed=loadCompleteProgress()}
@@ -3199,6 +3260,7 @@ function hS(e){
   //   return;
   // }
   if(gs==='playing'&&hitPauseBtn(cx0,cy0)){gs='paused';bL=false;bR=false;retireConfirm=false;return}
+  if(gs==='playing'&&tutActive&&tutSkipBtn.w>0&&cx0>=tutSkipBtn.x&&cx0<=tutSkipBtn.x+tutSkipBtn.w&&cy0>=tutSkipBtn.y&&cy0<=tutSkipBtn.y+tutSkipBtn.h){finishTut();bL=false;bR=false;return}
   for(let t of ts){if(((t.clientX-rc.left)*(W/rc.width))<W*0.4)bL=true;else bR=true}
 }
 function uT(e){e.preventDefault();lastTouchTime=Date.now();
@@ -3347,6 +3409,7 @@ C.addEventListener('mousedown',(e)=>{
   //   return;
   // }
   if(gs==='playing'&&hitPauseBtn(mcx,mcy)){gs='paused';bL=false;bR=false;retireConfirm=false;return}
+  if(gs==='playing'&&tutActive&&tutSkipBtn.w>0&&mcx>=tutSkipBtn.x&&mcx<=tutSkipBtn.x+tutSkipBtn.w&&mcy>=tutSkipBtn.y&&mcy<=tutSkipBtn.y+tutSkipBtn.h){finishTut();bL=false;bR=false;return}
   if(mcx<W*0.4)bL=true;else bR=true;
 });
 C.addEventListener('wheel',(e)=>{
