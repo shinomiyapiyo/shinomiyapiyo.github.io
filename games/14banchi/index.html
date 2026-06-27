@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.970';
+const APP_VER='0.972';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -1597,26 +1597,21 @@ function dUI(){
     X.fillText(t('warnRun'),W/2,H*0.33);
     X.globalAlpha=1;X.shadowBlur=0;X.restore();
   }
-  // 対話型チュートリアル: 1番地=基準の説明＋右へ / 2番地=2秒観察させてから「左へ引き返そう」をフェードイン
+  // 対話型チュートリアル: 1番地・2番地とも約2秒観察させてから誘導をフェードイン（画面の色付けはしない＝景色の判断を妨げない）
   tutSkipBtn.w=0;
   if(tutActive&&(cB===1||cB===2)&&tTm===0&&btTimer===0){
     const fwd=(cB===1);
-    // 2番地は約2秒間プレイヤー自身に観察させてから誘導をフェードイン
-    let ga=1;
-    if(!fwd){const el=fc-blockStartFc;ga=el<TUT_GUIDE_DELAY?0:Math.min(1,(el-TUT_GUIDE_DELAY)/25)}
+    // 1番地（基準を覚える）・2番地（異変に気づく）とも、自分で見てから誘導をフェードイン
+    const el=fc-blockStartFc;
+    const ga=el<TUT_GUIDE_DELAY?0:Math.min(1,(el-TUT_GUIDE_DELAY)/25);
     if(ga>0){
-      // 正しい側を淡くハイライト
-      const hp=(0.10+Math.abs(Math.sin(fc*0.06))*0.10)*ga;
-      X.save();X.fillStyle=`rgba(255,220,90,${hp.toFixed(3)})`;
-      if(fwd)X.fillRect(W*0.4,0,W*0.6,H);else X.fillRect(0,0,W*0.4,H);
-      X.restore();
-      // 大きな矢印（点滅）
+      // 矢印（点滅で方向を示す）。半透明の画面ハイライトは判断の邪魔になるため出さない
       X.save();X.textAlign='center';
       const ap=(0.7+Math.abs(Math.sin(fc*0.08))*0.3)*ga;
       X.globalAlpha=ap;X.fillStyle='#FFD24A';X.shadowColor='#000';X.shadowBlur=8;
       X.font='bold '+Math.round(Math.min(64,W*0.1))+'px sans-serif';
       X.fillText(fwd?'→':'←',fwd?W*0.72:W*0.22,H*0.52);
-      X.shadowBlur=0;X.restore();
+      X.shadowBlur=0;X.globalAlpha=1;X.restore();
       // 指示テキスト（1番地=基準の説明2行 / 2番地=1行）
       const lines=fwd?[t('tutStep1'),t('tutStep1b')]:[t('tutStep2')];
       X.save();X.textAlign='center';X.globalAlpha=ga;X.font='bold 16px sans-serif';
