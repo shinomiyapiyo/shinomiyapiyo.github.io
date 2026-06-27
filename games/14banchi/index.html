@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.964';
+const APP_VER='0.965';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -1308,7 +1308,7 @@ function drawAnom_foggy(gy,sd){
   X.fillStyle=`rgba(200,205,220,${0.18+Math.sin(fc*0.005)*0.04})`;
   X.fillRect(0,0,W,H);
 }
-function drawAnom_shadowHands(gy,sd){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.5+Math.sin(fc*0.02+i)*0.2;X.fillStyle=`rgba(20,0,35,${al})`;X.save();X.translate(hx,gy+2);
+function drawAnom_shadowHands(gy,sd){for(let i=0;i<6;i++){const hx=((sd+i*233)%BW)+bsX-camX;if(hx<-30||hx>W+30)continue;const rise=Math.sin(fc*0.03+i*1.5)*8;const al=0.62+Math.sin(fc*0.02+i)*0.2;X.fillStyle=`rgba(20,0,35,${al})`;X.save();X.translate(hx,gy+2);
   X.beginPath();X.moveTo(0,0);X.lineTo(-4,-18-rise);X.lineTo(-2,-24-rise);X.lineTo(0,-20-rise);X.lineTo(2,-26-rise);X.lineTo(4,-22-rise);X.lineTo(6,-27-rise);X.lineTo(7,-21-rise);X.lineTo(8,-25-rise);X.lineTo(9,-18-rise);X.lineTo(6,-12-rise);X.lineTo(10,0);X.closePath();X.fill();X.restore()}}
 function drawAnom_reverseGrav(gy,sd){X.strokeStyle='rgba(100,120,200,0.3)';X.lineWidth=1;for(let i=0;i<40;i++){const rx=((fc*2+i*97+sd)%W);const ry=H*GH-((fc*3+i*131+sd)%(H*GH));X.beginPath();X.moveTo(rx,ry);X.lineTo(rx+0.5,ry+8);X.stroke()}}
 function drawAnom_heartbeat(gy,sd){const pulse=Math.abs(Math.sin(fc*0.08));if(pulse>0.85){const al=(pulse-0.85)*3;X.fillStyle=`rgba(60,0,0,${al*0.15})`;X.fillRect(0,0,W,H);
@@ -2840,7 +2840,7 @@ function render(){
   }
   const gy=H*GH,sx=pX-camX;
   X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx,gy+2,20,5,0,0,Math.PI*2);X.fill();
-  if(hasA&&AN[aT]==='doubleShadow'){const so=30+Math.sin(fc*0.04)*4;X.fillStyle='rgba(0,0,0,0.3)';X.beginPath();X.ellipse(sx+so,gy+3,18,5,0,0,Math.PI*2);X.fill()}
+  if(hasA&&AN[aT]==='doubleShadow'){const so=30+Math.sin(fc*0.04)*4;X.fillStyle='rgba(0,0,0,0.25)';X.beginPath();X.ellipse(sx+so,gy+3,24,6,0,0,Math.PI*2);X.fill()}
   const sprScale=Math.min(H*0.32/120,1.3);
   drawPG(sx,gy,sprScale);
   dBugaSphere();
