@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.958';
+const APP_VER='0.959';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -226,12 +226,14 @@ const T={
   modeNormal:{ja:'ノーマルモード',en:'Normal Mode'},
   modeComplete:{ja:'コンプリートモード',en:'Complete Mode'},
   modeChallenge:{ja:'チャレンジモード',en:'Challenge Mode'},
+  modeEasy:{ja:'イージーモード',en:'Easy Mode'},
   menuRanking:{ja:'ランキング',en:'Ranking'},
   menuHints:{ja:'ヒント（異変一覧）',en:'Hints (Anomaly List)'},
   descNormal:{ja:'全14番地を脱出せよ',en:'Escape all 14 blocks'},
   descCompleteAll:{ja:(n)=>`全${n}種の異変を制覇せよ`,en:(n)=>`Master all ${n} anomalies`},
   descChallenge1:{ja:'1ミスで即終了',en:'One miss and you\'re out'},
   descChallenge2:{ja:'ランキングに名を刻め！',en:'Leave your mark on the ranking!'},
+  descEasy:{ja:'やさしい異変・1つ戻るだけ',en:'Gentle anomalies, fall back one'},
   // In-game HUD
   blockNum:{ja:(n)=>`${n}番地`,en:(n)=>`Block ${n}`},
   blockProgress:{ja:(c,m)=>`${c} / ${m} 番地`,en:(c,m)=>`${c} / ${m} Blocks`},
@@ -313,6 +315,7 @@ const T={
   ageNotice:{ja:'本作品にはホラー要素が含まれます',en:'This game contains horror elements'},
   copyright:{ja:'©14番地',en:'©14th Block'},
   returnedMsg:{ja:'1番地に戻された…',en:'Sent back to Block 1...'},
+  returnedMsgEasy:{ja:'1つ前の番地に戻された…',en:'Knocked back one block...'},
   misjudgeMsg:{ja:'異変の判断を間違えた',en:'Misjudged the anomaly'},
   lifeRecovery:{ja:'ライフ回復！',en:'Life recovered!'},
   lifeCount:{ja:(c,m)=>`ライフ: ${c}/${m}`,en:(c,m)=>`Lives: ${c}/${m}`},
@@ -730,9 +733,16 @@ const AN=[
   'alien',         // 宇宙人が立っている
   'bugaSphere',    // 金属の球体が追尾してくる
 ];
+// イージーモード出題プール（AN配列のインデックス）。低難易度＋立ち即死キャラのみ。
+// 立ち即死(thug/creep/wizard/ghost/alien)は接触で死なず1番地戻る扱い。
+// 除外: 動く即死(evilFog/runnerPiyo/bugaSphere)・地面色違い・青い地面・影の手・電柱以外の微妙系の一部 等
+const EASY_AN=[1,2,3,4,6,7,8,9,10,11,12,14,15,17,18,19,20,21,22,23,24,26,34,37,38,39];
 function genA(){
   BW=BW_NORMAL;runnerActive=false;
   if(gameMode==='normal'){
+    if(cB<=1||cB>=14){hasA=false;return}
+    hasA=Math.random()<0.70;
+  }else if(gameMode==='easy'){
     if(cB<=1||cB>=14){hasA=false;return}
     hasA=Math.random()<0.70;
   }else if(gameMode==='complete'){
@@ -745,7 +755,10 @@ function genA(){
     if(hasA){chAnomRate=0.50}else{chAnomRate=Math.min(chAnomRate+0.05,1.0)}
   }
   if(hasA){
-    if(gameMode==='normal'||gameMode==='complete'){
+    if(gameMode==='easy'){
+      // イージーは固定の易しいプールから（既出除外なし＝重複OK）
+      aT=EASY_AN[Math.floor(Math.random()*EASY_AN.length)];
+    }else if(gameMode==='normal'||gameMode==='complete'){
       // Exclude already-cleared anomalies
       const available=[];
       for(let i=0;i<AN.length;i++){if(!clearedAnomalies.includes(AN[i]))available.push(i)}
@@ -1391,7 +1404,7 @@ function dAnom(){
 }
 // --- Anomaly update functions (collision/movement, called from update via ANOM_UPDATE dispatch) ---
 function _anomKill(cause){lastDeathCause=cause;if(!completeDie()){gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;stopBgm();playSe(seMissSrc)}else{playSe(seMissSrc)}}
-function updateAnom_staticKiller(posRatio){const ex=bsX+BW*posRatio;if(Math.abs(pX-ex)<40)_anomKill(AN[aT])}
+function updateAnom_staticKiller(posRatio){const ex=bsX+BW*posRatio;if(Math.abs(pX-ex)<40){if(gameMode==='easy'){tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30])}else _anomKill(AN[aT])}}
 function updateAnom_thug(){updateAnom_staticKiller(0.5)}
 function updateAnom_creep(){updateAnom_staticKiller(0.55)}
 function updateAnom_wizard(){updateAnom_staticKiller(0.45)}
@@ -1533,7 +1546,7 @@ function dUI(){
   // Text with subtle glow
   X.save();X.shadowColor='#FFD700';X.shadowBlur=4;
   X.fillStyle='#FFD700';X.font='bold 14px monospace';X.textAlign='center';
-  X.fillText(gameMode==='normal'?tf('blockProgress',cB,14):tf('blockNum',cB),W/2,uiTop+18);
+  X.fillText(gameMode==='normal'||gameMode==='easy'?tf('blockProgress',cB,14):tf('blockNum',cB),W/2,uiTop+18);
   X.shadowBlur=0;X.restore();
   // Pause button (left of block counter) with gradient
   const px=W/2-58-66,py=6+saT,pw=44,ph=30;
@@ -1722,26 +1735,34 @@ function dTitle(){
   X.strokeStyle='rgba(170,153,119,0.35)';X.lineWidth=0.8;
   X.beginPath();X.moveTo(W*0.5-tagW/2-22,tagY-2);X.lineTo(W*0.5-tagW/2-4,tagY-2);X.stroke();
   X.beginPath();X.moveTo(W*0.5+tagW/2+4,tagY-2);X.lineTo(W*0.5+tagW/2+22,tagY-2);X.stroke();
-  // Direct tap buttons (right side) — fit 5 buttons between 35%~93% of H
+  // Direct tap buttons (right side) — fit 6 buttons between 35%~93% of H
   titleBtns.length=0;
   const tx=W*0.75;
   const btnZoneTop=H*0.35,btnZoneBot=H*0.93;
-  const btnW=200,btnH=Math.min(46,(btnZoneBot-btnZoneTop)/5*0.75);
-  const btnGap=(btnZoneBot-btnZoneTop-btnH)/4;
-  const labels=[[t('modeNormal'),'#CC2222'],[t('modeComplete'),'#22AA66'],[t('modeChallenge'),'#CC8822'],[t('menuRanking'),'#DAA520'],[t('menuHints'),'#66AACC']];
-  for(let i=0;i<5;i++){
+  const N_BTN=6;
+  const btnW=200,btnH=Math.min(46,(btnZoneBot-btnZoneTop)/N_BTN*0.75);
+  const btnGap=(btnZoneBot-btnZoneTop-btnH)/(N_BTN-1);
+  // 表示順とidを分離（既存モードのid 0〜4は固定、イージーはid 5を新規付与）
+  const modeItems=[
+    {id:5,label:t('modeEasy'),color:'#3399DD',icon:ICN.play,desc:t('descEasy')},
+    {id:0,label:t('modeNormal'),color:'#CC2222',icon:ICN.play,desc:t('descNormal')},
+    {id:1,label:t('modeComplete'),color:'#22AA66',icon:ICN.play,desc:tf('descCompleteAll',AN.length)},
+    {id:2,label:t('modeChallenge'),color:'#CC8822',icon:ICN.play,desc:[t('descChallenge1'),t('descChallenge2')]},
+    {id:3,label:t('menuRanking'),color:'#DAA520',icon:ICN.trophy,desc:''},
+    {id:4,label:t('menuHints'),color:'#66AACC',icon:ICN.book,desc:''},
+  ];
+  for(let i=0;i<N_BTN;i++){
+    const it=modeItems[i];
     const bx=tx-btnW/2,by=btnZoneTop+i*btnGap;
-    titleBtns.push({x:bx,y:by,w:btnW,h:btnH,id:i});
-    const btnIcn=i<3?ICN.play:i===3?ICN.trophy:i===4?ICN.book:null;
-    dBtn(bx,by,btnW,btnH,labels[i][0],labels[i][1],btnIcn);
+    titleBtns.push({x:bx,y:by,w:btnW,h:btnH,id:it.id});
+    dBtn(bx,by,btnW,btnH,it.label,it.color,it.icon);
     // Mode descriptions (left side of button)
-    const descs=[t('descNormal'),tf('descCompleteAll',AN.length),[t('descChallenge1'),t('descChallenge2')],'',''];
-    if(descs[i]){X.fillStyle=labels[i][1];X.globalAlpha=0.7;X.font='bold 12px sans-serif';X.textAlign='right';
-      if(Array.isArray(descs[i])){descs[i].forEach((ln,li)=>{X.fillText(ln,bx-12,by+btnH/2-4+li*16)})}
-      else{X.fillText(descs[i],bx-12,by+btnH/2+4)}
+    if(it.desc){X.fillStyle=it.color;X.globalAlpha=0.7;X.font='bold 12px sans-serif';X.textAlign='right';
+      if(Array.isArray(it.desc)){it.desc.forEach((ln,li)=>{X.fillText(ln,bx-12,by+btnH/2-4+li*16)})}
+      else{X.fillText(it.desc,bx-12,by+btnH/2+4)}
     X.globalAlpha=1.0}
-    // Complete mode save indicator + delete button
-    if(i===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&typeof sv==='object'&&Array.isArray(sv.a)&&sv.a.length>0){
+    // Complete mode save indicator + delete button（Completeボタン=id 1）
+    if(it.id===1){try{const sv=JSON.parse(localStorage.getItem('14b_comp'));if(sv&&typeof sv==='object'&&Array.isArray(sv.a)&&sv.a.length>0){
       X.textAlign='center';const svCx=bx+btnW+28;
       dI(ICN.save,svCx,by+btnH/2-6,16);
       X.fillStyle='#CCBBAA';X.font='bold 10px sans-serif';
@@ -2544,7 +2565,7 @@ function update(){
   if(tTm>0){tTm--;if(tTm===0){if(tTp==='a'){
     // Queue block advance with blackout transition
     const nb=cB+1;
-    if(gameMode==='normal'&&nb>14){cB++;gs='clear';playBgm(bgmGoal);return}
+    if((gameMode==='normal'||gameMode==='easy')&&nb>14){cB++;gs='clear';playBgm(bgmGoal);return}
     if(gameMode==='challenge'&&nb>CHALLENGE_MAX){cB++;gs='challenge_clear';challengeScore=CHALLENGE_MAX;showNameEntry=true;nameInput='';nameInputActive=true;playBgm(bgmGoal);return}
     btLabel=tf('blockNum',nb);btAction=()=>{cB++;
       if(gameMode==='complete'&&clearedAnomalies.length>=AN.length){clearCompleteProgress();gs='complete_clear';playBgm(bgmGoal);return}
@@ -2566,6 +2587,10 @@ function update(){
         gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;
         stopBgm();playSe(seMissSrc);return
       }else{playSe(seMissSrc)}
+    }else if(gameMode==='easy'){
+      // イージー: 1番地分だけ戻す（全リセットしない救済）
+      const back=Math.max(1,cB-1);
+      btLabel=tf('blockNum',back);btAction=()=>{cB=back;genA();sB();bL=false;bR=false;sM(t('returnedMsgEasy'),t('misjudgeMsg'))};btTimer=BT_HALF*2
     }else{
       btLabel=tf('blockNum',1);btAction=()=>{cB=1;genA();sB();bL=false;bR=false;sM(t('returnedMsg'),t('misjudgeMsg'))};btTimer=BT_HALF*2
     }
@@ -2922,6 +2947,7 @@ function handleTitleTap(cx,cy){
       if(b.id===300){gs='settings';exitConfirm=false;playBgm(bgmSettings);return true}
       if(b.id===100){compDeleteConfirm=true;return true}
       if(b.id===0){startGame('normal')}
+      else if(b.id===5){startGame('easy')}
       else if(b.id===1){startGame('complete')}
       else if(b.id===2){startGame('challenge')}
       else if(b.id===3){gs='ranking';rankScrollY=0;rankJustOpened=true;rankReportConfirm=null;rankReportedTimer=0;rankReportMode=false;playBgm(bgmRanking);loadRanking()}
@@ -3257,7 +3283,8 @@ document.addEventListener('keydown',(e)=>{
   }
   if(gs==='tap'){unlockAudio();gs='title';playBgm(bgmTitle)}
   else if(gs==='title'){
-    if(e.key==='1'){startGame('normal')}
+    if(e.key==='0'){startGame('easy')}
+    else if(e.key==='1'){startGame('normal')}
     else if(e.key==='2'){startGame('complete')}
     else if(e.key==='3'){startGame('challenge')}
     else if(e.key==='4'){gs='ranking';rankScrollY=0;rankJustOpened=true;rankReportConfirm=null;rankReportedTimer=0;rankReportMode=false;playBgm(bgmRanking);loadRanking()}
