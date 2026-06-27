@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.965';
+const APP_VER='0.966';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -1409,8 +1409,12 @@ function dAnom(){
   if(fn)fn(gy,sd);
 }
 // --- Anomaly update functions (collision/movement, called from update via ANOM_UPDATE dispatch) ---
-function _anomKill(cause){lastDeathCause=cause;if(!completeDie()){gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;stopBgm();playSe(seMissSrc)}else{playSe(seMissSrc)}}
-function updateAnom_staticKiller(posRatio){const ex=bsX+BW*posRatio;if(Math.abs(pX-ex)<40){if(gameMode==='easy'){tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30])}else _anomKill(AN[aT])}}
+function _anomKill(cause){lastDeathCause=cause;
+  // ノーマル/イージー: 敵接触は即死させず、判断ミスと同じペナルティ経路へ（tTm経由でノーマル=1番地戻し/イージー=1番地分戻し）
+  if(gameMode==='normal'||gameMode==='easy'){tTp='r';tTm=40;skT=18;bL=false;bR=false;pMov=false;playSe(seMissSrc);vib([30,20,30]);return}
+  // コンプリート=ハート−1 / チャレンジ=ゲームオーバー
+  if(!completeDie()){gs='dying';deathTimer=0;bL=false;bR=false;pMov=false;stopBgm();playSe(seMissSrc)}else{playSe(seMissSrc)}}
+function updateAnom_staticKiller(posRatio){const ex=bsX+BW*posRatio;if(Math.abs(pX-ex)<40)_anomKill(AN[aT])}
 function updateAnom_thug(){updateAnom_staticKiller(0.5)}
 function updateAnom_creep(){updateAnom_staticKiller(0.55)}
 function updateAnom_wizard(){updateAnom_staticKiller(0.45)}
