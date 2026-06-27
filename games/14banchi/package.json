@@ -5,7 +5,8 @@
   "description": "14番地 (iOS native via Capacitor)",
   "scripts": {
     "copy:web": "rm -rf www && mkdir -p www && cp index.html sw.js native-bridge.js manifest.json icon-192.png icon-512.png www/ && cp -R images audio www/",
-    "sync": "npm run copy:web && npx cap sync ios",
+    "sync": "npm run copy:web && LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx cap sync ios",
+    "configure:ios": "bash configure-ios.sh",
     "open:ios": "npx cap open ios"
   },
   "dependencies": {

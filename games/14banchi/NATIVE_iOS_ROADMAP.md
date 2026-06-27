@@ -124,42 +124,41 @@ npx cap open ios   # Xcodeが開く
 
 ## 6. 進捗（このファイルで管理）
 
-- [~] Step 1: Capacitor導入 … **Claude側ファイル作成済み**（下記）。あとは【あなた】が `npm install` 等を実行。
-- [ ] Step 2: iOSプロジェクト生成
-- [ ] Step 3: AdMob統合 … ブリッジ `native-bridge.js` 雛形作成済み（実機でAPI微調整が必要）
-- [ ] Step 4: ライフサイクル/向き/アイコン
+- [x] Step 1: Capacitor導入（npm install / copy:web 完了）
+- [x] Step 2: iOSプロジェクト生成（`ios/` 生成・`pod install` 完了＝AdMob SDK 11.3.0 統合済み）
+- [~] Step 3: AdMob統合 … ブリッジ実装＋Info.plistにアプリID設定済み。**実機ビルドでAPI/イベント名の動作確認が残**
+- [~] Step 4: ライフサイクル/向き/アイコン … ライフサイクル配線済み・横向き固定済み。**アイコン/起動画面が残**
 - [ ] Step 5: 実機テスト/TestFlight
 - [ ] Step 6: App Store申請
 
 ---
 
-## 7. 現在の状態（Claude実装済み Ver.0.973）
+## 7. 現在の状態（Claude実行済み）と残作業
 
-`games/14banchi/` に作成済み：
-- `capacitor.config.json`（appId=com.nullpoworks.banchi14, appName=14番地, webDir=www）
-- `package.json`（Capacitor依存＋`copy:web`/`sync`スクリプト）
-- `native-bridge.js`（AdMobブリッジ：リワード/インタースティシャルのユニットID設定済み・Web/PWAでは無効化）
-- `.gitignore`（node_modules/www/ios を除外）
-- `index.html` に `<script src="native-bridge.js" defer>` 追加（Webでは no-op を確認済み）
+### ✅ Claudeが実行・設定済み（このMac上）
+- `npm install`（Capacitor 6.2.1 / @capacitor-community/admob 6.2.0 等）
+- `npm run copy:web`（www/ 生成）
+- `npx cap add ios`（`ios/` Xcodeプロジェクト生成）
+- `pod install`（**Google-Mobile-Ads-SDK 11.3.0** 等を統合）
+- `ios/App/App/Info.plist` に設定済み：
+  - `GADApplicationIdentifier` = `ca-app-pub-4148293353679224~5712611505`
+  - 画面 **横向き固定**（iPhone/iPad とも Landscape のみ）
+  - ※これらは `configure-ios.sh` で再現可能（`ios/`再生成時は `npm run configure:ios` を実行）
 
-### 次に【あなた】がターミナルで実行（Mac・Xcode・Node・CocoaPods 導入後）
-```bash
-cd games/14banchi
-npm install                          # 依存インストール
-npm run copy:web                     # 配信用ファイルを www/ にコピー
-npx cap add ios                      # iOSプロジェクト(ios/)生成
-npm run sync                         # www更新＋ネイティブ同期
-npx cap open ios                     # Xcodeが開く
-```
-Xcode側でやること（Step 3〜4）：
-1. Signing & Capabilities に Apple Developer アカウント設定。
-2. `ios/App/App/Info.plist` に **AdMobアプリID** を追加：
-   - キー `GADApplicationIdentifier` = `ca-app-pub-4148293353679224~5712611505`
-   - （ATT採用時のみ）`NSUserTrackingUsageDescription` = 説明文
-3. 画面の向きを **横向き固定**（Deployment Info → Device Orientation で Landscape のみ）。
-4. アプリアイコン/起動画面を設定。
+### ▶ 次に【あなた】がXcodeでやること（Step 4〜5）
+1. ターミナルで `cd games/14banchi && npx cap open ios`（または `ios/App/App.xcworkspace` をダブルクリック）
+2. Xcode左の「App」→ **Signing & Capabilities** で **Team（Apple Developerアカウント）** を選択（自動署名）。
+3. **アプリアイコン**：`App/Assets.xcassets/AppIcon` に各サイズを設定（PWA用 icon-512.png を元に生成可）。
+4. 実機をUSB接続 → 上部で実機を選び ▶ で **ビルド＆実行**（初回は実機の「デベロッパを信頼」が必要）。
+5. 動作確認：タイトル→各モード／復活（テスト広告が出るか）／遷移（インタースティシャル）／ランキング／チュートリアル。
+6. 問題なければ **Product → Archive → TestFlight 配信**。
 
-### 本番ビルド前の切り替え
-- `native-bridge.js` の `USE_TEST_ADS = true` → **`false`**（実広告ID・実広告に切替）。
+### ⚠ 注意・残課題
+- **AdMobブリッジの動作確認**：`native-bridge.js` のメソッド/イベント名は @capacitor-community/admob 6.2.0 準拠で記述。実機でリワード/インタースティシャルが正しく出るか確認し、出なければ報告 → **Claudeが微調整**。
+- **本番ビルド前**：`native-bridge.js` の `USE_TEST_ADS = true` → **`false`**（実広告へ。Claudeが切替）。
+- **コード更新時の反映**：`index.html` 等を直したら `cd games/14banchi && npm run sync` で `ios/` に反映（ロケール対策済み）。
+- **`ios/` はgit管理外**（ローカルのみ）。Info.plist設定は `configure-ios.sh`（コミット済み）で再現。
 
-> ⚠ `native-bridge.js` のAdMobメソッド/イベント名は @capacitor-community/admob のバージョン依存。`npm install` 後、実機ビルドで動作確認し、必要ならClaudeが微調整する。
+### 参考：ロケール問題（解決済み）
+`pod install` が `Unicode Normalization ... ASCII-8BIT` で失敗する場合はシェルのロケールが非UTF-8。
+`LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` を付けて実行（`npm run sync` は対策済み）。
