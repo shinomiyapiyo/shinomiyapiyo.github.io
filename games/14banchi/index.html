@@ -44,7 +44,7 @@ if(/Android/i.test(navigator.userAgent)&&typeof window.AndroidBridge==='undefine
     location.replace('https://nullpoworks.pages.dev/beta-test');
   };
 }
-const APP_VER='0.961';
+const APP_VER='0.962';
 const C=document.getElementById('gc'),X=C.getContext('2d');
 let W,H,saT=0,saR=0,saB=0,saL=0;
 // === 静的グラデーションのキャッシュ（毎フレーム生成を回避。描画結果は不変） ===
@@ -759,8 +759,11 @@ function genA(){
   }
   if(hasA){
     if(gameMode==='easy'){
-      // イージーは固定の易しいプールから（既出除外なし＝重複OK）
-      aT=EASY_AN[Math.floor(Math.random()*EASY_AN.length)];
+      // イージーは易しいプールから出題。クリア済み(既出)は除外（ノーマル同様、1プレイ内で重複させない）
+      const eav=[];
+      for(let k=0;k<EASY_AN.length;k++){if(!clearedAnomalies.includes(AN[EASY_AN[k]]))eav.push(EASY_AN[k])}
+      if(eav.length===0){hasA=false;return}// 易しい異変を出し切ったら異変なし
+      aT=eav[Math.floor(Math.random()*eav.length)];
     }else if(gameMode==='normal'||gameMode==='complete'){
       // Exclude already-cleared anomalies
       const available=[];
@@ -1842,14 +1845,24 @@ function dEasyClear(){
     X.beginPath();X.arc(px,py,pr,0,Math.PI*2);X.fill();
   }
   X.globalAlpha=1;
-  // 上部タイトル（空の余白）：脱出成功！
-  const pulse=0.85+Math.sin(fc*0.05)*0.12;
-  X.save();X.textAlign='center';
-  X.shadowColor='rgba(120,60,20,0.55)';X.shadowBlur=6;
-  X.fillStyle='#FFEFA0';X.font='bold '+Math.round(Math.min(34,W*0.05))+'px sans-serif';
-  X.globalAlpha=pulse;
-  X.fillText(t('clearHeader'),W*0.5,H*0.13);
-  X.globalAlpha=1;X.shadowBlur=0;X.restore();
+  // 上部タイトル（空の余白）：脱出成功！ — 縁取り＋金グラデ＋発光で強調
+  const titlePulse=0.9+Math.sin(fc*0.05)*0.1;
+  const tcx=W*0.5,tcy=H*0.17,tfs=Math.round(Math.min(50,W*0.078));
+  X.save();X.textAlign='center';X.lineJoin='round';
+  X.font='bold '+tfs+'px sans-serif';
+  // 落ち影
+  X.shadowColor='rgba(70,30,0,0.6)';X.shadowBlur=8;X.shadowOffsetY=3;
+  // 濃い縁取り
+  X.lineWidth=tfs*0.2;X.strokeStyle='#5A2A08';
+  X.strokeText(t('clearHeader'),tcx,tcy);
+  X.shadowBlur=0;X.shadowOffsetY=0;
+  // 金色グラデ本体＋発光
+  const tgrad=X.createLinearGradient(0,tcy-tfs,0,tcy+tfs*0.3);
+  tgrad.addColorStop(0,'#FFF6C0');tgrad.addColorStop(0.5,'#FFD24A');tgrad.addColorStop(1,'#FF9E2E');
+  X.fillStyle=tgrad;
+  X.shadowColor='rgba(255,200,80,'+(0.7*titlePulse).toFixed(2)+')';X.shadowBlur=20*titlePulse;
+  X.fillText(t('clearHeader'),tcx,tcy);
+  X.shadowBlur=0;X.restore();
   // 下部メッセージ帯（ぴよ氏の顔を避けて下側に）
   X.save();X.textAlign='center';
   const mbW=Math.min(580,W*0.94),mbH=Math.max(58,H*0.155),mbY=H*0.62;
@@ -2664,7 +2677,7 @@ function update(){
     const ufn=ANOM_UPDATE[AN[aT]];
     if(ufn)ufn();
   }
-  if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){if((gameMode==='normal'||gameMode==='complete')&&!clearedAnomalies.includes(AN[aT])){clearedAnomalies.push(AN[aT]);if(gameMode==='complete')saveCompleteProgress()}tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM(t('anomalyFound'),t('correctReturn'))}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM(t('noAnomaly'),t('wrongReturn'))}}
+  if(pX<bsX+BACK_X){pX=bsX+BACK_X;if(hasA){if((gameMode==='normal'||gameMode==='easy'||gameMode==='complete')&&!clearedAnomalies.includes(AN[aT])){clearedAnomalies.push(AN[aT]);if(gameMode==='complete')saveCompleteProgress()}tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM(t('anomalyFound'),t('correctReturn'))}else{tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM(t('noAnomaly'),t('wrongReturn'))}}
   if(pX>bsX+BW+30){if(hasA){tTp='r';tTm=40;skT=18;playSe(seMissSrc);vib([30,20,30]);sM(t('missedAnomaly'),t('observeMore'))}else{tTp='a';tTm=30;playSe(seGoSrc);vib(10);sM(t('correctAdvance'))}}
   if(pMov){pAT++;if(pAT>6){pAT=0;pFr=(pFr+1)%4}}else{pFr=0;pAT=0}
 }
