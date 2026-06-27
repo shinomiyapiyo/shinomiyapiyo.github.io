@@ -1,0 +1,12 @@
+{
+  "appId": "com.nullpoworks.banchi14",
+  "appName": "14番地",
+  "webDir": "www",
+  "server": {
+    "iosScheme": "ionic"
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {}
+}
