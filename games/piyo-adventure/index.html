@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.319";
+                content: "Ver.1.320";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.319</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.320</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -764,6 +764,7 @@
                     <button class="game-button" id="shopButton"><img src="images/icon_cart.png" class="ui-icon"> <span data-i18n="title_shop">SHOP</span></button>
                     <button class="game-button" id="missionButton" style="position:relative;"><img src="images/icon_flag.png" class="ui-icon"> <span data-i18n="title_mission">MISSION</span><span id="missionBadge" style="display:none; position:absolute; top:-5px; right:-5px; width:13px; height:13px; background:#ff3344; border:2px solid #fff; border-radius:50%; box-shadow:0 0 6px rgba(255,51,68,0.9);"></span></button>
                     <button class="game-button" id="achievementButton" style="position:relative;"><img src="images/icon_celebrate.png" class="ui-icon"> <span data-i18n="title_achievement">TROPHY</span><span id="achievementBadge" style="display:none; position:absolute; top:-5px; right:-5px; width:13px; height:13px; background:#ff3344; border:2px solid #fff; border-radius:50%; box-shadow:0 0 6px rgba(255,51,68,0.9);"></span></button>
+                    <button class="game-button" id="skinButton"><img src="images/skin_maid_idle.png" class="ui-icon"> <span data-i18n="title_skin">きせかえ</span></button>
                     <!-- 課金ストアボタン（課金実装完了時に display:'' に戻す） -->
                     <button class="game-button" id="storeButton" style="
                         display: none;
@@ -1297,6 +1298,29 @@
                 <div id="achievementList" style="display:flex; flex-direction:column; gap:5px;
                     overflow-y:auto; -webkit-overflow-scrolling:touch; flex:1 1 auto; min-height:0;"></div>
                 <button class="game-button" id="achievementBackBtn" data-i18n="btn_back" style="margin-top:7px; flex-shrink:0;
+                    min-height:40px; font-size:clamp(11px,2.4vw,16px);"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
+            </div>
+        </div>
+
+        <!-- きせかえ（アバタースキン）画面 -->
+        <div id="skinScreen" class="hidden" style="
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            box-sizing: border-box; z-index: 9999;
+            background: linear-gradient(160deg, #1a0d32, #0d0520);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px calc(env(safe-area-inset-right,0px) + 12px) 10px calc(env(safe-area-inset-left,0px) + 12px);
+            overflow: hidden;">
+            <div style="width: min(94vw, 520px); max-height: 96vh; display: flex; flex-direction: column;
+                background: linear-gradient(160deg, rgba(30,15,50,0.97), rgba(15,5,30,0.97));
+                border: 2px solid rgba(255,215,0,0.5); border-radius: 14px;
+                box-shadow: 0 6px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.12);
+                padding: 9px 14px; box-sizing: border-box;">
+                <div id="skinTitle" style="color:#ffd700; font-size:clamp(13px,3vw,20px); font-weight:800;
+                    font-family:'M PLUS Rounded 1c',sans-serif; text-shadow:0 0 10px rgba(255,215,0,0.4); flex-shrink:0; margin-bottom:6px;"><img src="images/skin_maid_idle.png" class="ui-icon"> きせかえ</div>
+                <div id="skinList" style="display:flex; flex-direction:column; gap:7px;
+                    overflow-y:auto; -webkit-overflow-scrolling:touch; flex:1 1 auto; min-height:0;"></div>
+                <button class="game-button" id="skinBackBtn" data-i18n="btn_back" style="margin-top:9px; flex-shrink:0;
                     min-height:40px; font-size:clamp(11px,2.4vw,16px);"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
             </div>
         </div>
@@ -2423,6 +2447,59 @@ function closeAchievementScreen() {
     history.back();
 }
 
+// ─── きせかえ（アバタースキン） ───
+var SKINS = [
+    { id: '',     nameKey: 'skin_default', preview: 'images/player_idle_v1.png' }, // デフォルト
+    { id: 'maid', nameKey: 'skin_maid',    preview: 'images/skin_maid_idle.png' }  // 黄色メイド服（無料）
+];
+function isSkinOwned(id) { return id === '' || id === 'maid' || (gameSettings.ownedSkins && gameSettings.ownedSkins.indexOf(id) !== -1); } // 現状は全スキン無料
+function equipSkin(id) {
+    if (!isSkinOwned(id)) return;
+    gameSettings.activeSkin = id;
+    saveSettings();
+    if (soundManager) soundManager.playConfirmSelect();
+    renderSkins();
+}
+function handleSkinClick(e) {
+    var cb = e.target.closest('[data-skin-equip]');
+    if (cb) { e.stopPropagation(); equipSkin(cb.getAttribute('data-skin-equip')); return true; }
+    return false;
+}
+function renderSkinRow(s) {
+    var equipped = (gameSettings.activeSkin === s.id);
+    var stateHtml = equipped
+        ? '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('skin_equipped') + '</span>'
+        : '<button class="game-button" data-skin-equip="' + s.id + '" style="padding:4px 12px; min-height:auto; font-size:clamp(9px,2vw,13px); white-space:nowrap;">' + t('skin_equip') + '</button>';
+    return '<div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,40,0.55); border:1px solid ' + (equipped ? 'rgba(76,175,80,0.6)' : 'rgba(255,255,255,0.12)') + '; border-radius:10px; padding:6px 10px;">' +
+        '<img src="' + s.preview + '" width="44" height="44" style="image-rendering:pixelated; flex-shrink:0; background:rgba(255,255,255,0.06); border-radius:8px;">' +
+        '<div style="flex:1 1 auto; min-width:0; color:#fff; font-size:clamp(11px,2.3vw,15px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif;">' + escapeHtml(t(s.nameKey)) + '</div>' +
+        '<div style="flex-shrink:0;">' + stateHtml + '</div>' +
+    '</div>';
+}
+function renderSkins() {
+    var titleEl = document.getElementById('skinTitle');
+    if (titleEl) titleEl.innerHTML = _ic('skin_maid_idle.png') + ' ' + t('skin_title');
+    var listEl = document.getElementById('skinList');
+    if (!listEl) return;
+    var html = '';
+    for (var i = 0; i < SKINS.length; i++) html += renderSkinRow(SKINS[i]);
+    listEl.innerHTML = html;
+}
+function showSkinScreen() {
+    showScreenEl('skinScreen');
+    history.pushState({ screen: 'skin' }, '');
+    renderSkins();
+    if (soundManager) soundManager.playConfirmSelect();
+}
+function hideSkinScreen() {
+    hideScreenEl('skinScreen');
+    if (soundManager) soundManager.playCursorMove();
+}
+function closeSkinScreen() {
+    hideSkinScreen();
+    history.back();
+}
+
 function applyLanguage() {
     var els = document.querySelectorAll('[data-i18n]');
     for (var i = 0; i < els.length; i++) {
@@ -2733,6 +2810,7 @@ var BACK_HANDLERS = [
     { isOpen: function() { return isScreenVisible('titleShopScreen'); }, onBack: function() { hideTitleShop(); } },
     { isOpen: function() { return isScreenVisible('missionScreen'); }, onBack: function() { hideMissionScreen(); } },
     { isOpen: function() { return isScreenVisible('achievementScreen'); }, onBack: function() { hideAchievementScreen(); } },
+    { isOpen: function() { return isScreenVisible('skinScreen'); }, onBack: function() { hideSkinScreen(); } },
     { isOpen: function() { return isScreenVisible('guideScreen'); }, onBack: function() { hideGuide(); } },
     { isOpen: function() { return isScreenVisible('tutorialScreen'); }, onBack: function() { tutorialCancel(); } },
     { isOpen: function() { return isScreenVisible('settingsScreen'); }, onBack: function() { hideSettings(); } },
@@ -7667,15 +7745,18 @@ function drawPlayer(x, y) {
     var flipH = player.facing === 'left';
     var spriteName, frameIdx;
 
+    var pose;
     if (!player.onGround && player.velY < 0) {
-        spriteName = 'player_jump'; frameIdx = 0;
+        pose = 'jump'; frameIdx = 0;
     } else if (!player.onGround && player.velY > 0) {
-        spriteName = 'player_fall'; frameIdx = 0;
+        pose = 'fall'; frameIdx = 0;
     } else if (walk) {
-        spriteName = 'player_walk'; frameIdx = Math.floor(player.animFrame / 8) % 4;
+        pose = 'walk'; frameIdx = Math.floor(player.animFrame / 8) % 4;
     } else {
-        spriteName = 'player_idle'; frameIdx = 0;
+        pose = 'idle'; frameIdx = 0;
     }
+    // 装備中スキンでスプライト解決（デフォルト=player_*、メイド服=skin_maid_*）
+    spriteName = (gameSettings.activeSkin === 'maid' ? 'skin_maid_' : 'player_') + pose;
 
     spriteManager.draw(ctx, spriteName, frameIdx, x, y, player.width, player.height, flipH);
     player.animFrame++;
@@ -9140,6 +9221,23 @@ function initialize() {
     if (achListEl) {
         achListEl.addEventListener('click', handleAchievementClick);
         achListEl.addEventListener('touchend', function(e) { if (handleAchievementClick(e)) e.preventDefault(); });
+    }
+
+    // きせかえボタン（タイトル画面）＋きせかえ画面
+    var skinBtn = document.getElementById('skinButton');
+    if (skinBtn) {
+        skinBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showSkinScreen(); });
+        skinBtn.addEventListener('click', function(e) { e.stopPropagation(); showSkinScreen(); });
+    }
+    var skinBackBtn = document.getElementById('skinBackBtn');
+    if (skinBackBtn) {
+        skinBackBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeSkinScreen(); });
+        skinBackBtn.addEventListener('click', function(e) { e.stopPropagation(); closeSkinScreen(); });
+    }
+    var skinListEl = document.getElementById('skinList');
+    if (skinListEl) {
+        skinListEl.addEventListener('click', handleSkinClick);
+        skinListEl.addEventListener('touchend', function(e) { if (handleSkinClick(e)) e.preventDefault(); });
     }
 
     // 必殺技 発動ボタン（ゲージ満タン時のみ pointer-events:auto）

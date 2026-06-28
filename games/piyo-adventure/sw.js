@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.319';
+var CACHE_NAME = 'piyo-adventure-v1.320';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -34,6 +34,13 @@ var STATIC_ASSETS = [
     './images/player_walk_4.png',
     './images/player_jump.png',
     './images/player_fall.png',
+    './images/skin_maid_idle.png',
+    './images/skin_maid_walk_1.png',
+    './images/skin_maid_walk_2.png',
+    './images/skin_maid_walk_3.png',
+    './images/skin_maid_walk_4.png',
+    './images/skin_maid_jump.png',
+    './images/skin_maid_fall.png',
     './images/enemy_chick.png',
     './images/enemy_chick_walk_1.png',
     './images/enemy_chick_walk_2.png',
