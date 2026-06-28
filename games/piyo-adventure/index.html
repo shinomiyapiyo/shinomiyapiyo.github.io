@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.318";
+                content: "Ver.1.319";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.318</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.319</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -763,6 +763,7 @@
                     <button class="game-button" id="rankingButton"><img src="images/icon_trophy.png" class="ui-icon"> <span data-i18n="title_ranking">RANKING</span></button>
                     <button class="game-button" id="shopButton"><img src="images/icon_cart.png" class="ui-icon"> <span data-i18n="title_shop">SHOP</span></button>
                     <button class="game-button" id="missionButton" style="position:relative;"><img src="images/icon_flag.png" class="ui-icon"> <span data-i18n="title_mission">MISSION</span><span id="missionBadge" style="display:none; position:absolute; top:-5px; right:-5px; width:13px; height:13px; background:#ff3344; border:2px solid #fff; border-radius:50%; box-shadow:0 0 6px rgba(255,51,68,0.9);"></span></button>
+                    <button class="game-button" id="achievementButton" style="position:relative;"><img src="images/icon_celebrate.png" class="ui-icon"> <span data-i18n="title_achievement">TROPHY</span><span id="achievementBadge" style="display:none; position:absolute; top:-5px; right:-5px; width:13px; height:13px; background:#ff3344; border:2px solid #fff; border-radius:50%; box-shadow:0 0 6px rgba(255,51,68,0.9);"></span></button>
                     <!-- 課金ストアボタン（課金実装完了時に display:'' に戻す） -->
                     <button class="game-button" id="storeButton" style="
                         display: none;
@@ -1266,6 +1267,36 @@
                     overflow-y:auto; -webkit-overflow-scrolling:touch; flex:1 1 auto; min-height:0;"></div>
                 <!-- 戻る -->
                 <button class="game-button" id="missionBackBtn" data-i18n="btn_back" style="margin-top:7px; flex-shrink:0;
+                    min-height:40px; font-size:clamp(11px,2.4vw,16px);"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
+            </div>
+        </div>
+
+        <!-- 実績/トロフィー画面（ミッション画面の作りを流用） -->
+        <div id="achievementScreen" class="hidden" style="
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            box-sizing: border-box; z-index: 9999;
+            background: linear-gradient(160deg, #1a0d32, #0d0520);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px calc(env(safe-area-inset-right,0px) + 12px) 10px calc(env(safe-area-inset-left,0px) + 12px);
+            overflow: hidden;">
+            <div style="width: min(94vw, 580px); max-height: 96vh; display: flex; flex-direction: column;
+                background: linear-gradient(160deg, rgba(30,15,50,0.97), rgba(15,5,30,0.97));
+                border: 2px solid rgba(255,215,0,0.5); border-radius: 14px;
+                box-shadow: 0 6px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,215,0,0.12);
+                padding: 7px 14px; box-sizing: border-box;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-shrink:0;">
+                    <span id="achievementTitle" style="color:#ffd700; font-size:clamp(13px,3vw,20px); font-weight:800;
+                        font-family:'M PLUS Rounded 1c',sans-serif; text-shadow:0 0 10px rgba(255,215,0,0.4);"><img src="images/icon_celebrate.png" class="ui-icon"> 実績</span>
+                    <span id="achievementSavings" style="color:#fff; font-size:clamp(9px,1.8vw,13px);
+                        font-family:'M PLUS Rounded 1c',sans-serif; background:rgba(255,255,255,0.08);
+                        padding:2px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); white-space:nowrap;"><img src="images/icon_bank.png" class="ui-icon ui-icon-sm"> 0円</span>
+                </div>
+                <div id="achievementHint" style="color:rgba(255,255,255,0.5); font-size:clamp(8px,1.5vw,11px);
+                    font-family:'M PLUS Rounded 1c',sans-serif; margin:2px 0 5px;">ずっと挑戦できるよ</div>
+                <div id="achievementList" style="display:flex; flex-direction:column; gap:5px;
+                    overflow-y:auto; -webkit-overflow-scrolling:touch; flex:1 1 auto; min-height:0;"></div>
+                <button class="game-button" id="achievementBackBtn" data-i18n="btn_back" style="margin-top:7px; flex-shrink:0;
                     min-height:40px; font-size:clamp(11px,2.4vw,16px);"><img src="images/icon_back.png" class="ui-icon"> 戻る</button>
             </div>
         </div>
@@ -2029,6 +2060,8 @@ var gameSettings = {
     loginStreak: 0, lastLoginDate: '', pendingStockItems: [],
     lastLoginTimestamp: 0, loginBonusHistory: [],
     dailyMissions: { date: '', plays: 0, distance: 0, kills: 0, claimed: [false, false, false], bonusClaimed: false, ts: 0 },
+    achievementStats: { totalKills: 0, totalDistance: 0, totalPlays: 0, bestDistance: 0, ts: 0 }, // 実績用の生涯累計（リセットなし）
+    achievements: { claimed: {} },  // 実績の受取済み（id別マップ）
     tshopAdCooldown: 0,    // タイトルショップ広告のクールダウン（timestamp, 永続化）
     // ── 課金関連 ──
     purchased: {},         // { productId: true } 買い切り商品
@@ -2066,6 +2099,18 @@ var gameSettings = {
                 if (Array.isArray(pdm.claimed)) gameSettings.dailyMissions.claimed = pdm.claimed;
                 if (typeof pdm.bonusClaimed === 'boolean') gameSettings.dailyMissions.bonusClaimed = pdm.bonusClaimed;
                 if (typeof pdm.ts === 'number') gameSettings.dailyMissions.ts = pdm.ts;
+            }
+            // ── 実績（生涯累計＋受取済み） ──
+            if (parsed.achievementStats && typeof parsed.achievementStats === 'object') {
+                var pas = parsed.achievementStats;
+                if (typeof pas.totalKills === 'number') gameSettings.achievementStats.totalKills = pas.totalKills;
+                if (typeof pas.totalDistance === 'number') gameSettings.achievementStats.totalDistance = pas.totalDistance;
+                if (typeof pas.totalPlays === 'number') gameSettings.achievementStats.totalPlays = pas.totalPlays;
+                if (typeof pas.bestDistance === 'number') gameSettings.achievementStats.bestDistance = pas.bestDistance;
+                if (typeof pas.ts === 'number') gameSettings.achievementStats.ts = pas.ts;
+            }
+            if (parsed.achievements && typeof parsed.achievements === 'object' && parsed.achievements.claimed && typeof parsed.achievements.claimed === 'object') {
+                gameSettings.achievements.claimed = parsed.achievements.claimed;
             }
             // ── 広告クールダウン ──
             if (typeof parsed.tshopAdCooldown === 'number') gameSettings.tshopAdCooldown = parsed.tshopAdCooldown;
@@ -2137,14 +2182,18 @@ function hasClaimableMission() {
 function recordMissionProgress() {
     checkDailyMissions(); // 日付が変わっていたら先にリセット
     var dm = gameSettings.dailyMissions;
+    var as = gameSettings.achievementStats; // 実績の生涯累計（同じ差分・同じガードで加算＝二重計上しない）
     var addDist = gameState.distance - (gameState.missionCountedDistance || 0);
-    if (addDist > 0) { dm.distance += addDist; gameState.missionCountedDistance = gameState.distance; }
+    if (addDist > 0) { dm.distance += addDist; as.totalDistance += addDist; gameState.missionCountedDistance = gameState.distance; }
     var addKills = gameState.enemyKills - (gameState.missionCountedKills || 0);
-    if (addKills > 0) { dm.kills += addKills; gameState.missionCountedKills = gameState.enemyKills; }
-    if (!gameState.missionPlayCounted) { dm.plays += 1; gameState.missionPlayCounted = true; }
+    if (addKills > 0) { dm.kills += addKills; as.totalKills += addKills; gameState.missionCountedKills = gameState.enemyKills; }
+    if (!gameState.missionPlayCounted) { dm.plays += 1; as.totalPlays += 1; gameState.missionPlayCounted = true; }
+    if (gameState.distance > as.bestDistance) as.bestDistance = gameState.distance; // 自己ベスト距離
+    as.ts = Date.now();
     dm.ts = Date.now();
     saveSettings();
     updateMissionBadge();
+    updateAchievementBadge();
 }
 
 function claimMission(i) {
@@ -2267,6 +2316,110 @@ function hideMissionScreen() {
 }
 function closeMissionScreen() {
     hideMissionScreen();
+    history.back();
+}
+
+// ─── 実績/トロフィー（一生リセットされない長期目標。報酬は貯金。ミッションUIを流用） ───
+var ACHIEVEMENTS = [
+    { id: 'kills_100',   stat: 'totalKills',    target: 100,    reward: 3000,  nameKey: 'ach_kills_100',   iconImg: 'images/icon_kills.png' },
+    { id: 'kills_1000',  stat: 'totalKills',    target: 1000,   reward: 8000,  nameKey: 'ach_kills_1000',  iconImg: 'images/icon_kills.png' },
+    { id: 'kills_10000', stat: 'totalKills',    target: 10000,  reward: 30000, nameKey: 'ach_kills_10000', iconImg: 'images/icon_kills.png' },
+    { id: 'dist_5000',   stat: 'totalDistance', target: 5000,   reward: 3000,  nameKey: 'ach_dist_5000',   iconImg: 'images/icon_distance.png' },
+    { id: 'dist_50000',  stat: 'totalDistance', target: 50000,  reward: 8000,  nameKey: 'ach_dist_50000',  iconImg: 'images/icon_distance.png' },
+    { id: 'dist_200000', stat: 'totalDistance', target: 200000, reward: 30000, nameKey: 'ach_dist_200000', iconImg: 'images/icon_distance.png' },
+    { id: 'plays_10',    stat: 'totalPlays',    target: 10,     reward: 2000,  nameKey: 'ach_plays_10',    iconImg: 'images/icon_play.png' },
+    { id: 'plays_50',    stat: 'totalPlays',    target: 50,     reward: 5000,  nameKey: 'ach_plays_50',    iconImg: 'images/icon_play.png' },
+    { id: 'plays_200',   stat: 'totalPlays',    target: 200,    reward: 20000, nameKey: 'ach_plays_200',   iconImg: 'images/icon_play.png' },
+    { id: 'best_1000',   stat: 'bestDistance',  target: 1000,   reward: 3000,  nameKey: 'ach_best_1000',   iconImg: 'images/icon_progress.png' },
+    { id: 'best_3000',   stat: 'bestDistance',  target: 3000,   reward: 8000,  nameKey: 'ach_best_3000',   iconImg: 'images/icon_progress.png' },
+    { id: 'best_5000',   stat: 'bestDistance',  target: 5000,   reward: 20000, nameKey: 'ach_best_5000',   iconImg: 'images/icon_progress.png' }
+];
+
+function achStatValue(stat) { return (gameSettings.achievementStats && gameSettings.achievementStats[stat]) || 0; }
+function isAchievementComplete(a) { return achStatValue(a.stat) >= a.target; }
+function isAchievementClaimed(a) { return !!(gameSettings.achievements.claimed && gameSettings.achievements.claimed[a.id]); }
+function hasClaimableAchievement() {
+    for (var i = 0; i < ACHIEVEMENTS.length; i++) {
+        if (isAchievementComplete(ACHIEVEMENTS[i]) && !isAchievementClaimed(ACHIEVEMENTS[i])) return true;
+    }
+    return false;
+}
+function updateAchievementBadge() {
+    var badge = document.getElementById('achievementBadge');
+    if (badge) badge.style.display = hasClaimableAchievement() ? 'block' : 'none';
+}
+function claimAchievement(id) {
+    var a = null;
+    for (var i = 0; i < ACHIEVEMENTS.length; i++) { if (ACHIEVEMENTS[i].id === id) { a = ACHIEVEMENTS[i]; break; } }
+    if (!a || !isAchievementComplete(a) || isAchievementClaimed(a)) return;
+    if (!gameSettings.achievements.claimed) gameSettings.achievements.claimed = {};
+    gameSettings.achievements.claimed[id] = true;
+    gameSettings.savings += a.reward;
+    saveSettings();
+    if (soundManager) soundManager.playCoin();
+    renderAchievements();
+    updateAchievementBadge();
+}
+function handleAchievementClick(e) {
+    var cb = e.target.closest('[data-ach-claim]');
+    if (cb) { e.stopPropagation(); claimAchievement(cb.getAttribute('data-ach-claim')); return true; }
+    return false;
+}
+function renderAchievementRow(a) {
+    var cur = Math.min(achStatValue(a.stat), a.target);
+    var pct = Math.min(100, Math.floor(cur / a.target * 100));
+    var complete = isAchievementComplete(a);
+    var claimed = isAchievementClaimed(a);
+    var unit = (a.stat === 'totalDistance' || a.stat === 'bestDistance') ? 'm' : '';
+    var stateHtml;
+    if (claimed) {
+        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('mission_claimed') + '</span>';
+    } else if (complete) {
+        stateHtml = '<button class="game-button" data-ach-claim="' + a.id + '" style="padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
+    } else {
+        stateHtml = '<span style="color:#ffd700; font-weight:800; font-size:clamp(10px,2.2vw,15px); white-space:nowrap;">+' + a.reward.toLocaleString() + t('currency_unit') + '</span>';
+    }
+    var barColor = complete ? '#4CAF50' : '#ffd700';
+    return '<div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,40,0.55); border:1px solid rgba(255,255,255,0.12); border-radius:9px; padding:5px 9px;">' +
+        '<img src="' + a.iconImg + '" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
+        '<div style="flex:1 1 auto; min-width:0;">' +
+            '<div style="color:#fff; font-size:clamp(10px,2.1vw,14px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t(a.nameKey)) + '</div>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' +
+                '<div style="flex:1 1 auto; height:8px; background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;">' +
+                    '<div style="width:' + pct + '%; height:100%; background:' + barColor + '; border-radius:5px;"></div>' +
+                '</div>' +
+                '<span style="color:rgba(255,255,255,0.75); font-size:clamp(8px,1.6vw,11px); font-weight:700; white-space:nowrap;">' + cur.toLocaleString() + ' / ' + a.target.toLocaleString() + unit + '</span>' +
+            '</div>' +
+        '</div>' +
+        '<div style="flex-shrink:0; text-align:right;">' + stateHtml + '</div>' +
+    '</div>';
+}
+function renderAchievements() {
+    var titleEl = document.getElementById('achievementTitle');
+    if (titleEl) titleEl.innerHTML = _ic('icon_celebrate.png') + ' ' + t('ach_title');
+    var savEl = document.getElementById('achievementSavings');
+    if (savEl) savEl.innerHTML = _ic('icon_bank.png', 'ui-icon-sm') + ' ' + gameSettings.savings.toLocaleString() + t('currency_unit');
+    var hintEl = document.getElementById('achievementHint');
+    if (hintEl) hintEl.textContent = t('ach_hint');
+    var listEl = document.getElementById('achievementList');
+    if (!listEl) return;
+    var html = '';
+    for (var i = 0; i < ACHIEVEMENTS.length; i++) html += renderAchievementRow(ACHIEVEMENTS[i]);
+    listEl.innerHTML = html;
+}
+function showAchievementScreen() {
+    showScreenEl('achievementScreen');
+    history.pushState({ screen: 'achievement' }, '');
+    renderAchievements();
+    if (soundManager) soundManager.playConfirmSelect();
+}
+function hideAchievementScreen() {
+    hideScreenEl('achievementScreen');
+    updateAchievementBadge();
+    if (soundManager) soundManager.playCursorMove();
+}
+function closeAchievementScreen() {
+    hideAchievementScreen();
     history.back();
 }
 
@@ -2579,6 +2732,7 @@ var BACK_HANDLERS = [
       onBack: function() { hideStore(); } },
     { isOpen: function() { return isScreenVisible('titleShopScreen'); }, onBack: function() { hideTitleShop(); } },
     { isOpen: function() { return isScreenVisible('missionScreen'); }, onBack: function() { hideMissionScreen(); } },
+    { isOpen: function() { return isScreenVisible('achievementScreen'); }, onBack: function() { hideAchievementScreen(); } },
     { isOpen: function() { return isScreenVisible('guideScreen'); }, onBack: function() { hideGuide(); } },
     { isOpen: function() { return isScreenVisible('tutorialScreen'); }, onBack: function() { tutorialCancel(); } },
     { isOpen: function() { return isScreenVisible('settingsScreen'); }, onBack: function() { hideSettings(); } },
@@ -2969,6 +3123,7 @@ function startApp() {
     // デイリーミッションの日次チェック＆お知らせバッジ更新
     checkDailyMissions();
     updateMissionBadge();
+    updateAchievementBadge();
 }
 
 function handleTitleScreenClick(e) {
@@ -3045,6 +3200,7 @@ function showStartScreen() {
     hideNameInputDirect();
     hideGameOverScreen();
     updateMissionBadge();
+    updateAchievementBadge();
 
     if (soundManager) { try { soundManager.playBGM('title'); } catch (_) {} }
 }
@@ -8968,6 +9124,23 @@ function initialize() {
     var missionListEl = document.getElementById('missionList');
     missionListEl.addEventListener('click', handleMissionClick);
     missionListEl.addEventListener('touchend', function(e) { if (handleMissionClick(e)) e.preventDefault(); });
+
+    // 実績ボタン（タイトル画面）＋実績画面
+    var achBtn = document.getElementById('achievementButton');
+    if (achBtn) {
+        achBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showAchievementScreen(); });
+        achBtn.addEventListener('click', function(e) { e.stopPropagation(); showAchievementScreen(); });
+    }
+    var achBackBtn = document.getElementById('achievementBackBtn');
+    if (achBackBtn) {
+        achBackBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); closeAchievementScreen(); });
+        achBackBtn.addEventListener('click', function(e) { e.stopPropagation(); closeAchievementScreen(); });
+    }
+    var achListEl = document.getElementById('achievementList');
+    if (achListEl) {
+        achListEl.addEventListener('click', handleAchievementClick);
+        achListEl.addEventListener('touchend', function(e) { if (handleAchievementClick(e)) e.preventDefault(); });
+    }
 
     // 必殺技 発動ボタン（ゲージ満タン時のみ pointer-events:auto）
     var specialBtnEl = document.getElementById('specialMoveBtn');
