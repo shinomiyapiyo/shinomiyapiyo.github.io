@@ -17,6 +17,17 @@ var IMAGE_SPRITES = {
     player_jump: { files: ['images/player_jump.png'] },
     player_fall: { files: ['images/player_fall.png'], flip: true },
 
+    // 黄色メイド服スキン（player_* を再スキンした版・並び/flipを揃える）
+    skin_maid_idle: { files: ['images/skin_maid_idle.png'] },
+    skin_maid_walk: { files: [
+        'images/skin_maid_walk_1.png',
+        'images/skin_maid_walk_2.png',
+        'images/skin_maid_walk_3.png',
+        'images/skin_maid_walk_4.png'
+    ]},
+    skin_maid_jump: { files: ['images/skin_maid_jump.png'] },
+    skin_maid_fall: { files: ['images/skin_maid_fall.png'], flip: true },
+
     // 敵 (左向き固定 - 元画像が右向きのものだけflip:trueで反転)
     chick_walk:        { files: [
         'images/enemy_chick_walk_1.png',
