@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.320";
+                content: "Ver.1.321";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.320</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.321</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2448,6 +2448,10 @@ function closeAchievementScreen() {
 }
 
 // ─── きせかえ（アバタースキン） ───
+// 【一時措置】メイド服スキンのモーション素材（歩く/ジャンプ/落下）が未完成のため、
+// きせかえ機能を完成まで無効化（タイトルショップと同じグレーアウト扱い）。
+// 素材が完成したら、このフラグを true に戻すだけで再有効化できる。
+var SKIN_FEATURE_ENABLED = false;
 var SKINS = [
     { id: '',     nameKey: 'skin_default', preview: 'images/player_idle_v1.png' }, // デフォルト
     { id: 'maid', nameKey: 'skin_maid',    preview: 'images/skin_maid_idle.png' }  // 黄色メイド服（無料）
@@ -2486,6 +2490,8 @@ function renderSkins() {
     listEl.innerHTML = html;
 }
 function showSkinScreen() {
+    // 【一時措置】スキン素材が未完成の間は、どの経路から呼ばれても きせかえ画面を開かない
+    if (!SKIN_FEATURE_ENABLED) return;
     showScreenEl('skinScreen');
     history.pushState({ screen: 'skin' }, '');
     renderSkins();
@@ -7756,7 +7762,9 @@ function drawPlayer(x, y) {
         pose = 'idle'; frameIdx = 0;
     }
     // 装備中スキンでスプライト解決（デフォルト=player_*、メイド服=skin_maid_*）
-    spriteName = (gameSettings.activeSkin === 'maid' ? 'skin_maid_' : 'player_') + pose;
+    // 【一時措置】SKIN_FEATURE_ENABLED が false の間は、activeSkin が maid でも
+    // 未完成スキンを出さないよう必ずデフォルト見た目で描画する。
+    spriteName = ((SKIN_FEATURE_ENABLED && gameSettings.activeSkin === 'maid') ? 'skin_maid_' : 'player_') + pose;
 
     spriteManager.draw(ctx, spriteName, frameIdx, x, y, player.width, player.height, flipH);
     player.animFrame++;
@@ -9020,7 +9028,10 @@ function bindTapDelegate(container, attrName, handler) {
     bindTapButton(document.getElementById('toTitleBtn'), goToTitle, { guardTouchStart: true });
     bindTapButton(document.getElementById('adReviveBtn'), adRevive, { guardTouchStart: true });
     // UPDATEボタン: 旧onclick(iOSで遅延・指の微動で無効化)→ touchend即時に統一。タイトルの「タップで開始」誤爆も防ぐ。
-    bindTapButton(document.getElementById('forceUpdateBtn'), forceUpdate, { guardTouchStart: true, stopClickPropagation: true });
+    // ※ forceUpdate は後段(DOMContentLoaded内)で window.forceUpdate として定義されるため、
+    //   ここで素の forceUpdate を直接渡すと「未定義参照」でこのIIFE(setupInput)が中断し、
+    //   結果 initialize() の登録まで実行されず起動不能になる。クロージャで包んでタップ時に解決する。
+    bindTapButton(document.getElementById('forceUpdateBtn'), function() { if (window.forceUpdate) window.forceUpdate(); }, { guardTouchStart: true, stopClickPropagation: true });
 
     // ストックアイテム使用: 枠は動的生成のため委譲で touchend 即時反応（onclickのiOS遅延・指の微動での無効化を回避）。
     // ゲーム中の使用可能枠のみ data-idx を持つ（ショップ中の閲覧枠・空枠は対象外）。
@@ -9226,8 +9237,18 @@ function initialize() {
     // きせかえボタン（タイトル画面）＋きせかえ画面
     var skinBtn = document.getElementById('skinButton');
     if (skinBtn) {
-        skinBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showSkinScreen(); });
-        skinBtn.addEventListener('click', function(e) { e.stopPropagation(); showSkinScreen(); });
+        if (SKIN_FEATURE_ENABLED) {
+            skinBtn.addEventListener('touchend', function(e) { e.preventDefault(); e.stopPropagation(); showSkinScreen(); });
+            skinBtn.addEventListener('click', function(e) { e.stopPropagation(); showSkinScreen(); });
+        } else {
+            // 【一時措置】スキン素材が未完成のためグレーアウト＆無効化（タイトルショップと同じ扱い）
+            // ※ #titleButtons button に pointer-events:auto !important が掛かっているため
+            //   setProperty で !important を付けて確実に無効化する。
+            skinBtn.disabled = true;
+            skinBtn.style.opacity = '0.5';
+            skinBtn.style.filter = 'grayscale(0.5)';
+            skinBtn.style.setProperty('pointer-events', 'none', 'important');
+        }
     }
     var skinBackBtn = document.getElementById('skinBackBtn');
     if (skinBackBtn) {
