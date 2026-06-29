@@ -148,6 +148,8 @@ var gameState = {
     revivesLeft: 0, revivalFlashTimer: 0,
     hasRecordedHighScore: false,
     missionCountedDistance: 0, missionCountedKills: 0, missionPlayCounted: false,
+    coinsCollected: 0, bossKills: 0, specialUses: 0,
+    missionCountedCoins: 0, missionCountedBoss: 0, missionCountedSpecial: 0,
     specialGauge: 0, specialMoveLevel: 0, specialCutinTimer: 0, specialCutinActive: false
 };
 

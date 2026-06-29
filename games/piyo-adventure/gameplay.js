@@ -1268,6 +1268,7 @@ function updateBoss() {
             }
             gainScore(BOSS_DEFEAT_SCORE);
             gameState.enemyKills++; // ボス撃破を撃破数に加算
+            gameState.bossKills++;  // デイリーミッション(ボス撃破)用
             if (soundManager) soundManager.playBossFanfare();
             floatEffects.push({
                 type: 'boss_defeated_text',
