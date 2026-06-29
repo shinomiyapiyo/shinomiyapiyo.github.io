@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.338";
+                content: "Ver.1.339";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -757,7 +757,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.338</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.339</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1560,7 +1560,7 @@
 <script src="audio.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.338
+ * ぴよ氏の冒険 v1.339
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -2095,13 +2095,14 @@ function renderMissionRow(i) {
     var complete = isMissionComplete(i);
     var claimed = !!dm.claimed[i];
     var unit = (m.type === 'distance') ? 'm' : '';
+    var rewardSpan = '<div style="color:#ffd700; font-weight:800; font-size:clamp(9px,1.9vw,13px); white-space:nowrap;">+' + m.reward.toLocaleString() + t('currency_unit') + '</div>';
     var stateHtml;
     if (claimed) {
-        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('mission_claimed') + '</span>';
+        stateHtml = rewardSpan + '<div style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.7vw,12px); white-space:nowrap; margin-top:2px;">' + t('mission_claimed') + '</div>';
     } else if (complete) {
-        stateHtml = '<button class="game-button" data-mission-claim="' + i + '" style="padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
+        stateHtml = rewardSpan + '<button class="game-button" data-mission-claim="' + i + '" style="margin-top:3px; padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
     } else {
-        stateHtml = '<span style="color:#ffd700; font-weight:800; font-size:clamp(10px,2.2vw,15px); white-space:nowrap;">+' + m.reward.toLocaleString() + t('currency_unit') + '</span>';
+        stateHtml = rewardSpan;
     }
     var barColor = complete ? '#4CAF50' : '#ffd700';
     return '<div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,40,0.55); border:1px solid rgba(255,255,255,0.12); border-radius:9px; padding:5px 9px;">' +
@@ -2115,7 +2116,7 @@ function renderMissionRow(i) {
                 '<span style="color:rgba(255,255,255,0.75); font-size:clamp(8px,1.6vw,11px); font-weight:700; white-space:nowrap;">' + cur.toLocaleString() + ' / ' + m.target.toLocaleString() + unit + '</span>' +
             '</div>' +
         '</div>' +
-        '<div style="flex-shrink:0; text-align:right;">' + stateHtml + '</div>' +
+        '<div style="flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">' + stateHtml + '</div>' +
     '</div>';
 }
 
@@ -2124,13 +2125,14 @@ function renderMissionBonusRow() {
     var allDone = allMissionsComplete();
     var doneCount = 0;
     for (var i = 0; i < DAILY_MISSIONS.length; i++) if (isMissionComplete(i)) doneCount++;
+    var rewardSpan = '<div style="color:#ffd700; font-weight:800; font-size:clamp(9px,1.9vw,13px); white-space:nowrap;">+' + MISSION_ALLCLEAR_BONUS.toLocaleString() + t('currency_unit') + '</div>';
     var stateHtml;
     if (dm.bonusClaimed) {
-        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('mission_claimed') + '</span>';
+        stateHtml = rewardSpan + '<div style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.7vw,12px); white-space:nowrap; margin-top:2px;">' + t('mission_claimed') + '</div>';
     } else if (allDone) {
-        stateHtml = '<button class="game-button" data-mission-bonus="1" style="padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
+        stateHtml = rewardSpan + '<button class="game-button" data-mission-bonus="1" style="margin-top:3px; padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
     } else {
-        stateHtml = '<span style="color:#ffd700; font-weight:800; font-size:clamp(10px,2.2vw,15px); white-space:nowrap;">+' + MISSION_ALLCLEAR_BONUS.toLocaleString() + t('currency_unit') + '</span>';
+        stateHtml = rewardSpan;
     }
     return '<div style="display:flex; align-items:center; gap:8px; background:rgba(45,30,0,0.6); border:1px solid rgba(255,215,0,0.45); border-radius:9px; padding:5px 9px;">' +
         '<img src="images/icon_celebrate.png" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
@@ -2138,7 +2140,7 @@ function renderMissionBonusRow() {
             '<div style="color:#ffd700; font-size:clamp(10px,2.1vw,14px); font-weight:800; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t('mission_allclear_name')) + '</div>' +
             '<div style="color:rgba(255,255,255,0.7); font-size:clamp(8px,1.6vw,11px); font-weight:700;">' + doneCount + ' / ' + DAILY_MISSIONS.length + '</div>' +
         '</div>' +
-        '<div style="flex-shrink:0; text-align:right;">' + stateHtml + '</div>' +
+        '<div style="flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">' + stateHtml + '</div>' +
     '</div>';
 }
 
@@ -2179,7 +2181,7 @@ var ACHIEVEMENTS = [
     { id: 'kills_100',   stat: 'totalKills',    target: 100,    reward: 3000,  nameKey: 'ach_kills_100',   iconImg: 'images/icon_kills.png' },
     { id: 'kills_1000',  stat: 'totalKills',    target: 1000,   reward: 8000,  nameKey: 'ach_kills_1000',  iconImg: 'images/icon_kills.png' },
     { id: 'kills_10000', stat: 'totalKills',    target: 10000,  reward: 30000, nameKey: 'ach_kills_10000', iconImg: 'images/icon_kills.png' },
-    { id: 'dist_5000',   stat: 'totalDistance', target: 5000,   reward: 3000,  nameKey: 'ach_dist_5000',   iconImg: 'images/icon_distance.png', skinReward: 'maid', skinPreview: 'images/skin_maid_idle.png' },
+    { id: 'dist_5000',   stat: 'totalDistance', target: 5000,   reward: 0,     nameKey: 'ach_dist_5000',   iconImg: 'images/icon_distance.png', skinReward: 'maid', skinPreview: 'images/skin_maid_idle.png' },
     { id: 'dist_50000',  stat: 'totalDistance', target: 50000,  reward: 8000,  nameKey: 'ach_dist_50000',  iconImg: 'images/icon_distance.png' },
     { id: 'dist_200000', stat: 'totalDistance', target: 200000, reward: 30000, nameKey: 'ach_dist_200000', iconImg: 'images/icon_distance.png' },
     { id: 'plays_10',    stat: 'totalPlays',    target: 10,     reward: 2000,  nameKey: 'ach_plays_10',    iconImg: 'images/icon_play.png' },
@@ -2243,21 +2245,24 @@ function renderAchievementRow(a) {
     var complete = isAchievementComplete(a);
     var claimed = isAchievementClaimed(a);
     var unit = (a.stat === 'totalDistance' || a.stat === 'bestDistance') ? 'm' : '';
+    // 報酬内容（金額＋きせかえ）。全状態で「何がもらえる/もらった」を表示する。
+    var rewardHtml = '';
+    if (a.reward > 0) rewardHtml = '+' + a.reward.toLocaleString() + t('currency_unit');
+    if (a.skinReward) rewardHtml += (rewardHtml ? ' ' : '') + '<img src="' + a.skinPreview + '" width="14" height="14" style="image-rendering:pixelated; vertical-align:middle; border-radius:3px;"> ' + t('skin_reward_badge');
+    var rewardSpan = '<div style="color:#ffd700; font-weight:800; font-size:clamp(9px,1.9vw,13px); white-space:nowrap;">' + rewardHtml + '</div>';
     var stateHtml;
     if (claimed) {
-        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('mission_claimed') + '</span>';
+        stateHtml = rewardSpan + '<div style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.7vw,12px); white-space:nowrap; margin-top:2px;">' + t('mission_claimed') + '</div>';
     } else if (complete) {
-        stateHtml = '<button class="game-button" data-ach-claim="' + a.id + '" style="padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
+        stateHtml = rewardSpan + '<button class="game-button" data-ach-claim="' + a.id + '" style="margin-top:3px; padding:4px 10px; min-height:auto; font-size:clamp(9px,2vw,13px); background:linear-gradient(180deg,#ffd84a,#ff9c00); border:1px solid rgba(255,180,0,0.6); white-space:nowrap; animation:adRevivePulse 1.6s ease-in-out infinite;">' + t('mission_claim') + '</button>';
     } else {
-        stateHtml = '<span style="color:#ffd700; font-weight:800; font-size:clamp(10px,2.2vw,15px); white-space:nowrap;">+' + a.reward.toLocaleString() + t('currency_unit') + '</span>';
+        stateHtml = rewardSpan;
     }
     var barColor = complete ? '#4CAF50' : '#ffd700';
     return '<div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,40,0.55); border:1px solid rgba(255,255,255,0.12); border-radius:9px; padding:5px 9px;">' +
         '<img src="' + a.iconImg + '" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
         '<div style="flex:1 1 auto; min-width:0;">' +
-            '<div style="color:#fff; font-size:clamp(10px,2.1vw,14px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t(a.nameKey)) +
-                (a.skinReward ? ' <span style="color:#ff9ed8; font-size:clamp(8px,1.6vw,11px); font-weight:800; white-space:nowrap;"><img src="' + a.skinPreview + '" width="15" height="15" style="image-rendering:pixelated; vertical-align:middle; border-radius:3px;"> ' + t('skin_reward_badge') + '</span>' : '') +
-            '</div>' +
+            '<div style="color:#fff; font-size:clamp(10px,2.1vw,14px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t(a.nameKey)) + '</div>' +
             '<div style="display:flex; align-items:center; gap:6px;">' +
                 '<div style="flex:1 1 auto; height:8px; background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;">' +
                     '<div style="width:' + pct + '%; height:100%; background:' + barColor + '; border-radius:5px;"></div>' +
@@ -2265,7 +2270,7 @@ function renderAchievementRow(a) {
                 '<span style="color:rgba(255,255,255,0.75); font-size:clamp(8px,1.6vw,11px); font-weight:700; white-space:nowrap;">' + cur.toLocaleString() + ' / ' + a.target.toLocaleString() + unit + '</span>' +
             '</div>' +
         '</div>' +
-        '<div style="flex-shrink:0; text-align:right;">' + stateHtml + '</div>' +
+        '<div style="flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">' + stateHtml + '</div>' +
     '</div>';
 }
 function renderAchievements() {
