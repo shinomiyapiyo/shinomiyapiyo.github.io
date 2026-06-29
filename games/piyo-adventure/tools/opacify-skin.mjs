@@ -29,7 +29,11 @@ for (const n of list) {
     for (const [nx,ny] of [[x+1,y],[x-1,y],[x,y+1],[x,y-1]])
       if (nx>=0&&nx<width&&ny>=0&&ny<height&&isT(nx,ny)&&!ext[ny*width+nx]) { ext[ny*width+nx]=1; q.push(nx,ny); }
   }
-  let opa=0; for (let y=0;y<height;y++) for (let x=0;x<width;x++){ const e=ext[y*width+x]; data[A(x,y)] = e?0:255; if(!e) opa++; }
+  let opa=0; for (let y=0;y<height;y++) for (let x=0;x<width;x++){
+    const e=ext[y*width+x]; const i=A(x,y);
+    data[i] = e?0:255;            // 背景=透明 / キャラ=不透明(二値)
+    if(!e){ opa++; const r=data[i-3],g=data[i-2],b=data[i-1],mx=Math.max(r,b); if(g>mx) data[i-2]=mx; } // 緑かぶり除去(デスピル)
+  }
   await sharp(data, { raw:{ width, height, channels } }).png().toFile(f);
   console.log(`${n}: opaque=${opa}/${width*height}`);
 }
