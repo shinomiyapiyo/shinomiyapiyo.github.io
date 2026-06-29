@@ -1891,6 +1891,72 @@ function hideGameOverScreen() {
     hideScreenEl('gameOverScreen');
 }
 
+// ─── リザルト共有 ───
+// 正方形のリザルトカード画像をcanvasで生成（背景＋距離＋スコア＋装備スキンの立ち絵）。
+function buildResultCard() {
+    return new Promise(function(resolve) {
+        try {
+            var cv = document.createElement('canvas');
+            cv.width = 1080; cv.height = 1080;
+            var c = cv.getContext('2d');
+            // 背景グラデ（空→ピンク→草）
+            var g = c.createLinearGradient(0, 0, 0, 1080);
+            g.addColorStop(0, '#8ec5e8'); g.addColorStop(0.55, '#f6b6c8'); g.addColorStop(1, '#bfe6a0');
+            c.fillStyle = g; c.fillRect(0, 0, 1080, 1080);
+            // パネル枠
+            c.fillStyle = 'rgba(0,0,0,0.32)'; c.fillRect(64, 64, 952, 952);
+            c.strokeStyle = 'rgba(255,255,255,0.4)'; c.lineWidth = 5; c.strokeRect(64, 64, 952, 952);
+            c.textAlign = 'center';
+            // タイトル
+            c.fillStyle = '#ffffff';
+            c.font = 'bold 72px "M PLUS Rounded 1c", sans-serif';
+            c.fillText('ぴよ氏の冒険', 540, 196);
+            // 距離（大）
+            c.fillStyle = '#ffd84d';
+            c.font = 'bold 150px "M PLUS Rounded 1c", sans-serif';
+            c.fillText(finalGameStats.distance + 'm', 540, 392);
+            // スコア / 撃破 / Lv
+            c.fillStyle = '#ffffff';
+            c.font = 'bold 46px "M PLUS Rounded 1c", sans-serif';
+            c.fillText('スコア ' + finalGameStats.score + '　撃破 ' + finalGameStats.enemyKills + '　Lv' + finalGameStats.speedLevel, 540, 474);
+            // 装備スキンのキャラ立ち絵（ドット維持で拡大）
+            try {
+                var spriteName = ((typeof SKIN_FEATURE_ENABLED !== 'undefined' && SKIN_FEATURE_ENABLED && gameSettings.activeSkin === 'maid') ? 'skin_maid_' : 'player_') + 'idle';
+                c.imageSmoothingEnabled = false;
+                spriteManager.draw(c, spriteName, 0, 540 - 190, 540, 380, 380, false);
+            } catch (_) {}
+            // ハッシュタグ
+            c.fillStyle = 'rgba(255,255,255,0.92)';
+            c.font = 'bold 42px "M PLUS Rounded 1c", sans-serif';
+            c.fillText('#ぴよ氏の冒険', 540, 984);
+            cv.toBlob(function(b) { resolve(b); }, 'image/png');
+        } catch (_) { resolve(null); }
+    });
+}
+
+// シェア: Web Share API（画像＋テキスト）→ テキストのみ → X intent の順でフォールバック。
+function shareResult() {
+    var url = 'https://shinomiyapiyo.github.io/games/piyo-adventure/';
+    var text = t('share_text', { distance: finalGameStats.distance, score: finalGameStats.score });
+    buildResultCard().then(function(blob) {
+        var file = null;
+        try { if (blob) file = new File([blob], 'piyo_result.png', { type: 'image/png' }); } catch (_) {}
+        // 1) 画像つき共有（モバイル/PWA）
+        if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], text: text, url: url }).catch(function() {});
+            return;
+        }
+        // 2) テキストのみ共有
+        if (navigator.share) {
+            navigator.share({ text: text, url: url }).catch(function() {});
+            return;
+        }
+        // 3) フォールバック: X(Twitter) 投稿画面を新規タブ
+        var intent = 'https://x.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+        window.open(intent, '_blank');
+    });
+}
+
 function retryGame() {
     if (isInTransitionCooldown()) return;
     hideGameOverScreen();

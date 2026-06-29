@@ -277,6 +277,7 @@ function bindTapDelegate(container, attrName, handler) {
     bindTapButton(document.getElementById('skipBtn'), skipSubmit, { guardTouchStart: true });
     bindTapButton(document.getElementById('retryBtn'), retryGame, { guardTouchStart: true });
     bindTapButton(document.getElementById('toTitleBtn'), goToTitle, { guardTouchStart: true });
+    bindTapButton(document.getElementById('shareBtn'), shareResult, { guardTouchStart: true });
     bindTapButton(document.getElementById('adReviveBtn'), adRevive, { guardTouchStart: true });
     // UPDATEボタン: 旧onclick(iOSで遅延・指の微動で無効化)→ touchend即時に統一。タイトルの「タップで開始」誤爆も防ぐ。
     // ※ forceUpdate は後段(DOMContentLoaded内)で window.forceUpdate として定義されるため、
