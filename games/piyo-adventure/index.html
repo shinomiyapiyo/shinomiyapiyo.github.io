@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.326";
+                content: "Ver.1.327";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -605,6 +605,8 @@
             transition: transform 0.1s ease;
         }
         .stock-slot:active { transform: scale(0.9); }
+        /* 使用可能なストック枠だけタップ可能に戻す（コンテナは pointer-events:none でジャンプ貫通） */
+        .stock-slot[data-idx] { pointer-events: auto; }
         .stock-slot-empty {
             border-color: rgba(255,255,255,0.4);
             background: rgba(255,255,255,0.08);
@@ -755,7 +757,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.326</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.327</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1488,7 +1490,7 @@
         <div id="stockSlots" style="
             position: absolute; top: 60px; right: calc(10px + env(safe-area-inset-right, 0px));
             display: none; flex-direction: column; align-items: flex-end; gap: 4px;
-            z-index: 100;"></div>
+            z-index: 100; pointer-events: none;"></div><!-- 表示領域はタップ貫通（下のjumpAreaへ）。使用可能枠のみ下のCSSでauto復帰 -->
 
         <!-- 必殺技ゲージ＆発動ボタン（上部中央・デッドゾーンには触れない） -->
         <div id="specialMoveUI" style="display:none; position:absolute; top:calc(8px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%); z-index:150; flex-direction:column; align-items:center; pointer-events:none;">
