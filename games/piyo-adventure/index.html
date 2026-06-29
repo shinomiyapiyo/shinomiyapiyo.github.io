@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.325";
+                content: "Ver.1.326";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -755,7 +755,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.325</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.326</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2365,7 +2365,7 @@ var ACHIEVEMENTS = [
     { id: 'kills_100',   stat: 'totalKills',    target: 100,    reward: 3000,  nameKey: 'ach_kills_100',   iconImg: 'images/icon_kills.png' },
     { id: 'kills_1000',  stat: 'totalKills',    target: 1000,   reward: 8000,  nameKey: 'ach_kills_1000',  iconImg: 'images/icon_kills.png' },
     { id: 'kills_10000', stat: 'totalKills',    target: 10000,  reward: 30000, nameKey: 'ach_kills_10000', iconImg: 'images/icon_kills.png' },
-    { id: 'dist_5000',   stat: 'totalDistance', target: 5000,   reward: 3000,  nameKey: 'ach_dist_5000',   iconImg: 'images/icon_distance.png' },
+    { id: 'dist_5000',   stat: 'totalDistance', target: 5000,   reward: 3000,  nameKey: 'ach_dist_5000',   iconImg: 'images/icon_distance.png', skinReward: 'maid', skinPreview: 'images/skin_maid_idle.png' },
     { id: 'dist_50000',  stat: 'totalDistance', target: 50000,  reward: 8000,  nameKey: 'ach_dist_50000',  iconImg: 'images/icon_distance.png' },
     { id: 'dist_200000', stat: 'totalDistance', target: 200000, reward: 30000, nameKey: 'ach_dist_200000', iconImg: 'images/icon_distance.png' },
     { id: 'plays_10',    stat: 'totalPlays',    target: 10,     reward: 2000,  nameKey: 'ach_plays_10',    iconImg: 'images/icon_play.png' },
@@ -2396,10 +2396,27 @@ function claimAchievement(id) {
     if (!gameSettings.achievements.claimed) gameSettings.achievements.claimed = {};
     gameSettings.achievements.claimed[id] = true;
     gameSettings.savings += a.reward;
+    if (a.skinReward) {   // スキン報酬付き実績: スキンを解放
+        if (!gameSettings.ownedSkins) gameSettings.ownedSkins = [];
+        if (gameSettings.ownedSkins.indexOf(a.skinReward) === -1) gameSettings.ownedSkins.push(a.skinReward);
+    }
     saveSettings();
     if (soundManager) soundManager.playCoin();
+    if (a.skinReward) showSkinUnlockToast();
     renderAchievements();
     updateAchievementBadge();
+}
+function showSkinUnlockToast() {
+    var d = document.createElement('div');
+    d.textContent = '🎀 ' + t('skin_unlocked_toast');
+    d.style.cssText = 'position:fixed; left:50%; top:14%; transform:translateX(-50%); z-index:10000;' +
+        'background:linear-gradient(180deg,#ff7ec7,#ff1493); color:#fff; font-weight:800;' +
+        "font-family:'M PLUS Rounded 1c',sans-serif; padding:10px 18px; border-radius:12px;" +
+        'box-shadow:0 4px 16px rgba(0,0,0,0.45); font-size:clamp(13px,2.6vw,18px); pointer-events:none;' +
+        'opacity:0; transition:opacity 0.3s;';
+    document.body.appendChild(d);
+    requestAnimationFrame(function() { d.style.opacity = '1'; });
+    setTimeout(function() { d.style.opacity = '0'; setTimeout(function() { if (d.parentNode) d.parentNode.removeChild(d); }, 400); }, 2200);
 }
 function handleAchievementClick(e) {
     var cb = e.target.closest('[data-ach-claim]');
@@ -2424,7 +2441,9 @@ function renderAchievementRow(a) {
     return '<div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,40,0.55); border:1px solid rgba(255,255,255,0.12); border-radius:9px; padding:5px 9px;">' +
         '<img src="' + a.iconImg + '" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
         '<div style="flex:1 1 auto; min-width:0;">' +
-            '<div style="color:#fff; font-size:clamp(10px,2.1vw,14px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t(a.nameKey)) + '</div>' +
+            '<div style="color:#fff; font-size:clamp(10px,2.1vw,14px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t(a.nameKey)) +
+                (a.skinReward ? ' <span style="color:#ff9ed8; font-size:clamp(8px,1.6vw,11px); font-weight:800; white-space:nowrap;"><img src="' + a.skinPreview + '" width="15" height="15" style="image-rendering:pixelated; vertical-align:middle; border-radius:3px;"> ' + t('skin_reward_badge') + '</span>' : '') +
+            '</div>' +
             '<div style="display:flex; align-items:center; gap:6px;">' +
                 '<div style="flex:1 1 auto; height:8px; background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;">' +
                     '<div style="width:' + pct + '%; height:100%; background:' + barColor + '; border-radius:5px;"></div>' +
@@ -2470,9 +2489,16 @@ function closeAchievementScreen() {
 var SKIN_FEATURE_ENABLED = true;
 var SKINS = [
     { id: '',     nameKey: 'skin_default', preview: 'images/player_idle_v1.png' }, // デフォルト
-    { id: 'maid', nameKey: 'skin_maid',    preview: 'images/skin_maid_idle.png' }  // 黄色メイド服（無料）
+    { id: 'maid', nameKey: 'skin_maid',    preview: 'images/skin_maid_idle.png', unlockAch: 'dist_5000' }  // 実績「合計5,000m走る」で解放
 ];
-function isSkinOwned(id) { return id === '' || id === 'maid' || (gameSettings.ownedSkins && gameSettings.ownedSkins.indexOf(id) !== -1); } // 現状は全スキン無料
+function achById(id) { for (var i = 0; i < ACHIEVEMENTS.length; i++) if (ACHIEVEMENTS[i].id === id) return ACHIEVEMENTS[i]; return null; }
+function isSkinOwned(id) {
+    if (id === '') return true;                                                          // デフォルトは常に所持
+    if (gameSettings.ownedSkins && gameSettings.ownedSkins.indexOf(id) !== -1) return true;  // 明示的に所持
+    var s = null; for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) { s = SKINS[i]; break; }
+    if (s && s.unlockAch && gameSettings.achievements.claimed && gameSettings.achievements.claimed[s.unlockAch]) return true; // 実績を受け取り済みなら解放
+    return false;
+}
 function equipSkin(id) {
     if (!isSkinOwned(id)) return;
     gameSettings.activeSkin = id;
@@ -2486,13 +2512,21 @@ function handleSkinClick(e) {
     return false;
 }
 function renderSkinRow(s) {
+    var owned = isSkinOwned(s.id);
     var equipped = (gameSettings.activeSkin === s.id);
-    var stateHtml = equipped
-        ? '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('skin_equipped') + '</span>'
-        : '<button class="game-button" data-skin-equip="' + s.id + '" style="padding:4px 12px; min-height:auto; font-size:clamp(9px,2vw,13px); white-space:nowrap;">' + t('skin_equip') + '</button>';
+    var stateHtml, condHtml = '';
+    if (equipped) {
+        stateHtml = '<span style="color:#4CAF50; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">' + t('skin_equipped') + '</span>';
+    } else if (owned) {
+        stateHtml = '<button class="game-button" data-skin-equip="' + s.id + '" style="padding:4px 12px; min-height:auto; font-size:clamp(9px,2vw,13px); white-space:nowrap;">' + t('skin_equip') + '</button>';
+    } else {
+        stateHtml = '<span style="color:#ff9ed8; font-weight:800; font-size:clamp(9px,1.8vw,13px); white-space:nowrap;">🔒 ' + t('skin_locked') + '</span>';
+        if (s.unlockAch) { var ac = achById(s.unlockAch); if (ac) condHtml = '<div style="color:rgba(255,255,255,0.6); font-size:clamp(8px,1.6vw,11px); margin-top:2px;">' + t('skin_unlock_prefix') + escapeHtml(t(ac.nameKey)) + t('skin_unlock_suffix') + '</div>'; }
+    }
+    var dim = (!owned && !equipped) ? ' filter:grayscale(0.75); opacity:0.65;' : '';
     return '<div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,40,0.55); border:1px solid ' + (equipped ? 'rgba(76,175,80,0.6)' : 'rgba(255,255,255,0.12)') + '; border-radius:10px; padding:6px 10px;">' +
-        '<img src="' + s.preview + '" width="44" height="44" style="image-rendering:pixelated; flex-shrink:0; background:rgba(255,255,255,0.06); border-radius:8px;">' +
-        '<div style="flex:1 1 auto; min-width:0; color:#fff; font-size:clamp(11px,2.3vw,15px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif;">' + escapeHtml(t(s.nameKey)) + '</div>' +
+        '<img src="' + s.preview + '" width="44" height="44" style="image-rendering:pixelated; flex-shrink:0; background:rgba(255,255,255,0.06); border-radius:8px;' + dim + '">' +
+        '<div style="flex:1 1 auto; min-width:0; color:#fff; font-size:clamp(11px,2.3vw,15px); font-weight:700; font-family:\'M PLUS Rounded 1c\',sans-serif;">' + escapeHtml(t(s.nameKey)) + condHtml + '</div>' +
         '<div style="flex-shrink:0;">' + stateHtml + '</div>' +
     '</div>';
 }
@@ -9189,7 +9223,7 @@ window.addEventListener('orientationchange', function() {
 document.addEventListener('touchmove', function(e) {
     // INPUT要素とオーバーレイ画面内のスクロールは許可
     if (e.target.tagName === 'INPUT') return;
-    if (e.target.closest('#nameInputScreen, #rankingScreen, #settingsScreen, #pauseScreen, #gameOverScreen, #stageShopScreen, #titleShopScreen, #guideScreen')) return;
+    if (e.target.closest('#nameInputScreen, #rankingScreen, #settingsScreen, #pauseScreen, #gameOverScreen, #stageShopScreen, #titleShopScreen, #guideScreen, #achievementScreen, #missionScreen, #skinScreen')) return;
     e.preventDefault();
 }, { passive: false });
 document.addEventListener('visibilitychange', function() {
@@ -9202,6 +9236,8 @@ window.addEventListener('blur', function() {
 // ─── 初期化 ───
 
 function initialize() {
+    // 未所持スキンが装備中なら（解放条件導入前に装備していた等）デフォルトへ戻す
+    if (gameSettings.activeSkin && !isSkinOwned(gameSettings.activeSkin)) { gameSettings.activeSkin = ''; saveSettings(); }
     spriteManager.init(function() {
         // 画像スプライト読み込み完了
     });
