@@ -20,14 +20,15 @@ const getArg = (n) => { const a = args.find(x => x.startsWith(`--${n}=`)); retur
 const hasFlag = (n) => args.includes(`--${n}`);
 const MODEL    = getArg('model') || (hasFlag('std') ? 'veo-3.1-generate-preview' : 'veo-3.1-fast-generate-preview');
 const SECONDS  = parseInt(getArg('seconds') || '4', 10);
-const BASE     = getArg('base') || 'oai_base_side_2_1024.png';
-const SEED_OUT = path.join(RAW_DIR, 'veo_seed_green.png');
-const MP4_OUT  = path.join(RAW_DIR, 'veo_walk.mp4');
+const IDLE     = hasFlag('idle');   // 立ち絵(idle)用の動画を作る
+const BASE     = getArg('base') || 'oai_base_side_2_1024.png';   // idleもwalkと同じクリーンな横向きベースから（"walkを元に"）
+const SEED_OUT = path.join(RAW_DIR, IDLE ? 'veo_idle_seed.png' : 'veo_seed_green.png');
+const MP4_OUT  = path.join(RAW_DIR, IDLE ? 'veo_idle.mp4' : 'veo_walk.mp4');
 
 const GREEN = { r: 0, g: 200, b: 0, alpha: 1 };
 const W = 720, H = 1280, FOOT_Y = 1185;
 
-const PROMPT = [
+const PROMPT_WALK = [
   'A 2-heads-tall chibi pixel-art maid girl walks in place in a smooth, clear SIDE-VIEW walking cycle, facing right.',
   'Her legs clearly step: one foot forward, then both legs pass close together between steps, then the other foot forward —',
   'a natural open-close-open walk. Her black twin-tails and yellow-black frilly skirt sway slightly with each step.',
@@ -35,7 +36,19 @@ const PROMPT = [
   'pixel-art art style identical to the input image. Plain flat solid green background, no other objects, no camera movement,',
   'no zoom, no panning.',
 ].join(' ');
-const NEG = 'background change, camera motion, panning, zoom, extra characters, text, watermark, blur, realistic 3d render, walking out of frame';
+const PROMPT_IDLE = [
+  'The same 2-heads-tall chibi pixel-art maid girl from the input image simply STOPS walking and stands STILL in a calm,',
+  'relaxed IDLE pose, in the SAME clear SIDE VIEW facing right as the input — both feet planted together on the ground,',
+  'arms relaxed at her sides. Only a very subtle idle motion (gentle breathing, a tiny twin-tail sway). She does NOT walk,',
+  'does NOT step, does NOT move across the screen and does NOT turn to face the viewer (keep the side view).',
+  'Keep her exact appearance, beautiful crisp face, outfit, colors and pixel-art style IDENTICAL to the input image.',
+  'She stays CENTERED. Plain flat solid green background, no camera movement, no zoom, no panning.',
+].join(' ');
+const PROMPT = IDLE ? PROMPT_IDLE : PROMPT_WALK;
+const NEG = (IDLE
+  ? 'walking, stepping, moving across the screen, turning to face the viewer, changing the camera angle, '
+  : 'walking out of frame, ')
+  + 'background change, camera motion, panning, zoom, extra characters, text, watermark, blur, realistic 3d render, out of frame';
 
 async function buildSeed() {
   const basePath = path.join(RAW_DIR, BASE);
