@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.321";
+                content: "Ver.1.322";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -738,7 +738,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.321</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.322</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -2448,10 +2448,9 @@ function closeAchievementScreen() {
 }
 
 // ─── きせかえ（アバタースキン） ───
-// 【一時措置】メイド服スキンのモーション素材（歩く/ジャンプ/落下）が未完成のため、
-// きせかえ機能を完成まで無効化（タイトルショップと同じグレーアウト扱い）。
-// 素材が完成したら、このフラグを true に戻すだけで再有効化できる。
-var SKIN_FEATURE_ENABLED = false;
+// メイド服スキンのモーション素材が完成したため有効化。
+// （歩行=Veo動画からコマ切り出し / idle・jump・fall=画像生成。手順は tools/ と開発メモ参照）
+var SKIN_FEATURE_ENABLED = true;
 var SKINS = [
     { id: '',     nameKey: 'skin_default', preview: 'images/player_idle_v1.png' }, // デフォルト
     { id: 'maid', nameKey: 'skin_maid',    preview: 'images/skin_maid_idle.png' }  // 黄色メイド服（無料）
