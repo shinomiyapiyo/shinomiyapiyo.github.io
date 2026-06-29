@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.339";
+                content: "Ver.1.340";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -757,7 +757,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.339</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.340</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
@@ -1560,7 +1560,7 @@
 <script src="audio.js"></script>
 <script>
 /* ============================================================
- * ぴよ氏の冒険 v1.339
+ * ぴよ氏の冒険 v1.340
  * © 2026 Created by NullPo Works
  * ============================================================ */
 
@@ -1734,12 +1734,31 @@ var LOGIN_BONUS_REWARDS = [
     { savings: 13000 }
 ];
 // ─── デイリーミッション ───
-var DAILY_MISSIONS = [
-    { id: 'play',     type: 'plays',    target: 3,    reward: 2000, objKey: 'mission_obj_play',     iconImg: 'images/icon_play.png' },
-    { id: 'distance', type: 'distance', target: 2000, reward: 3000, objKey: 'mission_obj_distance', iconImg: 'images/icon_distance.png' },
-    { id: 'kills',    type: 'kills',    target: 50,   reward: 3000, objKey: 'mission_obj_kills',    iconImg: 'images/icon_kills.png' }
+// デイリーミッションのプール（毎日この中から MISSION_DAILY_COUNT 種を日替わりで選定）。各種に目標値バリエーション。
+var MISSION_POOL = [
+    { id: 'play',     type: 'plays',    objKey: 'mission_obj_play',     iconImg: 'images/icon_play.png',         variants: [{ target: 2, reward: 1500 }, { target: 3, reward: 2000 }, { target: 5, reward: 3000 }] },
+    { id: 'distance', type: 'distance', objKey: 'mission_obj_distance', iconImg: 'images/icon_distance.png',     variants: [{ target: 1500, reward: 2000 }, { target: 2500, reward: 3000 }, { target: 4000, reward: 4000 }] },
+    { id: 'kills',    type: 'kills',    objKey: 'mission_obj_kills',    iconImg: 'images/icon_kills.png',        variants: [{ target: 30, reward: 2000 }, { target: 50, reward: 3000 }, { target: 80, reward: 4000 }] },
+    { id: 'coins',    type: 'coins',    objKey: 'mission_obj_coins',    iconImg: 'images/item_coin.png',         variants: [{ target: 30, reward: 2000 }, { target: 60, reward: 3000 }, { target: 100, reward: 4000 }] },
+    { id: 'boss',     type: 'boss',     objKey: 'mission_obj_boss',     iconImg: 'images/icon_skull.png',        variants: [{ target: 1, reward: 2500 }, { target: 2, reward: 4000 }, { target: 3, reward: 5000 }] },
+    { id: 'special',  type: 'special',  objKey: 'mission_obj_special',  iconImg: 'images/icon_special_move.png', variants: [{ target: 1, reward: 2000 }, { target: 2, reward: 3000 }, { target: 3, reward: 4000 }] }
 ];
+var MISSION_DAILY_COUNT = 3;
 var MISSION_ALLCLEAR_BONUS = 3000;
+
+// 日付文字列から決定論的に当日のミッション(種類＋目標値)を選ぶ。同じ日は同じ＝端末内で固定（Math.random不使用）。
+function _missionHash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function _mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function pickDailyMissions(dateStr) {
+    var rng = _mulberry32(_missionHash(dateStr));
+    var pool = MISSION_POOL.slice();
+    for (var i = pool.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)); var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }
+    var picked = pool.slice(0, MISSION_DAILY_COUNT);
+    return picked.map(function (m) {
+        var v = m.variants[Math.floor(rng() * m.variants.length)];
+        return { id: m.id, type: m.type, objKey: m.objKey, iconImg: m.iconImg, target: v.target, reward: v.reward };
+    });
+}
 
 // ─── ぴよフラッシュ（必殺技・内部ID special_move） ───
 var SPECIAL_MOVE_DAMAGE = [3, 5, 8];   // ボスへのダメージ（L1/L2/L3）
@@ -1989,21 +2008,18 @@ function saveSettings() {
 // ─── デイリーミッション: ロジック＆UI ───
 function checkDailyMissions() {
     var dm = gameSettings.dailyMissions;
-    // claimed配列の長さをミッション数に正規化（将来ミッション数を変えても壊れない）
-    if (!Array.isArray(dm.claimed) || dm.claimed.length !== DAILY_MISSIONS.length) {
-        var fixed = [];
-        for (var k = 0; k < DAILY_MISSIONS.length; k++) fixed.push(!!(dm.claimed && dm.claimed[k]));
-        dm.claimed = fixed;
-    }
     var today = getDateString();
-    if (dm.date === today) return;       // 今日のミッションは設定済み
+    // 当日分が未生成（新しい日 or 旧セーブで todayMissions 無し）なら日替わりミッションを生成
+    var needNew = (dm.date !== today) || !Array.isArray(dm.todayMissions) || dm.todayMissions.length !== MISSION_DAILY_COUNT;
+    if (!needNew) return;
     var now = Date.now();
-    if (dm.ts && now < dm.ts) return;    // 時計巻き戻し対策: 前回更新時刻より過去なら無視
-    // 新しい日 → 進捗リセット
+    // 時計巻き戻し対策: 日付が進んだのに前回更新より過去、かつ既に当日分がある場合のみ無視
+    if (dm.date !== today && dm.ts && now < dm.ts && Array.isArray(dm.todayMissions) && dm.todayMissions.length) return;
     dm.date = today;
-    dm.plays = 0; dm.distance = 0; dm.kills = 0;
+    dm.todayMissions = pickDailyMissions(today);
+    dm.plays = 0; dm.distance = 0; dm.kills = 0; dm.coins = 0; dm.boss = 0; dm.special = 0;
     dm.claimed = [];
-    for (var i = 0; i < DAILY_MISSIONS.length; i++) dm.claimed.push(false);
+    for (var i = 0; i < MISSION_DAILY_COUNT; i++) dm.claimed.push(false);
     dm.bonusClaimed = false;
     dm.ts = now;
     saveSettings();
@@ -2014,22 +2030,29 @@ function getMissionProgress(type) {
     if (type === 'plays') return dm.plays;
     if (type === 'distance') return dm.distance;
     if (type === 'kills') return dm.kills;
+    if (type === 'coins') return dm.coins || 0;
+    if (type === 'boss') return dm.boss || 0;
+    if (type === 'special') return dm.special || 0;
     return 0;
 }
 function isMissionComplete(i) {
-    var m = DAILY_MISSIONS[i];
-    return getMissionProgress(m.type) >= m.target;
+    var tm = gameSettings.dailyMissions.todayMissions;
+    if (!tm || !tm[i]) return false;
+    return getMissionProgress(tm[i].type) >= tm[i].target;
 }
 function allMissionsComplete() {
-    for (var i = 0; i < DAILY_MISSIONS.length; i++) if (!isMissionComplete(i)) return false;
+    var tm = gameSettings.dailyMissions.todayMissions;
+    if (!tm || !tm.length) return false;
+    for (var i = 0; i < tm.length; i++) if (!isMissionComplete(i)) return false;
     return true;
 }
 function hasClaimableMission() {
     var dm = gameSettings.dailyMissions;
-    for (var i = 0; i < DAILY_MISSIONS.length; i++) {
+    var tm = dm.todayMissions || [];
+    for (var i = 0; i < tm.length; i++) {
         if (isMissionComplete(i) && !dm.claimed[i]) return true;
     }
-    if (allMissionsComplete() && !dm.bonusClaimed) return true;
+    if (tm.length && allMissionsComplete() && !dm.bonusClaimed) return true;
     return false;
 }
 
@@ -2043,6 +2066,12 @@ function recordMissionProgress() {
     var addKills = gameState.enemyKills - (gameState.missionCountedKills || 0);
     if (addKills > 0) { dm.kills += addKills; as.totalKills += addKills; gameState.missionCountedKills = gameState.enemyKills; }
     if (!gameState.missionPlayCounted) { dm.plays += 1; as.totalPlays += 1; gameState.missionPlayCounted = true; }
+    var addCoins = gameState.coinsCollected - (gameState.missionCountedCoins || 0);
+    if (addCoins > 0) { dm.coins = (dm.coins || 0) + addCoins; gameState.missionCountedCoins = gameState.coinsCollected; }
+    var addBoss = gameState.bossKills - (gameState.missionCountedBoss || 0);
+    if (addBoss > 0) { dm.boss = (dm.boss || 0) + addBoss; gameState.missionCountedBoss = gameState.bossKills; }
+    var addSpecial = gameState.specialUses - (gameState.missionCountedSpecial || 0);
+    if (addSpecial > 0) { dm.special = (dm.special || 0) + addSpecial; gameState.missionCountedSpecial = gameState.specialUses; }
     if (gameState.distance > as.bestDistance) as.bestDistance = gameState.distance; // 自己ベスト距離
     as.ts = Date.now();
     dm.ts = Date.now();
@@ -2055,7 +2084,7 @@ function claimMission(i) {
     var dm = gameSettings.dailyMissions;
     if (!isMissionComplete(i) || dm.claimed[i]) return;
     dm.claimed[i] = true;
-    gameSettings.savings += DAILY_MISSIONS[i].reward;
+    gameSettings.savings += gameSettings.dailyMissions.todayMissions[i].reward;
     dm.ts = Date.now();
     saveSettings();
     if (soundManager) soundManager.playCoin();
@@ -2088,7 +2117,7 @@ function handleMissionClick(e) {
 }
 
 function renderMissionRow(i) {
-    var m = DAILY_MISSIONS[i];
+    var m = gameSettings.dailyMissions.todayMissions[i];
     var dm = gameSettings.dailyMissions;
     var cur = Math.min(getMissionProgress(m.type), m.target);
     var pct = Math.min(100, Math.floor(cur / m.target * 100));
@@ -2124,7 +2153,8 @@ function renderMissionBonusRow() {
     var dm = gameSettings.dailyMissions;
     var allDone = allMissionsComplete();
     var doneCount = 0;
-    for (var i = 0; i < DAILY_MISSIONS.length; i++) if (isMissionComplete(i)) doneCount++;
+    var tmLen = (gameSettings.dailyMissions.todayMissions || []).length;
+    for (var i = 0; i < tmLen; i++) if (isMissionComplete(i)) doneCount++;
     var rewardSpan = '<div style="color:#ffd700; font-weight:800; font-size:clamp(9px,1.9vw,13px); white-space:nowrap;">+' + MISSION_ALLCLEAR_BONUS.toLocaleString() + t('currency_unit') + '</div>';
     var stateHtml;
     if (dm.bonusClaimed) {
@@ -2138,7 +2168,7 @@ function renderMissionBonusRow() {
         '<img src="images/icon_celebrate.png" width="26" height="26" style="image-rendering:pixelated; flex-shrink:0;">' +
         '<div style="flex:1 1 auto; min-width:0;">' +
             '<div style="color:#ffd700; font-size:clamp(10px,2.1vw,14px); font-weight:800; font-family:\'M PLUS Rounded 1c\',sans-serif; margin-bottom:2px;">' + escapeHtml(t('mission_allclear_name')) + '</div>' +
-            '<div style="color:rgba(255,255,255,0.7); font-size:clamp(8px,1.6vw,11px); font-weight:700;">' + doneCount + ' / ' + DAILY_MISSIONS.length + '</div>' +
+            '<div style="color:rgba(255,255,255,0.7); font-size:clamp(8px,1.6vw,11px); font-weight:700;">' + doneCount + ' / ' + tmLen + '</div>' +
         '</div>' +
         '<div style="flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">' + stateHtml + '</div>' +
     '</div>';
@@ -2154,7 +2184,8 @@ function renderMissions() {
     var listEl = document.getElementById('missionList');
     if (!listEl) return;
     var html = '';
-    for (var i = 0; i < DAILY_MISSIONS.length; i++) html += renderMissionRow(i);
+    var tmList = gameSettings.dailyMissions.todayMissions || [];
+    for (var i = 0; i < tmList.length; i++) html += renderMissionRow(i);
     html += renderMissionBonusRow();
     listEl.innerHTML = html;
 }
@@ -2918,6 +2949,12 @@ function resetGame() {
     gameState.missionCountedDistance = 0;
     gameState.missionCountedKills = 0;
     gameState.missionPlayCounted = false;
+    gameState.coinsCollected = 0;
+    gameState.bossKills = 0;
+    gameState.specialUses = 0;
+    gameState.missionCountedCoins = 0;
+    gameState.missionCountedBoss = 0;
+    gameState.missionCountedSpecial = 0;
     gameState.specialGauge = 0;
     gameState.specialCutinTimer = 0;
     gameState.specialCutinActive = false;
@@ -3927,6 +3964,7 @@ function activateSpecialMove() {
     if (gameState.specialCutinTimer > 0) return;
     if (!gameState.gameStarted || gameState.gamePaused) return;
     gameState.specialGauge = 0;
+    gameState.specialUses++;  // デイリーミッション(必殺技使用)用
     gameState.specialCutinActive = true;
     gameState.specialCutinTimer = SPECIAL_CUTIN_FRAMES;
     if (soundManager) { try { soundManager.playSpecialCharge(); } catch (_) {} }
@@ -4416,6 +4454,7 @@ function updateCoins() {
 
         if (aabb(player, c)) {
             c.collected = true;
+            gameState.coinsCollected++;  // デイリーミッション(コイン取得)用
             gainScore(Math.floor(150 * (gameState.coinBonus || 1)));
             if (soundManager) soundManager.playCoin();
         }
