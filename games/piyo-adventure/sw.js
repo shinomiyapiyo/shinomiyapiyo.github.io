@@ -1,4 +1,4 @@
-var CACHE_NAME = 'piyo-adventure-v1.334';
+var CACHE_NAME = 'piyo-adventure-v1.335';
 var STATIC_ASSETS = [
     './',
     './index.html',
@@ -6,6 +6,7 @@ var STATIC_ASSETS = [
     './i18n.js',
     './audio.js',
     './monetization.js',
+    './core-state.js',
     './gameplay.js',
     './render.js',
     './manifest.json',
