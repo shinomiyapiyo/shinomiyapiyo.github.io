@@ -47,6 +47,7 @@ const FRAMES = [
   { key:'jump',   pose:'player_jump.png',   motion:'JUMPING UP pose: the character is clearly AIRBORNE and lifted off the ground, both knees bent and tucked up, feet off the floor, arms raised upward. This must NOT look like a normal standing pose.' },
   { key:'fall',   pose:'player_fall.png',   motion:'FALLING DOWN pose: the character is clearly AIRBORNE and descending, legs spread apart and loose, arms raised up and outward to balance, slightly looking down. This must NOT look like a normal standing pose.' },
   { key:'base_side', pose:'player_idle_v1.png', motion:'NEUTRAL STANDING pose in a clear full SIDE VIEW (profile), facing RIGHT, standing upright with both feet flat on the ground close together, arms relaxed at the sides, a calm ready-to-walk stance. Full body from head to feet, full profile silhouette (we should see the side of the face and body).' },
+  { key:'idle_v2', pose:'player_idle_v1.png', motion:'NEUTRAL STANDING IDLE pose, facing the VIEWER (front view, not profile), calm and cute with a gentle closed-mouth smile and clear open eyes, both arms relaxed hanging down at the sides, feet together, standing upright and still. A clean, crisp idle sprite with a clear face.' },
 ];
 
 const IDENTITY = [
