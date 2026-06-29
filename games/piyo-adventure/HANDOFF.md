@@ -1,37 +1,39 @@
-# 引き継ぎ — メイド服スキン（idle 立ち絵は完了）
+# 引き継ぎ — ぴよ氏の冒険（次セッション向け）
 
-> 最初に `CLAUDE.md`（プロジェクトルール）を読むこと。本書はその次。
-> 最終更新時点: 公開版 **Ver.1.328**。作業ディレクトリ: `games/piyo-adventure/`。
-> ユーザーの自動メモ `[[veo-motion-sprite-workflow]]` に手法・罠の詳細あり（必読）。
-> （※以前ここにあった「2体目ボス」指示書は完了済みのため破棄）
+> **最初に `CLAUDE.md`（プロジェクトルール）と、ユーザーの自動メモリ `MEMORY.md` を読むこと。** 本書はその次。
+> 最終更新時点: 公開版 **Ver.1.340**（2026-06-29）。作業ディレクトリ: `games/piyo-adventure/`。
 
-## 完了していること（メイド服スキン＝アバター着せ替え）
-- **walk_1〜4**: Gemini **Veo 3.1**(image-to-video) 歩行動画→コマ切り出し→緑クロマキー＋正規化。**高品質・ユーザー合格**。
-- **jump / fall**: `gpt-image-1` 生成（正面・クリーンな顔）。**合格**。
-- **idle（立ち絵）**: **完了 (Ver.1.328)**。最終的に**ユーザー自身が ChatGPT で生成した正面立ち絵**を採用（Veo横向き立ちは結局「振り向き360°回転」になり不採用＝下記参照）。透過PNG(1024×1536)を `tools/idle-from-image.mjs` で 64×64 化（背景は生成時点で透過済みのためクロマキー不要・bboxトリム→高さ54/足元gapBottom5で正規化）。実機ゲーム内idleで美麗な顔・透過OK・他スプライトとサイズ整合を確認済み。元画像は `_raw/user_idle_src_1024.png` に保管。
-- **入手条件**: 実績 **dist_5000（合計5,000m走る）** の報酬で解放（コイン+メイド服）。`isSkinOwned` / `claimAchievement` / きせかえ画面のロック表示・実績行のスキンバッジまで実装済み。
-- 実績リストのスクロール修正(1.326)、タイトル6ボタンの横向き収まり(1.323)、肌の透過修正(1.324/1.325)、**永久アイテム表示領域タップでジャンプ(1.327)** も済み。
+## 最重要メモリ（必読・要点）
+- **[[respond-in-japanese]]**: 応答も**思考(thinking)も日本語**で書く。
+- **[[trust-ingame-diagnosis]]**: ユーザーは実機プレイで確認済み。**過剰調査せず診断を信頼して即修正**。⚠**スプライトの「向き」は静止画でなく『ゲーム内描画＋対象スキン装備＋ユーザー目視』で判定**（メイド服fallで2度誤った教訓。直すときは `sharp().flop()`）。
+- **[[piyo-release-audit]]**: リリースのブロッカー（Capacitor/広告・課金stub/プライバシー）、収益のpay-to-win矛盾、**index.html分割の方針・鉄則・進捗**。
+- **[[piyo-dev-notes]]**: 検証(headless Chrome CDP)・ship(gh merge flow)・通貨モデル・画像生成。
+- [[improvement-roadmap]] / [[polish-backlog]] / [[veo-motion-sprite-workflow]] / [[known-bugs]] / [[gemini-key-interactive-shell]]。
 
-## ✅ idle（立ち絵）完了の記録（Ver.1.328）
-**採用方式**: ユーザーが ChatGPT で生成した**正面向きの透過立ち絵**（クリーンな顔）を採用。`images/<元ファイル>` に置いてもらい、`tools/idle-from-image.mjs` で 64×64 スプライト化（背景透過済み＝クロマキー不要・bboxトリム→高さ54・足元gapBottom5・中央寄せ）。元画像は `_raw/user_idle_src_1024.png` に保管。
+## このセッションで完了したこと（Ver.1.328〜1.340）
+- **メイド服スキン 全ポーズ完成**: idle立ち絵は**ユーザー生成の正面立ち絵を採用**(1.328, `tools/idle-from-image.mjs`)。fallの向きを右向きに是正(1.337)。
+- **小修正(1.331)**: 消音バグ(`audio.js` playItem/playCoin に soundEnabledガード)＋オンボ文言「画面の右はしをタップ」。
+- **index.html 分割 Step1〜5 完了(1.332〜1.336)**: `render.js`/`monetization.js`/`gameplay.js`/`core-state.js`/`bootstrap.js` に分離。**9485行→4542行(48%)**。読み込み順=sprites→i18n→audio→[inline:スプライト生成]→monetization→[inline:progression]→core-state→[inline:world/entities]→gameplay→render→bootstrap。**Step6(残りインライン約3000行の分割)はユーザー判断で保留**。
+- **リザルト共有(1.338)**: ゲームオーバーに「📤シェア」。`shareResult()`/`buildResultCard()`(gameplay.js)＝リザルトカード画像をWeb Share API/X intentで共有。
+- **実績/デイリー 表示改善(1.339)**: うけとる!/受取ずみでも報酬内容を縦表示。`dist_5000`(合計5000m)報酬を**メイド服のみ**(貯金0)。タイトル「ミッション」→「**デイリー**」改名。
+- **デイリー日替わり化(1.340)**: `MISSION_POOL`6種(あそぶ/距離/撃破/コイン取得/ボス撃破/必殺技使用)から日付決定論シード`pickDailyMissions`で**3種＋目標値を日替わり**選定→`dm.todayMissions`。新type集計(gameStateに coins/boss/special カウンタ＋record差分)。
 
-**検証済み**: cache無しヘッドレスChromeでゲーム起動→`piyo_settings`に`ownedSkins:['maid'],activeSkin:'maid',tutorialSeen:true`を注入→splash(`startApp()`)とログインボーナス(`#loginBonusPopup`の受取ボタン)を閉じ→`startGame()`で実プレイのidle描画をスクショ。顔美麗・透過OK・サイズ整合・コンソールエラー無し・Ver.1.328表示を確認。
+## 現在のファイル構成
+- `index.html`(約4542行: HTML＋CSS＋インラインJS3ブロック)
+- js: `sprites.js`/`i18n.js`/`audio.js`/`core-state.js`/`monetization.js`/`gameplay.js`/`render.js`/`bootstrap.js`
+- 全て `<script src>`・グローバルスコープ・ビルドツール無し。
 
-### この過程で却下された方式（将来の参考・繰り返さない）
-- ❌ gpt で真正面 idle（旧）→ 不自然に固い真正面（idle_v2）。
-- ❌ Veo で「横向きのまま立たせる」→ プロンプトに反し**360°振り向き回転**になり、横向き静止コマが冒頭数フレームしか無く品質も不足。`_raw/veo_idle.mp4` 参照。
-- ❌ Veo で正面に振り向かせる → 振り向き＋縮小で顔が潰れ「ゆるキャラ」化。
-- ❌ 元idle(`_raw/orig_idle*.png`)を種 → 元idleの顔は実体RGBがノイズ。
-- 教訓: **「動きのある差分（walk等）＝Veo動画切り出し」「単発の止め絵（idle/jump/fall）＝画像生成（gpt / ユーザー生成）」のハイブリッドが結論**。idleを動画から無理に作る必要は無かった。
+## 次の候補（ユーザー提示済み・未着手）
+- **⑤ 新ボス追加**（中工数, 既存ボス枠流用）
+- **データ引き継ぎ機能**（設定にセーブのエクスポート/インポート。機種変更で進捗全消失を防ぐ＝課金/リリース前に必須・Ultracode指摘）
+- **ネイティブ化（Capacitor＋AdMob, iOS優先）**（リリース本線・大仕事。広告/課金/ATTの前提）
+- **収益設計の見直し**（貯金パック=pay-to-win→コスメ課金へ）／**必殺技の民主化**（無課金お試し）
+- index.html 分割 **Step6**（残りインラインの分割・任意・保留）
 
-### 品質バー（達成済み・今後の他スキンでも維持）
-ユーザーは「美少女キャラ」を要求。**顔が潰れた“ゆるキャラ”は不可**。今回の正面立ち絵で達成。
-
-## 環境・運用
-- `OPENAI_API_KEY` / `GEMINI_API_KEY` は **`.zshrc`** にあり。生成は **`zsh -ic`** 経由（非対話bashは空に見える）。
-- ルール: **HTMLを1行でも変えたら index.html Ver.+0.001＋sw.js CACHE_NAME 同期**。回答末尾に現在Ver.記載。Git/PR/マージは Claude が実行（ユーザーはGit不慣れ＝具体手順で案内）。
-- 検証: ヘッドレスChrome(CDP)。サーバは `python3 -m http.server`、Chromeは `--headless=new --remote-debugging-port=...`。**新規プロファイルでキャッシュ無し確認**（SWキャッシュで本番だけ壊れる罠）。
-- 主要ツール: `tools/veo-walk.mjs`(--idle), `veo-frames-to-skin.mjs`, `opacify-skin.mjs`, `generate-skin-maid-openai.mjs`。
-
-## 今後（別途・ユーザー要望）
-他アバター追加、**コイン購入・課金専用スキン**（ショップ/IAP整備が前提）。解放の仕組み（`SKINS[].unlockAch` / `ACHIEVEMENTS[].skinReward` / `isSkinOwned` / `claimAchievement`）は実装済みで流用可。
+## 作業手順（このプロジェクト固有）
+- **HTMLを1行でも変えたら Ver +0.001**: `index.html` の `content:"Ver.X"`(≈82行) ＋ 版数span(≈760行) ＋ 冒頭コメント `* ぴよ氏の冒険 vX`(grepで行特定) ＋ `sw.js` の `CACHE_NAME` を同期。**回答末尾に現在Verを必ず記載**。
+- 新規js/画像を追加したら `sw.js` の `STATIC_ASSETS` に登録。
+- **git は Claude が代行**(ユーザーはGit不慣れ・確認不要): `git checkout -b claude/xxx` → add → commit(末尾に Co-Authored-By: Claude) → push → `gh pr create` → `gh pr merge --merge --delete-branch` → main pull。committer name警告は無害。リポジトリ=`shinomiyapiyo.github.io`(GitHub Pages, mainマージで公開)。※コマンドは**リポジトリルート**で(cwdがサブだとpath二重エラー)。
+- **検証**: `scratchpad/*verify.mjs`(headless Chrome CDP)が雛形。`python3 -m http.server`＋`--headless=new --user-data-dir=空tmp`(キャッシュ無し)。版数・コンソールエラー0・実描画スクショを確認。起動手順=splash `startApp()`→ログボ`#loginBonusPopup`の受取ボタン→`gameSettings.tutorialSeen=true`→`startGame()`。スキン確認は `gameSettings.ownedSkins=['maid'],activeSkin='maid'` 注入。実機操作(タッチ/共有シート)はユーザー確認に委ねる。
+- 大きめの新機能は **EnterPlanMode→計画→ExitPlanMode承認→実装** の流れが好評。
+- API key(OPENAI/GEMINI)は `.zshrc`。画像/動画生成は `zsh -ic` 経由。
