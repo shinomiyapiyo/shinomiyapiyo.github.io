@@ -96,7 +96,7 @@ class SoundManager {
     }
 
     playItem() {
-        if (!this.ctx) return;
+        if (!this.ctx || !gameSettings.soundEnabled) return;
         var notes = [523, 659, 784];
         var delays = [0, 50, 100];
         var vols = [0.25, 0.25, 0.3];
@@ -115,7 +115,7 @@ class SoundManager {
     }
 
     playCoin() {
-        if (!this.ctx) return;
+        if (!this.ctx || !gameSettings.soundEnabled) return;
         // 連打スロットル: 50ms以内の連続呼び出しは無視（マグネットでコイン列を一気取得した際のoscillator大量生成による処理落ちを防ぐ）
         var t = this.ctx.currentTime;
         if (this._coinT && t - this._coinT < 0.05) return;
