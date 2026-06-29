@@ -79,7 +79,7 @@
                 box-sizing: border-box;
             }
             body::after {
-                content: "Ver.1.322";
+                content: "Ver.1.323";
                 position: fixed;
                 bottom: 8px; right: 10px;
                 color: rgba(255,255,255,0.5);
@@ -490,9 +490,26 @@
             }
         }
 
-        @media (max-width: 900px) and (orientation: landscape) {
-            #titleButtons { right: 10px !important; top: 50% !important; }
-            #titleButtons .game-button { font-size: 2.5vw !important; padding: 8px 12px !important; }
+        /* 横向き: 6ボタン(設定/ランキング/ショップ/ミッション/実績/きせかえ)が
+           画面内に必ず収まるよう、画面の高さ(vh)基準で小型化する。
+           ※幅基準(vw)や max-width:900px 限定だと、幅の広い横向き端末で基本サイズ(大)のままはみ出すため。 */
+        @media (orientation: landscape) {
+            #titleButtons {
+                right: 10px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                gap: clamp(5px, 1.3vh, 9px) !important;
+                max-height: 94vh;
+            }
+            #titleButtons .game-button {
+                font-size: clamp(12px, 4vh, 20px) !important;
+                padding: clamp(4px, 1.3vh, 8px) clamp(12px, 2vw, 22px) !important;
+                min-width: auto !important;
+                max-width: none !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                border-radius: 10px !important;
+            }
         }
 
         /* --- iPhone safe-area対応（タイトル画面は#titleContentで処理済み） --- */
@@ -738,7 +755,7 @@
                     color: #fff; font-size: clamp(7px, 1.2vw, 12px);
                     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
                     font-weight: bold;">
-                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.322</span>
+                    <span style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 5px;">Ver.1.323</span>
                 </div>
 
                 <!-- アップデートボタン：右上 -->
