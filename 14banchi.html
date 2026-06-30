@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="format-detection" content="telephone=no">
+
+    <title>14番地 〜ぴよ氏の怪異街歩き〜 | 入手（iOS / Android）</title>
+    <meta name="description" content="ホラー街歩きゲーム「14番地 〜ぴよ氏の怪異街歩き〜」の入手ページ。iOSはApp Storeで配信中、Android版はクローズドテスト中（招待制）。">
+    <link rel="canonical" href="https://shinomiyapiyo.github.io/14banchi.html">
+
+    <meta property="og:site_name" content="14番地 〜ぴよ氏の怪異街歩き〜">
+    <meta property="og:title" content="14番地 〜ぴよ氏の怪異街歩き〜 | 入手">
+    <meta property="og:description" content="ホラー街歩きゲーム「14番地」の入手ページ。iOSはApp Storeで配信中、Android版はクローズドテスト中。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shinomiyapiyo.github.io/14banchi.html">
+    <meta property="og:image" content="https://shinomiyapiyo.github.io/games/14banchi/icon-512.png">
+    <meta property="og:locale" content="ja_JP">
+
+    <link rel="icon" href="games/14banchi/icon-192.png">
+    <link rel="apple-touch-icon" href="games/14banchi/icon-192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --panel: #14141c;
+            --panel-border: rgba(255,255,255,0.08);
+            --indigo: #6366f1;
+            --indigo-light: #a5b4fc;
+            --text: #e5e7eb;
+            --text-dim: #9ca3af;
+            --warn-bg: rgba(245, 158, 11, 0.08);
+            --warn-border: rgba(245, 158, 11, 0.5);
+            --warn-text: #fcd34d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            background-image:
+                linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px),
+                radial-gradient(circle at 50% 0%, rgba(99,102,241,0.12), transparent 60%);
+            background-size: 40px 40px, 40px 40px, 100% 100%;
+            color: var(--text);
+            font-family: 'Zen Maru Gothic', sans-serif;
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wrap {
+            max-width: 60rem;
+            margin: 0 auto;
+            padding: 2.5rem 1.25rem 4rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.8125rem;
+            margin-bottom: 2rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--indigo-light); }
+
+        .hero {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .hero__icon {
+            width: 5rem;
+            height: 5rem;
+            border-radius: 1.25rem;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 8px 30px rgba(99,102,241,0.25);
+            flex-shrink: 0;
+        }
+        .hero__title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            line-height: 1.3;
+        }
+        .hero__sub {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+        }
+
+        h1.section-h {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+        }
+        .divider {
+            height: 1px;
+            background: var(--panel-border);
+            margin: 1rem 0 2rem;
+        }
+
+        .store-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        @media (max-width: 640px) {
+            .store-grid { grid-template-columns: 1fr; }
+            .hero { flex-direction: column; text-align: center; }
+            h1.section-h { font-size: 1.625rem; }
+        }
+
+        .store-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 1.25rem;
+            padding: 1.75rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .store-card__label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+            margin-bottom: 1.25rem;
+        }
+
+        .store-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 0.85rem;
+            padding: 0.7rem 1.4rem;
+            text-decoration: none;
+            color: #fff;
+            width: fit-content;
+            transition: transform 0.15s, border-color 0.2s;
+        }
+        .store-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.4);
+        }
+        .store-btn svg { flex-shrink: 0; }
+        .store-btn__text { text-align: left; line-height: 1.15; }
+        .store-btn__top { font-size: 0.625rem; display: block; opacity: 0.85; }
+        .store-btn__bottom { font-size: 1.125rem; font-weight: 700; display: block; }
+
+        .warn {
+            background: var(--warn-bg);
+            border: 1px solid var(--warn-border);
+            border-radius: 0.85rem;
+            padding: 0.85rem 1rem;
+            font-size: 0.8125rem;
+            color: var(--warn-text);
+            margin-bottom: 1.25rem;
+            line-height: 1.55;
+        }
+
+        .footer-note {
+            margin-top: 2.5rem;
+            font-size: 0.8125rem;
+            color: var(--text-dim);
+            text-align: center;
+        }
+        .footer-note a { color: var(--indigo-light); }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <a href="./index.html" class="back-link">← 四ノ宮ぴよ Official に戻る</a>
+
+        <div class="hero">
+            <img src="games/14banchi/icon-192.png" alt="14番地 アイコン" class="hero__icon">
+            <div>
+                <div class="hero__title">14番地<br>〜ぴよ氏の怪異街歩き〜</div>
+                <div class="hero__sub">異変を見つけて引き返す、ホラー街歩きゲーム 👻</div>
+            </div>
+        </div>
+
+        <h1 class="section-h">入手</h1>
+        <div class="divider"></div>
+
+        <div class="store-grid">
+            <!-- iOS -->
+            <div class="store-card">
+                <div class="store-card__label">iOS (iPhone)</div>
+                <a href="https://apps.apple.com/app/id6785090823" target="_blank" rel="noopener noreferrer" class="store-btn" aria-label="App Store でダウンロード">
+                    <svg width="26" height="26" viewBox="0 0 384 512" fill="#fff" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+                    <span class="store-btn__text">
+                        <span class="store-btn__top">からダウンロード</span>
+                        <span class="store-btn__bottom">App Store</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- Android -->
+            <div class="store-card">
+                <div class="store-card__label">Android</div>
+                <div class="warn">⚠️ Android版は現在クローズドテスト中です。下記からテスターに登録するとプレイできます（招待制）。</div>
+                <a href="https://nullpoworks.pages.dev/beta-test.html" target="_blank" rel="noopener noreferrer" class="store-btn" aria-label="Google Play で手に入れよう（クローズドテスト）">
+                    <svg width="24" height="24" viewBox="0 0 512 512" aria-hidden="true"><path fill="#00d2ff" d="M48 59.49v393a4.33 4.33 0 0 0 7.37 3.07L260 256 55.37 56.42A4.33 4.33 0 0 0 48 59.49Z"/><path fill="#ffbc00" d="m345.8 174-89.78 82 90 90 105.13-61.74c14.86-8.71 14.86-30.3 0-39L345.8 174Z"/><path fill="#00e676" d="M55.38 56.43 260 256l85.8-82-262.36-153.4A21.6 21.6 0 0 0 72.51 20a21.4 21.4 0 0 0-17.13 36.43Z"/><path fill="#ff3a44" d="M256 256 55.38 455.57A21.4 21.4 0 0 0 72.51 492a21.6 21.6 0 0 0 10.93-2.6L345.8 338 256 256Z"/></svg>
+                    <span class="store-btn__text">
+                        <span class="store-btn__top">で手に入れよう</span>
+                        <span class="store-btn__bottom">Google Play</span>
+                    </span>
+                </a>
+            </div>
+        </div>
+
+        <p class="footer-note">個人情報の取り扱いについては <a href="https://nullpoworks.pages.dev/privacy-policy" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a> をご覧ください。</p>
+    </div>
+</body>
+</html>
