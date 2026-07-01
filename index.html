@@ -1426,6 +1426,44 @@
             clip: rect(0,0,0,0) !important;
             border: 0 !important;
         }
+
+        /* PC専用 左右余白の浮遊モチーフ（スマホは完全非表示） */
+        .side-decor { display: none; }
+
+        @media (min-width: 1000px) {
+            .side-decor {
+                display: block;
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                width: calc((100vw - 28rem) / 2);
+                pointer-events: none;
+                overflow: hidden;
+                z-index: 0;
+            }
+            .side-decor--left  { left: 0; }
+            .side-decor--right { right: 0; }
+
+            .side-motif {
+                position: absolute;
+                font-size: 2.4rem;
+                opacity: 0.55;
+                filter: drop-shadow(0 4px 10px rgba(255, 143, 171, 0.25));
+                animation: side-float 7s ease-in-out infinite;
+                will-change: transform;
+                user-select: none;
+            }
+
+            @keyframes side-float {
+                0%, 100% { transform: translateY(0)      rotate(-5deg); }
+                50%      { transform: translateY(-20px)   rotate(5deg); }
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .side-motif { animation: none; }
+        }
+
     </style>
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2E28JBNJVF"></script>
@@ -1450,6 +1488,21 @@
         <div class="blob blob--2"></div>
         <div class="blob blob--3"></div>
     </div>
+
+        <div class="side-decor side-decor--left" aria-hidden="true">
+            <span class="side-motif" style="top:8%;  left:44%; animation-delay:0s;">🐥</span>
+            <span class="side-motif" style="top:25%; left:16%; animation-delay:1.2s; font-size:2rem;">🌸</span>
+            <span class="side-motif" style="top:44%; left:52%; animation-delay:2.5s; font-size:1.8rem;">🎵</span>
+            <span class="side-motif" style="top:62%; left:20%; animation-delay:0.8s;">🎀</span>
+            <span class="side-motif" style="top:82%; left:46%; animation-delay:3.2s; font-size:1.7rem;">⭐</span>
+        </div>
+        <div class="side-decor side-decor--right" aria-hidden="true">
+            <span class="side-motif" style="top:10%; right:42%; animation-delay:1.6s;">💗</span>
+            <span class="side-motif" style="top:27%; right:15%; animation-delay:0.4s; font-size:1.8rem;">🌸</span>
+            <span class="side-motif" style="top:46%; right:50%; animation-delay:2.9s;">🐥</span>
+            <span class="side-motif" style="top:65%; right:18%; animation-delay:1s;   font-size:1.8rem;">🎵</span>
+            <span class="side-motif" style="top:84%; right:44%; animation-delay:2.2s; font-size:1.7rem;">🐾</span>
+        </div>
 
         <main class="main-container">
 
