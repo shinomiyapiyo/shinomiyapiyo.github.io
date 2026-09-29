@@ -1,0 +1,13 @@
+# GitHub Pages（Jekyll）の公開設定
+#
+# exclude に書いたファイル・フォルダは公開サイトに出力されない（URL は 404 になる）。
+# 開発・作業用のファイルを外部から読まれないようにするための設定。
+# README.md は公開のままにしている。
+exclude:
+  - CLAUDE.md
+  - tools/
+  # 以下は Jekyll の既定の除外リスト。exclude を自分で書くと既定が上書きされるため明記しておく
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/
